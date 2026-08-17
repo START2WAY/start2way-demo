@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>START2WAY — Présentation commerciale</title>
+  <meta name="description" content="START2WAY remplace le Livret Individuel de Contrôle papier par une solution numérique sécurisée et conforme au Code des transports." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@200;300;400;500;600;700;800&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:       #0D2242;
+      --navy-light: #1a3460;
+      --amber:      #C9922F;
+      --amber-light:#e5b04a;
+      --paper:      #F8F6F3;
+      --white:      #FFFFFF;
+      --text-main:  #1A1A1A;
+      --text-sec:   #5A5A5A;
+      --success:    #2E7D32;
+      --danger:     #D32F2F;
+      --radius:     16px;
+      --shadow:     0 8px 32px rgba(13,34,66,0.12);
+      --shadow-lg:  0 20px 60px rgba(13,34,66,0.20);
+      --font-head:  'Lexend', sans-serif;
+      --font-body:  'Source Sans 3', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--paper); color: var(--text-main); }
+
+    /* ─── PROGRESS NAV ──────────────────────────────────────────────── */
+    .progress-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(13,34,66,0.95); backdrop-filter: blur(12px);
+      padding: 12px 40px;
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    }
+    .nav-brand {
+      font-family: var(--font-head); font-size: 18px; font-weight: 700;
+      color: var(--white); display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo {
+      width: 32px; height: 32px; background: var(--amber); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: var(--white);
+    }
+    .nav-acts { display: flex; gap: 4px; }
+    .act-btn {
+      border: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7);
+      border-radius: 8px; padding: 7px 18px;
+      font-family: var(--font-head); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .act-btn:hover   { background: rgba(255,255,255,0.18); color: var(--white); }
+    .act-btn.current { background: var(--amber); color: var(--white); }
+    .nav-cta {
+      background: var(--amber); color: var(--white); border: none;
+      border-radius: 8px; padding: 8px 20px;
+      font-family: var(--font-head); font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    }
+    .nav-cta:hover { background: var(--amber-light); }
+    .progress-line {
+      position: fixed; top: 56px; left: 0; right: 0; height: 3px;
+      background: rgba(255,255,255,0.1); z-index: 100;
+    }
+    .progress-fill { height: 100%; background: var(--amber); transition: width 0.3s; }
+
+    /* ─── SLIDE ──────────────────────────────────────────────────────── */
+    .slide {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 100px 40px 60px; position: relative;
+    }
+    .slide-inner { max-width: 960px; width: 100%; }
+
+    /* ─── SLIDE 1 : PROBLÈME ─────────────────────────────────────────── */
+    .slide-1 { background: var(--navy); }
+    .hero-eyebrow {
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--amber); margin-bottom: 20px;
+    }
+    .hero-title {
+      font-family: var(--font-head); font-size: clamp(36px, 6vw, 64px);
+      font-weight: 800; color: var(--white); line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .hero-title em { color: var(--amber); font-style: normal; }
+    .hero-sub {
+      font-size: 18px; color: rgba(255,255,255,0.65); max-width: 580px;
+      line-height: 1.6; margin-bottom: 48px;
+    }
+
+    /* LIC mock */
+    .lic-illustration {
+      border: 3px solid rgba(255,255,255,0.15);
+      border-radius: 12px; padding: 24px;
+      max-width: 400px; background: rgba(255,255,255,0.04);
+      margin-bottom: 40px;
+    }
+    .lic-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .lic-title-block h4 { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--white); }
+    .lic-title-block p  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .lic-stamp { background: rgba(201,146,47,0.2); border: 1px solid var(--amber); color: var(--amber); font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; font-family: var(--font-head); letter-spacing: 1px; }
+    .lic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; }
+    .lic-cell { background: rgba(255,255,255,0.04); padding: 8px 6px; text-align: center; }
+    .lic-cell.header { background: rgba(201,146,47,0.15); }
+    .lic-cell-label { font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--amber); }
+    .lic-cell-val   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; }
+    .lic-row-date   { grid-column: 1/-1; background: rgba(255,255,255,0.02); padding: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
+    .lic-x { color: var(--amber); font-weight: 700; font-size: 14px; }
+
+    /* Problèmes cards */
+    .problems-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      margin-bottom: 40px;
+    }
+    .problem-card {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px; padding: 20px;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .problem-card:hover { border-color: rgba(201,146,47,0.5); background: rgba(201,146,47,0.05); }
+    .problem-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+    .problem-title { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+    .problem-desc  { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+
+    /* Chiffres-clés */
+    .kpi-row { display: flex; gap: 24px; flex-wrap: wrap; }
+    .kpi-stat { text-align: center; }
+    .kpi-num  { font-family: var(--font-head); font-size: 36px; font-weight: 800; color: var(--amber); }
+    .kpi-lbl  { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; max-width: 130px; line-height: 1.3; }
+
+    /* ─── SLIDE 2 : SOLUTION ─────────────────────────────────────────── */
+    .slide-2 { background: var(--paper); }
+    .solution-header { text-align: center; margin-bottom: 48px; }
+    .solution-eyebrow {
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 12px;
+    }
+    .solution-title {
+      font-family: var(--font-head); font-size: clamp(28px, 4vw, 48px);
+      font-weight: 800; color: var(--navy); line-height: 1.15;
+    }
+    .cta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 48px; }
+    .cta-card {
+      background: var(--white); border: 2px solid transparent;
+      border-radius: 16px; padding: 28px; text-align: center;
+      box-shadow: var(--shadow);
+      transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+      text-decoration: none; display: block;
+    }
+    .cta-card:hover { border-color: var(--navy); box-shadow: var(--shadow-lg); transform: translateY(-4px); }
+    .cta-card:active { transform: scale(0.98); }
+    .cta-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+    .cta-title { font-family: var(--font-head); font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .cta-desc  { font-size: 14px; color: var(--text-sec); line-height: 1.4; margin-bottom: 16px; }
+    .cta-link  {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--navy); color: var(--white);
+      padding: 10px 24px; border-radius: 8px;
+      font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .cta-card:hover .cta-link { background: var(--amber); }
+    .cta-card.mobile-card .cta-link { background: var(--amber); }
+    .cta-card.mobile-card:hover .cta-link { background: var(--amber-light); }
+
+    /* Accordéon guide démo */
+    .demo-guide { margin-bottom: 48px; }
+    .guide-title {
+      font-family: var(--font-head); font-size: 20px; font-weight: 700;
+      color: var(--navy); margin-bottom: 16px;
+    }
+    .accordion { display: flex; flex-direction: column; gap: 8px; }
+    .acc-item {
+      background: var(--white); border: 1px solid #E0DDD8;
+      border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(13,34,66,0.06);
+    }
+    .acc-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .acc-header:hover { background: #F3F1EE; }
+    .acc-header-left { display: flex; align-items: center; gap: 12px; }
+    .acc-badge {
+      background: var(--navy); color: var(--white);
+      font-family: var(--font-head); font-size: 12px; font-weight: 700;
+      padding: 4px 12px; border-radius: 20px;
+    }
+    .acc-header-title { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--navy); }
+    .acc-chevron { font-size: 14px; color: var(--text-sec); transition: transform 0.3s; }
+    .acc-item.open .acc-chevron { transform: rotate(180deg); }
+    .acc-body { display: none; padding: 0 20px 20px; }
+    .acc-item.open .acc-body { display: block; }
+    .steps-list { display: flex; flex-direction: column; gap: 10px; }
+    .step-item { display: flex; align-items: flex-start; gap: 12px; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(13,34,66,0.08); color: var(--navy);
+      font-family: var(--font-head); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-text { font-size: 14px; color: var(--text-sec); line-height: 1.5; }
+    .step-text strong { color: var(--navy); }
+
+    /* Features */
+    .features-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .feature-card {
+      background: var(--white); border: 1px solid #E0DDD8;
+      border-radius: 12px; padding: 16px; text-align: center;
+      box-shadow: 0 2px 6px rgba(13,34,66,0.06);
+    }
+    .feature-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+    .feature-title { font-family: var(--font-head); font-size: 13px; font-weight: 600; color: var(--navy); }
+    .feature-desc  { font-size: 12px; color: var(--text-sec); margin-top: 4px; line-height: 1.4; }
+
+    /* ─── SLIDE 3 : OFFRE ────────────────────────────────────────────── */
+    .slide-3 { background: var(--navy); }
+    .offer-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+    .offer-left { }
+    .offer-eyebrow {
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 16px;
+    }
+    .offer-title {
+      font-family: var(--font-head); font-size: clamp(28px, 4vw, 46px);
+      font-weight: 800; color: var(--white); line-height: 1.15; margin-bottom: 20px;
+    }
+    .offer-sub { font-size: 16px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 32px; }
+
+    /* Différenciants accordéon */
+    .diff-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+    .diff-item {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+    }
+    .diff-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; cursor: pointer; transition: background 0.2s;
+    }
+    .diff-header:hover { background: rgba(255,255,255,0.04); }
+    .diff-check { color: var(--amber); font-size: 16px; flex-shrink: 0; }
+    .diff-label { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); flex: 1; }
+    .diff-chevron { font-size: 12px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
+    .diff-item.open .diff-chevron { transform: rotate(180deg); }
+    .diff-body { display: none; padding: 0 16px 14px 40px; font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.5; }
+    .diff-item.open .diff-body { display: block; }
+
+    /* Pricing card */
+    .pricing-card {
+      background: var(--white); border-radius: 20px; padding: 32px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    }
+    .pricing-badge {
+      background: rgba(201,146,47,0.15); color: var(--amber);
+      font-family: var(--font-head); font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; padding: 4px 14px; border-radius: 20px;
+      text-transform: uppercase; display: inline-block; margin-bottom: 16px;
+    }
+    .pricing-title { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .pricing-sub { font-size: 13px; color: var(--text-sec); margin-bottom: 20px; }
+    .pricing-price { margin-bottom: 16px; }
+    .pricing-main { font-family: var(--font-head); font-size: 48px; font-weight: 800; color: var(--navy); line-height: 1; }
+    .pricing-suffix { font-size: 16px; color: var(--text-sec); font-weight: 400; }
+    .pricing-addons { font-size: 13px; color: var(--text-sec); margin-bottom: 20px; line-height: 1.4; }
+    .pricing-pilot {
+      background: rgba(13,34,66,0.06); border-radius: 10px; padding: 14px;
+      margin-bottom: 20px;
+    }
+    .pilot-title { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+    .pilot-items { display: flex; flex-direction: column; gap: 6px; }
+    .pilot-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-sec); }
+    .pilot-check { color: var(--success); font-weight: 700; }
+    .pricing-cta {
+      display: block; width: 100%; padding: 14px;
+      background: var(--amber); color: var(--white); border: none; border-radius: 10px;
+      font-family: var(--font-head); font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s; text-align: center; text-decoration: none;
+    }
+    .pricing-cta:hover { background: var(--amber-light); }
+    .pricing-cta-sec {
+      display: block; width: 100%; padding: 11px; margin-top: 10px;
+      background: transparent; color: var(--navy); border: 1px solid rgba(13,34,66,0.2);
+      border-radius: 10px; font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s; text-align: center; text-decoration: none;
+    }
+    .pricing-cta-sec:hover { background: rgba(13,34,66,0.05); }
+
+    /* Pilot count */
+    .pilot-count {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    }
+    .pilot-slots { display: flex; gap: 6px; }
+    .pilot-slot {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(13,34,66,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .pilot-slot.taken { background: var(--amber); }
+    .pilot-slot-label { font-size: 13px; color: var(--text-sec); }
+
+    /* ─── FOOTER ──────────────────────────────────────────────────────── */
+    .deck-footer {
+      background: var(--navy-dark); padding: 40px;
+      text-align: center;
+    }
+    .footer-brand { font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
+    .footer-contact { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
+    .footer-email {
+      color: var(--amber); font-weight: 600; text-decoration: none;
+      border-bottom: 1px solid rgba(201,146,47,0.4); transition: border-color 0.2s;
+    }
+    .footer-email:hover { border-bottom-color: var(--amber); }
+    .footer-legal { font-size: 11px; color: rgba(255,255,255,0.3); line-height: 1.5; max-width: 600px; margin: 0 auto; }
+
+    /* ─── KEYBOARD HINT ──────────────────────────────────────────────── */
+    .keyboard-hint {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(13,34,66,0.85); color: rgba(255,255,255,0.7);
+      font-size: 11px; padding: 6px 16px; border-radius: 20px; z-index: 50;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .slide { padding: 80px 20px 40px; }
+      .problems-grid  { grid-template-columns: 1fr; }
+      .cta-grid       { grid-template-columns: 1fr; }
+      .features-grid  { grid-template-columns: repeat(2, 1fr); }
+      .offer-layout   { grid-template-columns: 1fr; }
+      .progress-nav   { padding: 10px 16px; }
+      .nav-acts       { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PROGRESS NAV -->
+  <nav class="progress-nav" aria-label="Navigation présentation">
+    <div class="nav-brand">
+      <div class="nav-logo" aria-hidden="true">S2</div>
+      START2WAY
+    </div>
+    <div class="nav-acts" role="list">
+      <button class="act-btn current" id="act-1" onclick="scrollToSlide(1)" role="listitem">① Le problème</button>
+      <button class="act-btn" id="act-2" onclick="scrollToSlide(2)" role="listitem">② La solution</button>
+      <button class="act-btn" id="act-3" onclick="scrollToSlide(3)" role="listitem">③ L'offre</button>
+    </div>
+    <button class="nav-cta" onclick="document.getElementById('contact-email').click()">
+      Devenir partenaire pilote →
+    </button>
+  </nav>
+  <div class="progress-line"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       ACTE 1 — LE PROBLÈME
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section class="slide slide-1" id="slide-1" aria-labelledby="s1-title">
+    <div class="slide-inner">
+      <div class="hero-eyebrow" aria-label="Acte 1">Acte 1 — Le problème</div>
+      <h1 class="hero-title" id="s1-title">
+        Le carnet papier<br>ne suffit <em>plus.</em>
+      </h1>
+      <p class="hero-sub">
+        Depuis 1992, les conducteurs de transport routier remplissent manuellement
+        un Livret Individuel de Contrôle. En 2024, ce carnet est une source de risques
+        juridiques, d'erreurs, et de pertes d'archives.
+      </p>
+
+      <!-- LIC illustration -->
+      <div class="lic-illustration" role="img" aria-label="Représentation du Livret Individuel de Contrôle papier n°126330">
+        <div class="lic-header">
+          <div class="lic-title-block">
+            <h4>Livret Individuel de Contrôle</h4>
+            <p>N° 126330 — AMT Transport — Dupont Martin</p>
+          </div>
+          <div class="lic-stamp">PAPIER</div>
+        </div>
+        <div class="lic-grid">
+          <div class="lic-cell header"><div class="lic-cell-label">Date</div></div>
+          <div class="lic-cell header"><div class="lic-cell-label">A</div></div>
+          <div class="lic-cell header"><div class="lic-cell-label">B</div></div>
+          <div class="lic-cell header"><div class="lic-cell-label">C+D</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">14/08</div></div>
+          <div class="lic-cell"><div class="lic-cell-val lic-x">9h02 !</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">—</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">14h58</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">15/08</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">7h30</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">0h45</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">15h45</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">16/08</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">…</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">…</div></div>
+          <div class="lic-cell"><div class="lic-cell-val">…</div></div>
+        </div>
+      </div>
+
+      <!-- Problèmes -->
+      <div class="problems-grid" role="list">
+        <div class="problem-card" role="listitem">
+          <span class="problem-icon" aria-hidden="true">✍</span>
+          <h3 class="problem-title">Saisie manuelle = erreurs</h3>
+          <p class="problem-desc">Remplissage à la main, totaux incorrects, cases oubliées.
+            Lors d'un contrôle DREAL, chaque erreur est une infraction potentielle.</p>
+        </div>
+        <div class="problem-card" role="listitem">
+          <span class="problem-icon" aria-hidden="true">🔕</span>
+          <h3 class="problem-title">Aucune alerte en temps réel</h3>
+          <p class="problem-desc">Le conducteur dépasse les 9h de conduite sans notification.
+            L'employeur ne le sait pas. La DREAL, si.</p>
+        </div>
+        <div class="problem-card" role="listitem">
+          <span class="problem-icon" aria-hidden="true">⚖</span>
+          <h3 class="problem-title">Responsabilité employeur (R3315-8)</h3>
+          <p class="problem-desc">Sans traçabilité numérique, l'employeur porte la responsabilité
+            pénale des infractions — même commises à son insu.</p>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row" role="list">
+        <div class="kpi-stat" role="listitem">
+          <div class="kpi-num">1 500€</div>
+          <div class="kpi-lbl">Amende max par infraction (R3315-8)</div>
+        </div>
+        <div class="kpi-stat" role="listitem">
+          <div class="kpi-num">5 ans</div>
+          <div class="kpi-lbl">Conservation obligatoire des feuillets (R3315-5)</div>
+        </div>
+        <div class="kpi-stat" role="listitem">
+          <div class="kpi-num">0 préavis</div>
+          <div class="kpi-lbl">Les contrôles DREAL arrivent sans prévenir</div>
+        </div>
+        <div class="kpi-stat" role="listitem">
+          <div class="kpi-num">24h</div>
+          <div class="kpi-lbl">Durée à justifier chaque jour (A+B+C+D)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       ACTE 2 — LA SOLUTION
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section class="slide slide-2" id="slide-2" aria-labelledby="s2-title">
+    <div class="slide-inner">
+      <div class="solution-header">
+        <div class="solution-eyebrow">Acte 2 — La solution</div>
+        <h2 class="solution-title" id="s2-title">
+          Le Livret numérique.<br>Légal. Simple. Prouvable.
+        </h2>
+      </div>
+
+      <!-- CTA Apps -->
+      <div class="cta-grid" role="list">
+        <a class="cta-card mobile-card" href="app-mobile.html" target="_blank" role="listitem"
+          aria-label="Ouvrir l'application conducteur START2WAY">
+          <span class="cta-icon" aria-hidden="true">📱</span>
+          <div class="cta-title">Application conducteur</div>
+          <p class="cta-desc">3 boutons. Démarrer, Pause, Arrêter. Chronomètre A/B/C/D.
+            Feuillet généré automatiquement.</p>
+          <span class="cta-link">Ouvrir la démo conducteur →</span>
+        </a>
+        <a class="cta-card" href="app-web.html" target="_blank" role="listitem"
+          aria-label="Ouvrir le dashboard employeur START2WAY">
+          <span class="cta-icon" aria-hidden="true">💻</span>
+          <div class="cta-title">Dashboard employeur</div>
+          <p class="cta-desc">Registre du personnel, alertes temps réel, rapports DREAL
+            en un clic avec hash SHA-256 d'intégrité.</p>
+          <span class="cta-link">Ouvrir le dashboard →</span>
+        </a>
+      </div>
+
+      <!-- Guide de démo -->
+      <div class="demo-guide">
+        <h3 class="guide-title">Guide de démonstration</h3>
+        <div class="accordion">
+          <div class="acc-item open" id="acc-mobile">
+            <div class="acc-header" onclick="toggleAcc('acc-mobile')" role="button" tabindex="0"
+              aria-expanded="true" onkeydown="if(event.key==='Enter')toggleAcc('acc-mobile')">
+              <div class="acc-header-left">
+                <span class="acc-badge">📱 Mobile</span>
+                <span class="acc-header-title">Scénario conducteur — Martin Dupont</span>
+              </div>
+              <span class="acc-chevron" aria-hidden="true">▼</span>
+            </div>
+            <div class="acc-body">
+              <div class="steps-list">
+                <div class="step-item">
+                  <div class="step-num">1</div>
+                  <div class="step-text">Cliquer <strong>« Ouvrir la démo conducteur »</strong> — l'app s'ouvre avec un chrono à zéro.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">2</div>
+                  <div class="step-text">Appuyer sur <strong>Démarrer</strong> — le chronomètre démarre, catégorie A (conduite).</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">3</div>
+                  <div class="step-text">Appuyer sur <strong>Pause</strong> — sélectionner D (Repos). Observer la timeline se dessiner en temps réel.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">4</div>
+                  <div class="step-text">Aller dans l'onglet <strong>Feuillet</strong> — voir le récapitulatif A/B/C/D du 15/08/2026 (conforme) et du 14/08/2026 (non conforme 9h02).</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">5</div>
+                  <div class="step-text">Onglet <strong>Historique</strong> — 30 journées passées, 3 badges rouges (non conformes), recherche par date.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">6</div>
+                  <div class="step-text">Onglet <strong>Profil</strong> — badge orange sur Visite médicale (expire dans 14 jours). AMT Transport, contact d'urgence.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="acc-item" id="acc-web">
+            <div class="acc-header" onclick="toggleAcc('acc-web')" role="button" tabindex="0"
+              aria-expanded="false" onkeydown="if(event.key==='Enter')toggleAcc('acc-web')">
+              <div class="acc-header-left">
+                <span class="acc-badge" style="background:var(--amber)">💻 Web</span>
+                <span class="acc-header-title">Scénario employeur — Jean Dupont (AMT Transport)</span>
+              </div>
+              <span class="acc-chevron" aria-hidden="true">▼</span>
+            </div>
+            <div class="acc-body">
+              <div class="steps-list">
+                <div class="step-item">
+                  <div class="step-num">1</div>
+                  <div class="step-text">Cliquer <strong>« Ouvrir le dashboard »</strong> — accueil avec 4 KPIs : 8 actifs, 3 docs expirés, 5 alertes.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">2</div>
+                  <div class="step-text">Menu <strong>Registre</strong> — 12 conducteurs avec filtres (Actifs, Bloqués, Départ, Supprimés). Cliquer 🔗 → code d'invitation généré.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">3</div>
+                  <div class="step-text">Menu <strong>Documents</strong> — badges rouges sur Lefèvre (permis expiré), MN-974-QA (CT expiré).</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">4</div>
+                  <div class="step-text">Menu <strong>Rapports DREAL</strong> — sélectionner « 7 jours », cliquer Générer → barre de progression → hash SHA-256 (64 caractères). Régénérer → hash différent.</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-num">5</div>
+                  <div class="step-text">Menu <strong>Flotte</strong> — 8 cartes véhicules. CT DX-847-AZ en orange, CT MN-974-QA en rouge.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="features-grid" role="list">
+        <div class="feature-card" role="listitem">
+          <span class="feature-icon" aria-hidden="true">🔒</span>
+          <div class="feature-title">Horodatage inviolable</div>
+          <div class="feature-desc">Chaque segment est horodaté côté serveur — le conducteur ne peut pas tricher.</div>
+        </div>
+        <div class="feature-card" role="listitem">
+          <span class="feature-icon" aria-hidden="true">#</span>
+          <div class="feature-title">Hash SHA-256</div>
+          <div class="feature-desc">Chaque rapport signé cryptographiquement. Intégrité vérifiable à tout moment.</div>
+        </div>
+        <div class="feature-card" role="listitem">
+          <span class="feature-icon" aria-hidden="true">⚖</span>
+          <div class="feature-title">100% R3315</div>
+          <div class="feature-desc">Conforme au Code des transports articles R3315-1 à R3315-8.</div>
+        </div>
+        <div class="feature-card" role="listitem">
+          <span class="feature-icon" aria-hidden="true">🌍</span>
+          <div class="feature-title">RGPD EU</div>
+          <div class="feature-desc">Hébergement européen (Neon + Cloudflare R2). Données localisées en France.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       ACTE 3 — L'OFFRE
+       ═══════════════════════════════════════════════════════════════════ -->
+  <section class="slide slide-3" id="slide-3" aria-labelledby="s3-title">
+    <div class="slide-inner">
+      <div class="offer-layout">
+        <div class="offer-left">
+          <div class="offer-eyebrow">Acte 3 — L'offre</div>
+          <h2 class="offer-title" id="s3-title">
+            5 entreprises pilotes.<br>6 mois <em style="color:var(--amber);font-style:normal">offerts.</em>
+          </h2>
+          <p class="offer-sub">
+            Je cherche des entreprises de transport volontaires pour tester
+            START2WAY en conditions réelles. En échange d'un feedback terrain,
+            6 mois d'accès complet — offerts.
+          </p>
+
+          <!-- Différenciants -->
+          <div class="diff-list">
+            <div class="diff-item" id="diff-1">
+              <div class="diff-header" onclick="toggleDiff('diff-1')" role="button" tabindex="0"
+                onkeydown="if(event.key==='Enter')toggleDiff('diff-1')">
+                <span class="diff-check">✓</span>
+                <span class="diff-label">Valeur probante devant la DREAL</span>
+                <span class="diff-chevron">▼</span>
+              </div>
+              <div class="diff-body">Les feuillets générés par START2WAY ont la même valeur juridique qu'un LIC papier (article R3315-1), avec en plus un hash SHA-256 inviolable.</div>
+            </div>
+            <div class="diff-item" id="diff-2">
+              <div class="diff-header" onclick="toggleDiff('diff-2')" role="button" tabindex="0"
+                onkeydown="if(event.key==='Enter')toggleDiff('diff-2')">
+                <span class="diff-check">✓</span>
+                <span class="diff-label">Clause protectrice R3315-8</span>
+                <span class="diff-chevron">▼</span>
+              </div>
+              <div class="diff-body">L'employeur est protégé : chaque dérogation accordée est tracée, horodatée, signée. En cas de contrôle, vous pouvez prouver votre bonne foi.</div>
+            </div>
+            <div class="diff-item" id="diff-3">
+              <div class="diff-header" onclick="toggleDiff('diff-3')" role="button" tabindex="0"
+                onkeydown="if(event.key==='Enter')toggleDiff('diff-3')">
+                <span class="diff-check">✓</span>
+                <span class="diff-label">Archivage automatique 5 ans</span>
+                <span class="diff-chevron">▼</span>
+              </div>
+              <div class="diff-body">Tous les feuillets sont archivés automatiquement pendant 5 ans (R3315-5). Aucune impression, aucun classeur, aucune perte.</div>
+            </div>
+            <div class="diff-item" id="diff-4">
+              <div class="diff-header" onclick="toggleDiff('diff-4')" role="button" tabindex="0"
+                onkeydown="if(event.key==='Enter')toggleDiff('diff-4')">
+                <span class="diff-check">✓</span>
+                <span class="diff-label">Zéro installation, zéro formation</span>
+                <span class="diff-chevron">▼</span>
+              </div>
+              <div class="diff-body">L'application conducteur fonctionne sur n'importe quel smartphone. 3 boutons. Le conducteur apprend en 5 minutes.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pricing card -->
+        <div class="offer-right">
+          <div class="pricing-card">
+            <div class="pricing-badge">Offre Pilote — Limitée à 5 entreprises</div>
+            <div class="pricing-title">START2WAY</div>
+            <div class="pricing-sub">Accès complet — Dashboard + Application conducteur</div>
+            <div class="pricing-price">
+              <span class="pricing-main">14,99€</span>
+              <span class="pricing-suffix">/mois HT</span>
+            </div>
+            <div class="pricing-addons">
+              Inclus : 2 conducteurs — <strong>+4,99€/conducteur supplémentaire</strong>
+            </div>
+            <div class="pricing-pilot">
+              <div class="pilot-title">🎁 Offre partenaire pilote</div>
+              <div class="pilot-items">
+                <div class="pilot-item"><span class="pilot-check">✓</span> 6 mois d'accès complet offerts</div>
+                <div class="pilot-item"><span class="pilot-check">✓</span> Onboarding personnalisé inclus</div>
+                <div class="pilot-item"><span class="pilot-check">✓</span> Logo sur le site START2WAY</div>
+                <div class="pilot-item"><span class="pilot-check">✓</span> Référence client officielle</div>
+                <div class="pilot-item"><span class="pilot-check">✓</span> Influence sur la feuille de route</div>
+              </div>
+            </div>
+            <div class="pilot-count" aria-label="1 place prise sur 5">
+              <div class="pilot-slots" aria-hidden="true">
+                <div class="pilot-slot taken" title="Place prise">🏢</div>
+                <div class="pilot-slot" title="Disponible">○</div>
+                <div class="pilot-slot" title="Disponible">○</div>
+                <div class="pilot-slot" title="Disponible">○</div>
+                <div class="pilot-slot" title="Disponible">○</div>
+              </div>
+              <span class="pilot-slot-label">1 place prise — 4 disponibles</span>
+            </div>
+            <a class="pricing-cta" id="contact-email"
+              href="mailto:start2way.contact@gmail.com?subject=Candidature%20partenaire%20pilote%20START2WAY&body=Bonjour%2C%0A%0ANous%20sommes%20int%C3%A9ress%C3%A9s%20par%20le%20programme%20pilote%20START2WAY.%0A%0AEntreprise%20%3A%20%5BNom%5D%0AEffectif%20conducteurs%20%3A%20%5BNombre%5D%0A%0ACordialement">
+              ✉ Devenir partenaire pilote
+            </a>
+            <a class="pricing-cta-sec" href="app-web.html" target="_blank">
+              👀 Voir la démo en live
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="deck-footer">
+    <div class="footer-brand">START2WAY</div>
+    <div class="footer-contact">
+      Une question ? Écrivez-nous :
+      <a class="footer-email" href="mailto:start2way.contact@gmail.com">start2way.contact@gmail.com</a>
+    </div>
+    <p class="footer-legal">
+      START2WAY — Solution de remplacement du Livret Individuel de Contrôle (LIC) pour les entreprises de transport routier.
+      Conforme aux articles R3315-1 à R3315-8 du Code des transports. Hébergement européen. RGPD.
+      © 2026 — Démo S1 (données fictives).
+    </p>
+  </footer>
+
+  <div class="keyboard-hint" id="kb-hint" aria-hidden="true">↑ ↓ pour naviguer entre les actes</div>
+
+  <script>
+  /* ─── SCROLL PROGRESS ─────────────────────────────────────────── */
+  window.addEventListener('scroll', () => {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const pct   = total > 0 ? (window.scrollY / total) * 100 : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+
+    // Mise à jour boutons actes
+    const s1 = document.getElementById('slide-1').getBoundingClientRect();
+    const s2 = document.getElementById('slide-2').getBoundingClientRect();
+    const s3 = document.getElementById('slide-3').getBoundingClientRect();
+    const mid = window.innerHeight / 2;
+
+    let current = 1;
+    if (s3.top < mid) current = 3;
+    else if (s2.top < mid) current = 2;
+
+    [1,2,3].forEach(i => {
+      const btn = document.getElementById(`act-${i}`);
+      if (btn) btn.classList.toggle('current', i === current);
+    });
+  });
+
+  /* ─── SMOOTH SCROLL TO SLIDE ──────────────────────────────────── */
+  function scrollToSlide(n) {
+    document.getElementById(`slide-${n}`)?.scrollIntoView({ behavior:'smooth' });
+  }
+
+  /* ─── KEYBOARD NAVIGATION ─────────────────────────────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+      e.preventDefault();
+      const current = getCurrentSlide();
+      if (current < 3) scrollToSlide(current + 1);
+    }
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      const current = getCurrentSlide();
+      if (current > 1) scrollToSlide(current - 1);
+    }
+  });
+
+  function getCurrentSlide() {
+    const mid = window.innerHeight / 2;
+    for (let i = 3; i >= 1; i--) {
+      const rect = document.getElementById(`slide-${i}`)?.getBoundingClientRect();
+      if (rect && rect.top < mid) return i;
+    }
+    return 1;
+  }
+
+  /* ─── ACCORDÉON GUIDE DÉMO ──────────────────────────────────────── */
+  function toggleAcc(id) {
+    const item = document.getElementById(id);
+    if (!item) return;
+    const isOpen = item.classList.contains('open');
+    item.classList.toggle('open', !isOpen);
+    item.querySelector('.acc-header')?.setAttribute('aria-expanded', !isOpen);
+  }
+
+  /* ─── ACCORDÉON DIFFÉRENCIANTS ──────────────────────────────────── */
+  function toggleDiff(id) {
+    const item = document.getElementById(id);
+    if (!item) return;
+    item.classList.toggle('open');
+  }
+
+  /* ─── KEYBOARD HINT HIDE ─────────────────────────────────────── */
+  setTimeout(() => {
+    const hint = document.getElementById('kb-hint');
+    if (hint) { hint.style.opacity = '0'; setTimeout(()=>hint.remove(), 600); }
+  }, 5000);
+  </script>
+</body>
+</html>

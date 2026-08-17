@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>START2WAY — Gestion des temps & Conformité DREAL</title>
+  <meta name="description" content="Solution simplifiée de suivi d'activité et d'archivage réglementaire 5 ans pour les transporteurs routiers. Conforme R3315-5.">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #0D2242;
+      --navy-light:  #1a3460;
+      --navy-dark:   #07162b;
+      --amber:       #C9922F;
+      --amber-light: #e5b04a;
+      --paper:       #F8F6F3;
+      --white:       #FFFFFF;
+      --text-main:   #1A1A1A;
+      --text-sec:    #5A5A5A;
+      --border:      #E0E0E0;
+      --success:     #2E7D32;
+      --success-bg:  #E8F5E9;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --font-body:   'Source Sans 3', sans-serif;
+      --font-head:   'Lexend', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--paper);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+    h1, h2, h3, h4 {
+      font-family: var(--font-head);
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    /* HEADER */
+    .header {
+      background-color: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-badge {
+      background: var(--navy);
+      color: var(--amber);
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .nav-link {
+      text-decoration: none;
+      color: var(--text-sec);
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    .nav-link:hover { color: var(--navy); }
+    
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn {
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--navy);
+      color: var(--navy);
+    }
+    .btn-outline:hover {
+      background: rgba(13, 34, 66, 0.05);
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+    }
+    .btn-primary:hover {
+      background: var(--navy-light);
+    }
+    .btn-amber {
+      background: var(--amber);
+      color: var(--navy);
+      font-weight: 600;
+    }
+    .btn-amber:hover {
+      background: var(--amber-light);
+    }
+
+    /* HERO SECTION */
+    .hero {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .hero-content h1 {
+      font-size: 42px;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      letter-spacing: -1px;
+    }
+    .hero-content p {
+      font-size: 18px;
+      color: var(--text-sec);
+      margin-bottom: 32px;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-visual {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .visual-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    .visual-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .visual-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--paper);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+    }
+    .visual-badge {
+      background: var(--success-bg);
+      color: var(--success);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* FEATURES */
+    .features {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 24px;
+    }
+    .features-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-tag {
+      color: var(--amber);
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      display: block;
+    }
+    .section-title {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+    }
+    .feature-card {
+      padding: 24px;
+      border-radius: var(--radius);
+      background: var(--paper);
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+    }
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-sec);
+    }
+
+    /* PRICING */
+    .pricing {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .pricing-card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 2px solid var(--navy);
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(13,34,66,0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .pricing-popular-badge {
+      position: absolute;
+      top: 20px;
+      right: -35px;
+      background: var(--amber);
+      color: var(--navy);
+      font-family: var(--font-head);
+      font-weight: 700;
+      font-size: 11px;
+      padding: 4px 40px;
+      transform: rotate(45deg);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .pricing-price {
+      font-size: 54px;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 16px 0;
+    }
+    .pricing-price span {
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-sec);
+    }
+    .pricing-features-list {
+      margin: 24px 0 32px;
+      text-align: left;
+      display: inline-block;
+    }
+    .pricing-feature {
+      font-size: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pricing-feature::before {
+      content: "✓";
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: var(--navy-dark);
+      color: var(--white);
+      padding: 48px 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    .footer-logo {
+      color: var(--white);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .footer-copyright {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; text-align: center; padding: 40px 16px; }
+      .hero-actions { justify-content: center; }
+      .header-container { flex-direction: column; gap: 16px; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <a href="landing.html" class="logo-container">
+        <div class="logo-badge">S2W</div>
+        <span class="logo-text">START2WAY</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features" class="nav-link">Fonctionnalités</a>
+        <a href="#pricing" class="nav-link">Tarifs</a>
+        <a href="telecharger.html" class="nav-link">Application Conducteur</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="souscription.html" class="btn btn-primary">S'inscrire</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <span class="section-tag">Conformité Transport R3315-5</span>
+        <h1>Simplifiez le suivi d'activité de vos conducteurs routiers.</h1>
+        <p>
+          START2WAY est la première solution d'enregistrement des temps de service (A/B/C/D) conçue spécifiquement pour les véhicules légers et lourds non équipés de tachygraphe, avec archivage légal 5 ans certifié.
+        </p>
+        <div class="hero-actions">
+          <a href="souscription.html" class="btn btn-amber" style="font-size: 16px; padding: 14px 28px;">S'inscrire et créer son entreprise</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="visual-header">
+          <span class="visual-title">🚚 AMT Transport — Registre de Flotte</span>
+          <span class="visual-badge">En ligne 🟢</span>
+        </div>
+        <div class="visual-row">
+          <span>Conducteurs Actifs</span>
+          <strong>12 conducteurs</strong>
+        </div>
+        <div class="visual-row">
+          <span>Feuillets Validés (30j)</span>
+          <strong>240 feuillets</strong>
+        </div>
+        <div class="visual-row">
+          <span>Statut Conformité DREAL</span>
+          <strong style="color:var(--success)">100% Conforme</strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+      <div class="features-container">
+        <div class="section-title-wrap">
+          <span class="section-tag">Pourquoi START2WAY ?</span>
+          <h2 class="section-title">La conformité transport en toute simplicité</h2>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>Application Conducteur</h3>
+            <p>Saisie facile des temps A (Conduite), B (Travail), C (Dispo) et D (Repos) en temps réel, même sans réseau.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Preuve d'Intégrité</h3>
+            <p>Chaque feuillet validé est signé (PIN + manuscrit) et scellé avec un hash d'intégrité SHA-256 infalsifiable.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🗄️</div>
+            <h3>Archivage Légal 5 Ans</h3>
+            <p>Conservation sécurisée de l'historique et génération immédiate de rapports conformes pour les contrôles DREAL.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚠️</div>
+            <h3>Alertes Actives</h3>
+            <p>Soyez notifié immédiatement des infractions de conduite et de l'expiration des documents (Permis, FCO, CT).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing" id="pricing">
+      <div class="section-title-wrap">
+        <span class="section-tag">Tarification Unique</span>
+        <h2 class="section-title">Une offre transparente et sans engagement</h2>
+      </div>
+      <div class="pricing-card">
+        <div class="pricing-popular-badge">Populaire</div>
+        <h3>Pack Pro Transport</h3>
+        <div class="pricing-price">9€<span>/ mois par conducteur</span></div>
+        <p style="color:var(--text-sec); font-size:14px; margin-bottom: 24px;">Essai gratuit de 14 jours, sans engagement</p>
+        <ul class="pricing-features-list">
+          <li class="pricing-feature">Accès complet à la plateforme web gérant</li>
+          <li class="pricing-feature">Application mobile pour les conducteurs</li>
+          <li class="pricing-feature">Archivage sécurisé des feuillets pendant 5 ans</li>
+          <li class="pricing-feature">Génération de rapports DREAL en un clic</li>
+          <li class="pricing-feature">Support technique 7j/7</li>
+        </ul>
+        <a href="souscription.html" class="btn btn-primary" style="display:block; width:100%; padding:14px; font-size: 16px;">Démarrer l'essai gratuit</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-logo">START2WAY</div>
+      <div class="footer-copyright">
+        &copy; 2026 START2WAY. Tous droits réservés. Conforme à la réglementation sociale européenne et française du transport.
+        <a href="app-web.html" style="font-size: 11px; color: rgba(255,255,255,0.3); text-decoration: none; margin-left: 20px;">[Accès Démo Direct]</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

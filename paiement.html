@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>START2WAY — Paiement Sécurisé</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="docs/s1/js/s2w-localstorage.js"></script>
+  <style>
+    :root {
+      --navy:        #0D2242;
+      --navy-light:  #1a3460;
+      --navy-dark:   #07162b;
+      --amber:       #C9922F;
+      --amber-light: #e5b04a;
+      --paper:       #F8F6F3;
+      --white:       #FFFFFF;
+      --text-main:   #1A1A1A;
+      --text-sec:    #5A5A5A;
+      --border:      #E0E0E0;
+      --success:     #2E7D32;
+      --success-bg:  #E8F5E9;
+      --warning:     #ED6C02;
+      --warning-bg:  #FFF3E0;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --font-body:   'Source Sans 3', sans-serif;
+      --font-head:   'Lexend', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--paper);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      font-family: var(--font-head);
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    /* HEADER */
+    .header {
+      background-color: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-badge {
+      background: var(--navy);
+      color: var(--amber);
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+    .btn-text {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .btn-text:hover { color: var(--navy); }
+
+    /* LAYOUT */
+    .payment-container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .payment-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+    .payment-title {
+      font-size: 28px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    /* STEPPER */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-sec);
+    }
+    .step-dot.active {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+    .step-line {
+      height: 2px;
+      width: 40px;
+      background: var(--navy);
+    }
+
+    /* SUMMARY */
+    .summary-box {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .summary-row:last-child {
+      margin-bottom: 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    /* DISCLAIMER */
+    .disclaimer-box {
+      background-color: var(--warning-bg);
+      border: 1.5px solid var(--warning);
+      color: #9c4100;
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .disclaimer-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* SEPA MANDATE */
+    .mandate-box {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      background: #fafaf9;
+      font-size: 13px;
+      color: var(--text-sec);
+      margin-bottom: 24px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .form-group-checkbox {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+    .form-group-checkbox input {
+      margin-top: 4px;
+    }
+
+    /* LOADING SPINNER */
+    .loading-overlay {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border);
+      border-top-color: var(--navy);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .btn {
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 15px;
+      padding: 14px 28px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: var(--navy-light); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <a href="landing.html" class="logo-container">
+        <div class="logo-badge">S2W</div>
+        <span class="logo-text">START2WAY</span>
+      </a>
+      <a href="souscription.html" class="btn-text">← Étape précédente</a>
+    </div>
+  </header>
+
+  <!-- PAYMENT CONTAINER -->
+  <div class="payment-container">
+    <div class="payment-card">
+      <h1 class="payment-title" style="margin-bottom: 32px; text-align: center;">Paiement & Mandat SEPA</h1>
+
+      <!-- STEPPER -->
+      <div class="stepper">
+        <div class="step-dot active">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot active">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot active">3</div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="summary-box">
+        <div class="summary-row">
+          <span>Abonnement : Pack Pro Transport (Mensuel)</span>
+          <strong>9,00 € / mois</strong>
+        </div>
+        <div class="summary-row">
+          <span>Période d'essai gratuit</span>
+          <span style="color:var(--success); font-weight:600;">14 jours (Jusqu'au 30/08/2026)</span>
+        </div>
+        <div class="summary-row">
+          <span>Montant à régler aujourd'hui</span>
+          <strong>0,00 €</strong>
+        </div>
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div class="disclaimer-box">
+        <span class="disclaimer-icon">⚠️</span>
+        <div>
+          <strong>Simulation de démonstration</strong><br>
+          Aucune donnée bancaire réelle n'est transmise ni stockée. L'IBAN fourni à l'étape précédente sert uniquement à simuler la création de la fiche entreprise et sera chiffré en localStorage pour les besoins de la démonstration commerciale.
+        </div>
+      </div>
+
+      <!-- SEPA DETAILS -->
+      <h3 style="font-size:15px; margin-bottom: 12px;">Mandat de prélèvement SEPA</h3>
+      <div class="mandate-box">
+        <strong>Mandat de prélèvement SEPA - START2WAY</strong><br><br>
+        En signant ce mandat, vous autorisez START2WAY à envoyer des instructions à votre banque pour débiter votre compte, et votre banque à débiter votre compte conformément aux instructions de START2WAY. Vous bénéficiez d'un droit au remboursement par votre banque selon les conditions décrites dans la convention passée avec elle.
+        <br><br>
+        <strong>Créancier :</strong> START2WAY SAS, 12 rue de la Paix, 75002 Paris<br>
+        <strong>Identifiant Créancier SEPA (ICS) :</strong> FR98ZZZ876543<br>
+        <strong>Débiteur :</strong> <span id="debtor-name">Chargement...</span><br>
+        <strong>IBAN :</strong> <span id="debtor-iban">FR76...</span><br>
+        <strong>BIC :</strong> <span id="debtor-bic">...</span>
+      </div>
+
+      <div class="form-group-checkbox">
+        <input type="checkbox" id="agree" required checked>
+        <label for="agree" style="color:var(--text-sec); font-size: 13px;">
+          En cochant cette case, je signe électroniquement le mandat SEPA ci-dessus et j'autorise le prélèvement mensuel de 9,00 € TTC à l'issue de la période d'essai de 14 jours.
+        </label>
+      </div>
+
+      <!-- INTERFACE ACTIONS -->
+      <div id="payment-actions">
+        <button class="btn btn-primary" onclick="confirmPayment()">Valider et démarrer la démo</button>
+      </div>
+
+      <!-- LOADING DISPLAY -->
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <h3 style="font-size:16px; margin-bottom: 8px;">Création de votre espace en cours...</h3>
+        <p style="font-size:13px; color:var(--text-sec);">Génération de la base de démonstration, chiffrement de l'IBAN et connexion.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Charger les données temporaires
+    const tempData = JSON.parse(sessionStorage.getItem('temp_company_signup') || '{}');
+    
+    document.getElementById('debtor-name').textContent = tempData.legal_name || 'AMT Transport';
+    
+    const rawIban = tempData.iban || '';
+    const maskedIban = rawIban.length > 10 
+      ? rawIban.substring(0, 4) + ' ●●●● ●●●● ●●●● ●●●● ' + rawIban.slice(-3)
+      : 'Non fourni';
+    
+    document.getElementById('debtor-iban').textContent = maskedIban;
+    document.getElementById('debtor-bic').textContent = tempData.bic || 'Non fourni';
+
+    function confirmPayment() {
+      if (!document.getElementById('agree').checked) {
+        alert('Veuillez signer le mandat SEPA pour continuer.');
+        return;
+      }
+
+      // Cacher les actions, afficher le chargement
+      document.getElementById('payment-actions').style.display = 'none';
+      document.getElementById('loading-overlay').style.display = 'block';
+
+      // Simuler l'enregistrement dans localStorage après 2 secondes
+      setTimeout(() => {
+        // Enregistrer la nouvelle entreprise dans localStorage
+        if (tempData.legal_name) {
+          // On initialise la base de données S2W
+          S2W.init(); 
+          
+          // Récupérer les entreprises existantes
+          const companies = S2W.table('companies');
+          
+          // Mettre à jour la première entreprise existante (démo) avec ces détails
+          if (companies.length > 0) {
+            const current = companies[0];
+            current.legal_name = tempData.legal_name;
+            current.trade_name = tempData.trade_name;
+            current.legal_form = tempData.legal_form;
+            current.siret      = tempData.siret;
+            current.address    = tempData.address;
+            current.iban       = tempData.iban; // Simulé
+            current.bic        = tempData.bic;
+            S2W.update('companies', current.id, current);
+          }
+        }
+
+        // Nettoyer sessionStorage
+        sessionStorage.removeItem('temp_company_signup');
+
+        // Mettre un toast de succès dans sessionStorage pour qu'il s'affiche sur le dashboard
+        sessionStorage.setItem('s2w_success_toast', 'Félicitations ! Votre entreprise a bien été enregistrée et votre période d\'essai a démarré.');
+
+        // Redirection vers le dashboard
+        window.location.href = 'app-web.html';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

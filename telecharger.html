@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>START2WAY — Télécharger l'application Conducteur</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #0D2242;
+      --navy-light:  #1a3460;
+      --navy-dark:   #07162b;
+      --amber:       #C9922F;
+      --amber-light: #e5b04a;
+      --paper:       #F8F6F3;
+      --white:       #FFFFFF;
+      --text-main:   #1A1A1A;
+      --text-sec:    #5A5A5A;
+      --border:      #E0E0E0;
+      --success:     #2E7D32;
+      --success-bg:  #E8F5E9;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --font-body:   'Source Sans 3', sans-serif;
+      --font-head:   'Lexend', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--paper);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      font-family: var(--font-head);
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    /* HEADER */
+    .header {
+      background-color: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-badge {
+      background: var(--navy);
+      color: var(--amber);
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+    .btn-text {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .btn-text:hover { color: var(--navy); }
+
+    /* CONTENT */
+    .content-container {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    @media (max-width: 768px) {
+      .content-container { grid-template-columns: 1fr; text-align: center; }
+    }
+
+    .app-preview-mockup {
+      background: var(--white);
+      border: 6px solid var(--navy);
+      border-radius: 30px;
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+      width: 280px;
+      height: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .app-preview-screen {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+    }
+
+    /* DOWNLOAD BADGES */
+    .download-badge {
+      display: flex;
+      align-items: center;
+      background: #000000;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-family: Arial, sans-serif;
+      margin-bottom: 12px;
+      border: 1px solid #333333;
+      transition: background 0.2s;
+    }
+    .download-badge:hover {
+      background: #111111;
+    }
+    .badge-icon {
+      font-size: 24px;
+      margin-right: 12px;
+    }
+    .badge-text-top {
+      font-size: 9px;
+      text-transform: uppercase;
+      opacity: 0.8;
+      display: block;
+    }
+    .badge-text-bottom {
+      font-size: 15px;
+      font-weight: bold;
+      display: block;
+    }
+
+    /* DEMO SIMULATOR CARD */
+    .simulator-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 32px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.02);
+      border-left: 4px solid var(--amber);
+    }
+
+    .btn {
+      display: inline-block;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .btn-amber {
+      background: var(--amber);
+      color: var(--navy);
+    }
+    .btn-amber:hover { background: var(--amber-light); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <a href="landing.html" class="logo-container">
+        <div class="logo-badge">S2W</div>
+        <span class="logo-text">START2WAY</span>
+      </a>
+      <a href="landing.html" class="btn-text">← Retour à l'accueil</a>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content-container">
+    <div>
+      <h1 style="font-size:32px; margin-bottom:16px;">Application Conducteur</h1>
+      <p style="color:var(--text-sec); font-size:16px; margin-bottom: 32px;">
+        Installez l'application sur le smartphone de vos conducteurs routiers. Ils pourront enregistrer leurs activités A/B/C/D, signer leurs feuillets de travail et suivre leur conformité en temps réel.
+      </p>
+
+      <!-- DOWNLOAD BUTTONS -->
+      <div style="max-width:260px; margin-bottom: 24px;">
+        <a href="#" class="download-badge" onclick="alert('Simulation — Téléchargement disponible dans les stores de production.')">
+          <span class="badge-icon">🍏</span>
+          <div>
+            <span class="badge-text-top">Télécharger dans l'</span>
+            <span class="badge-text-bottom">App Store</span>
+          </div>
+        </a>
+        <a href="#" class="download-badge" onclick="alert('Simulation — Télécharger disponible dans les stores de production.')">
+          <span class="badge-icon">🤖</span>
+          <div>
+            <span class="badge-text-top">Disponible sur</span>
+            <span class="badge-text-bottom">Google Play</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- SIMULATOR CARD -->
+      <div class="simulator-card">
+        <h3 style="font-size:16px; margin-bottom: 8px;">👉 Mode Démonstration / Commercial</h3>
+        <p style="font-size:13px; color:var(--text-sec); margin-bottom: 16px;">
+          Vous testez notre solution sur ordinateur ? Lancez directement le simulateur mobile dans votre navigateur pour tester la saisie d'activité en tant que conducteur !
+        </p>
+        <a href="app-mobile.html" class="btn btn-amber" target="_blank">Lancer le simulateur conducteur 📱</a>
+      </div>
+    </div>
+
+    <!-- APP VISUAL -->
+    <div>
+      <div class="app-preview-mockup">
+        <div class="app-preview-screen">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px;">
+            <strong style="font-size:14px; color:var(--navy)">START2WAY</strong>
+            <span style="font-size:10px; padding:2px 6px; background:var(--success-bg); color:var(--success); border-radius:4px; font-weight:700;">Service Actif</span>
+          </div>
+          <div style="text-align:center; padding:40px 0;">
+            <div style="font-size:12px; color:var(--text-sec); margin-bottom: 4px;">CONDUITE (A) EN COURS</div>
+            <div style="font-size:36px; font-weight:700; font-family:monospace; color:var(--navy)">02:14:35</div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div style="background:#e8f5e9; border:1px solid #a5d6a7; padding:8px; border-radius:8px; text-align:center; font-size:11px;">
+              <strong>9h00</strong> Conduite Max
+            </div>
+            <div style="background:#fff3e0; border:1px solid #ffe0b2; padding:8px; border-radius:8px; text-align:center; font-size:11px;">
+              <strong>4h30</strong> Pause requis
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

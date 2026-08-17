@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>START2WAY — Inscription Entreprise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:        #0D2242;
+      --navy-light:  #1a3460;
+      --navy-dark:   #07162b;
+      --amber:       #C9922F;
+      --amber-light: #e5b04a;
+      --paper:       #F8F6F3;
+      --white:       #FFFFFF;
+      --text-main:   #1A1A1A;
+      --text-sec:    #5A5A5A;
+      --border:      #E0E0E0;
+      --success:     #2E7D32;
+      --success-bg:  #E8F5E9;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --font-body:   'Source Sans 3', sans-serif;
+      --font-head:   'Lexend', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--paper);
+      color: var(--text-main);
+      line-height: 1.6;
+    }
+    h1, h2, h3 {
+      font-family: var(--font-head);
+      color: var(--navy);
+      font-weight: 600;
+    }
+
+    /* HEADER */
+    .header {
+      background-color: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .logo-badge {
+      background: var(--navy);
+      color: var(--amber);
+      font-family: var(--font-head);
+      font-weight: 800;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+    .btn-text {
+      color: var(--text-sec);
+      text-decoration: none;
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .btn-text:hover { color: var(--navy); }
+
+    /* LAYOUT */
+    .signup-container {
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 0 24px;
+    }
+    .signup-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+    .signup-title {
+      font-size: 28px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .signup-subtitle {
+      color: var(--text-sec);
+      font-size: 15px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    /* STEPPER */
+    .stepper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-sec);
+    }
+    .step-dot.active {
+      background: var(--navy);
+      color: var(--white);
+      border-color: var(--navy);
+    }
+    .step-line {
+      height: 2px;
+      width: 40px;
+      background: var(--border);
+    }
+
+    /* FORM ELEMENTS */
+    .form-section {
+      display: none;
+    }
+    .form-section.active {
+      display: block;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-label {
+      display: block;
+      font-family: var(--font-head);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text-main);
+      background-color: var(--white);
+      transition: all 0.2s;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--navy);
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 600px) {
+      .form-grid-2 { grid-template-columns: 1fr; gap: 0; }
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 32px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+    .btn {
+      font-family: var(--font-head);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+    .btn-secondary {
+      background: var(--paper);
+      color: var(--text-sec);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: rgba(0,0,0,0.05); }
+    .btn-primary {
+      background: var(--navy);
+      color: var(--white);
+    }
+    .btn-primary:hover { background: var(--navy-light); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-container">
+      <a href="landing.html" class="logo-container">
+        <div class="logo-badge">S2W</div>
+        <span class="logo-text">START2WAY</span>
+      </a>
+      <a href="landing.html" class="btn-text">← Retour au site</a>
+    </div>
+  </header>
+
+  <!-- SIGNUP CARD -->
+  <div class="signup-container">
+    <div class="signup-card">
+      <h1 class="signup-title">Créer un compte Entreprise</h1>
+      <p class="signup-subtitle">Essai gratuit de 14 jours, sans engagement</p>
+
+      <!-- STEPPER -->
+      <div class="stepper">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-line" id="line-1"></div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-line" id="line-2"></div>
+        <div class="step-dot" id="dot-3">3</div>
+      </div>
+
+      <form id="signup-form" onsubmit="handleSubmit(event)">
+        <!-- STEP 1: COMPTE GERANT -->
+        <div class="form-section active" id="sec-1">
+          <h2 style="font-size:18px; margin-bottom: 20px; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Étape 1 — Informations Administrateur</h2>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="l-name">Nom *</label>
+              <input type="text" id="l-name" class="form-control" placeholder="Dupont" required autocomplete="family-name">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-name">Prénom *</label>
+              <input type="text" id="f-name" class="form-control" placeholder="Jean" required autocomplete="given-name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">Adresse Email professionnelle *</label>
+            <input type="email" id="email" class="form-control" placeholder="jean.dupont@entreprise.com" required autocomplete="email">
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="phone">Téléphone portable *</label>
+              <input type="tel" id="phone" class="form-control" placeholder="06 12 34 56 78" required autocomplete="tel">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="password">Mot de passe *</label>
+              <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-actions" style="justify-content: flex-end;">
+            <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continuer →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2: ENTREPRISE -->
+        <div class="form-section" id="sec-2">
+          <h2 style="font-size:18px; margin-bottom: 20px; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Étape 2 — Informations Entreprise</h2>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="c-legal-name">Dénomination sociale *</label>
+              <input type="text" id="c-legal-name" class="form-control" placeholder="Ex: AMT Transport" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-trade-name">Enseigne commerciale</label>
+              <input type="text" id="c-trade-name" class="form-control" placeholder="Optionnel">
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="c-legal-form">Forme juridique *</label>
+              <select id="c-legal-form" class="form-control" required>
+                <option value="">Choisir…</option>
+                <option>EI</option>
+                <option>SARL</option>
+                <option selected>SAS</option>
+                <option>SASU</option>
+                <option>SA</option>
+                <option>Autre</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-siret">N° SIRET *</label>
+              <input type="text" id="c-siret" class="form-control" placeholder="14 chiffres" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c-address">Adresse du siège social *</label>
+            <input type="text" id="c-address" class="form-control" placeholder="Ex: 122 avenue de la Résistance, 93340 Le Raincy" required>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="c-iban">RIB / IBAN *</label>
+              <input type="text" id="c-iban" class="form-control" placeholder="FR76..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="c-bic">Code BIC / SWIFT *</label>
+              <input type="text" id="c-bic" class="form-control" placeholder="8 ou 11 caractères" required style="text-transform:uppercase;">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="nextStep(1)">← Précédent</button>
+            <button type="submit" class="btn btn-primary">Accéder au paiement sécurisé →</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    function nextStep(step) {
+      // Validation simple
+      if (step === 2) {
+        const lname = document.getElementById('l-name').value;
+        const fname = document.getElementById('f-name').value;
+        const email = document.getElementById('email').value;
+        const phone = document.getElementById('phone').value;
+        const pwd = document.getElementById('password').value;
+        if (!lname || !fname || !email || !phone || !pwd) {
+          alert('Veuillez remplir tous les champs obligatoires.');
+          return;
+        }
+      }
+
+      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(`sec-${step}`).classList.add('active');
+
+      document.getElementById('dot-1').className = 'step-dot' + (step >= 1 ? ' active' : '');
+      document.getElementById('dot-2').className = 'step-dot' + (step >= 2 ? ' active' : '');
+      document.getElementById('dot-3').className = 'step-dot' + (step >= 3 ? ' active' : '');
+
+      document.getElementById('line-1').style.background = step >= 2 ? 'var(--navy)' : 'var(--border)';
+      document.getElementById('line-2').style.background = step >= 3 ? 'var(--navy)' : 'var(--border)';
+
+      currentStep = step;
+    }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      
+      // Récupérer les données saisies
+      const legalName = document.getElementById('c-legal-name').value;
+      const tradeName = document.getElementById('c-trade-name').value || legalName;
+      const legalForm = document.getElementById('c-legal-form').value;
+      const siret = document.getElementById('c-siret').value;
+      const address = document.getElementById('c-address').value;
+      const iban = document.getElementById('c-iban').value;
+      const bic = document.getElementById('c-bic').value;
+
+      const companyData = {
+        legal_name: legalName,
+        trade_name: tradeName,
+        legal_form: legalForm,
+        siret: siret,
+        address: address,
+        iban: iban,
+        bic: bic
+      };
+
+      // Sauvegarder temporairement dans sessionStorage pour la page de paiement
+      sessionStorage.setItem('temp_company_signup', JSON.stringify(companyData));
+
+      // Aller à la page de paiement
+      window.location.href = 'paiement.html';
+    }
+  </script>
+</body>
+</html>

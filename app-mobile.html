@@ -1,0 +1,2845 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>START2WAY — Application Conducteur</title>
+  <meta name="description" content="Chronométrez vos temps de travail A/B/C/D, consultez vos feuillets quotidiens et suivez votre conformité en temps réel." />
+  <meta name="theme-color" content="#0D2242" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="docs/s1/js/s2w-localstorage.js"></script>
+  <script src="docs/s1/js/s2w-utils.js"></script>
+  <style>
+    /* ─── TOKENS ──────────────────────────────────────────────────────── */
+    :root {
+      --navy:        #0D2242;
+      --navy-light:  #1a3460;
+      --navy-dark:   #07162b;
+      --amber:       #C9922F;
+      --amber-light: #e5b04a;
+      --paper:       #F8F6F3;
+      --white:       #FFFFFF;
+      --text-main:   #1A1A1A;
+      --text-sec:    #5A5A5A;
+      --border:      #E0E0E0;
+      --success:     #2E7D32;
+      --success-bg:  #E8F5E9;
+      --warning:     #ED6C02;
+      --warning-bg:  #FFF3E0;
+      --danger:      #D32F2F;
+      --danger-bg:   #FFEBEE;
+      --muted:       #F0EDE8;
+      --btn-start:   #2E7D32;
+      --btn-pause:   #7B1FA2;
+      --btn-stop:    #D32F2F;
+      --radius:      12px;
+      --radius-sm:   8px;
+      --shadow:      0 4px 12px rgba(13,34,66,0.10);
+      --shadow-md:   0 8px 24px rgba(13,34,66,0.15);
+      --transition:  0.25s ease;
+      --font-head:   'Lexend', sans-serif;
+      --font-body:   'Source Sans 3', sans-serif;
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* ─── RESET ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--text-main);
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+    }
+
+    /* ─── PHONE FRAME (desktop) ──────────────────────────────────────── */
+    .phone-frame {
+      width: 393px;
+      height: 852px;
+      background: var(--white);
+      border-radius: 44px;
+      box-shadow: 0 32px 80px rgba(13,34,66,0.25), 0 0 0 2px #1a1a1a;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    @media (max-width: 430px) {
+      body { background: var(--white); }
+      .phone-frame { width: 100vw; height: 100dvh; border-radius: 0; box-shadow: none; }
+    }
+
+    /* ─── STATUS BAR ──────────────────────────────────────────────────── */
+    .status-bar {
+      background: var(--navy);
+      padding: 12px 24px 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .status-time { color: var(--white); font-family: var(--font-head); font-size: 13px; font-weight: 600; }
+    .status-icons { display: flex; gap: 6px; color: var(--white); font-size: 12px; }
+
+    /* ─── HEADER APP ──────────────────────────────────────────────────── */
+    .app-header {
+      background: var(--navy);
+      padding: 4px 20px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .app-brand { display: flex; align-items: center; gap: 10px; }
+    .app-logo {
+      width: 32px; height: 32px;
+      background: var(--amber);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--white);
+    }
+    .app-name { color: var(--white); font-family: var(--font-head); font-size: 16px; font-weight: 600; }
+    .header-actions { display: flex; gap: 8px; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border: none; background: rgba(255,255,255,0.12);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--white); font-size: 16px;
+      transition: background var(--transition);
+      position: relative;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,0.2); }
+    .icon-btn:active { transform: scale(0.95); }
+    .notif-dot {
+      width: 8px; height: 8px;
+      background: var(--amber);
+      border-radius: 50%;
+      position: absolute; top: 6px; right: 6px;
+      border: 2px solid var(--navy);
+    }
+
+    /* ─── SCROLL AREA ──────────────────────────────────────────────────── */
+    .scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    /* ─── ALERT BANNER ──────────────────────────────────────────────────── */
+    .alert-banner {
+      background: var(--danger-bg);
+      border-left: 4px solid var(--danger);
+      padding: 10px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      margin: 12px 16px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      transition: var(--transition);
+    }
+    .alert-banner.hidden { display: none; }
+    .alert-banner-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-banner-text { flex: 1; font-size: 13px; color: var(--danger); line-height: 1.4; }
+    .alert-banner-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--danger); font-size: 16px; flex-shrink: 0;
+      padding: 0 4px; line-height: 1;
+    }
+
+    /* ─── VEHICLE PILL ──────────────────────────────────────────────────── */
+    .vehicle-section { padding: 12px 16px 0; }
+    .vehicle-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .vehicle-pill:hover { border-color: var(--navy); }
+    .vehicle-pill:active { transform: scale(0.98); }
+    .vehicle-plate {
+      font-family: var(--font-head); font-size: 14px; font-weight: 700;
+      color: var(--navy); letter-spacing: 1px;
+    }
+    .vehicle-model { font-size: 13px; color: var(--text-sec); }
+    .vehicle-pill-icon { margin-left: auto; color: var(--text-sec); font-size: 12px; }
+
+    /* ─── TIMER CARD ──────────────────────────────────────────────────── */
+    .timer-section { padding: 12px 16px 0; }
+    .timer-card {
+      background: var(--navy);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+    }
+    .timer-state-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .timer-state {
+      font-family: var(--font-head); font-size: 13px; font-weight: 500;
+      padding: 4px 12px; border-radius: 20px;
+      transition: var(--transition);
+    }
+    .timer-state.idle    { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.6); }
+    .timer-state.running { background: rgba(46,125,50,0.3); color: #81C784; }
+    .timer-state.paused  { background: rgba(123,31,162,0.3); color: #CE93D8; }
+    .timer-cat-badge {
+      font-size: 11px; font-weight: 700; font-family: var(--font-head);
+      padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+      background: rgba(201,146,47,0.25); color: var(--amber-light);
+    }
+    .timer-display {
+      font-family: var(--font-head); font-size: 52px; font-weight: 300;
+      color: var(--white); letter-spacing: 2px; text-align: center;
+      padding: 8px 0; line-height: 1.1;
+    }
+    .timer-hint {
+      font-size: 12px; color: rgba(255,255,255,0.4);
+      text-align: center; margin-bottom: 16px; min-height: 16px;
+    }
+    .action-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .action-btn-main {
+      border: none; border-radius: var(--radius); cursor: pointer;
+      padding: 14px 8px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      color: var(--white); letter-spacing: 0.3px;
+      transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+      position: relative; overflow: hidden;
+      min-height: 72px;
+    }
+    .action-btn-main:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+    .action-btn-main:not(:disabled):active { transform: scale(0.96); }
+    .action-btn-main:not(:disabled):hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .btn-start { background: linear-gradient(145deg, #388E3C, var(--btn-start)); }
+    .btn-pause { background: linear-gradient(145deg, #9C27B0, var(--btn-pause)); }
+    .btn-stop  { background: linear-gradient(145deg, #E53935, var(--btn-stop)); }
+    .btn-start.active-state { box-shadow: 0 0 0 3px rgba(46,125,50,0.5); }
+    .btn-pause.active-state { box-shadow: 0 0 0 3px rgba(123,31,162,0.5); }
+    .btn-stop.active-state  { box-shadow: 0 0 0 3px rgba(211,47,47,0.5); }
+    .btn-icon { font-size: 22px; line-height: 1; }
+
+    /* ─── STATS ROW ──────────────────────────────────────────────────── */
+    .stats-section { padding: 12px 16px 0; }
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    }
+    .stat-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 8px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    .stat-cat {
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .stat-cat.A { color: var(--navy); }
+    .stat-cat.B { color: #1565C0; }
+    .stat-cat.C { color: var(--warning); }
+    .stat-cat.D { color: var(--success); }
+    .stat-value { font-size: 14px; font-weight: 600; color: var(--text-main); }
+    .stat-label { font-size: 10px; color: var(--text-sec); margin-top: 2px; }
+
+    /* ─── TIMELINE ──────────────────────────────────────────────────── */
+    .timeline-section { padding: 12px 16px 0; }
+    .section-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .section-label {
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .section-link {
+      font-size: 12px; color: var(--amber); font-weight: 600; cursor: pointer;
+      text-decoration: none;
+    }
+    .timeline-bar {
+      height: 20px; background: var(--muted); border-radius: 10px;
+      overflow: hidden; display: flex;
+    }
+    .tl-seg {
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    .tl-seg.A { background: var(--navy); }
+    .tl-seg.B { background: #1976D2; }
+    .tl-seg.C { background: var(--warning); }
+    .tl-seg.D { background: var(--success); }
+    .timeline-legend {
+      display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap;
+    }
+    .tl-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-sec); }
+    .tl-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ─── GAUGE CARD ──────────────────────────────────────────────────── */
+    .gauge-section { padding: 12px 16px 0; }
+    .gauge-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .gauge-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .gauge-title { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--text-main); }
+    .gauge-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .gauge-row:last-child { margin-bottom: 0; }
+    .gauge-row-label { font-size: 12px; color: var(--text-sec); width: 100px; flex-shrink: 0; }
+    .gauge-bar-wrap { flex: 1; height: 8px; background: var(--muted); border-radius: 4px; overflow: hidden; }
+    .gauge-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+    .gauge-fill.ok   { background: var(--success); }
+    .gauge-fill.warn { background: var(--warning); }
+    .gauge-fill.bad  { background: var(--danger); }
+    .gauge-val { font-size: 12px; font-weight: 600; color: var(--text-main); width: 48px; text-align: right; flex-shrink: 0; }
+
+    /* ─── TABS ──────────────────────────────────────────────────────── */
+    .bottom-nav {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      padding: 8px 0 12px;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      flex-shrink: 0;
+    }
+    .nav-tab {
+      border: none; background: none; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 6px 4px;
+      font-family: var(--font-body); font-size: 10px; font-weight: 500;
+      color: var(--text-sec);
+      transition: color var(--transition);
+      border-top: 2px solid transparent;
+      position: relative;
+    }
+    .nav-tab:hover { color: var(--navy); }
+    .nav-tab.active { color: var(--navy); border-top-color: var(--amber); }
+    .nav-tab-icon { font-size: 20px; }
+
+    /* ─── TAB CONTENT PAGES ──────────────────────────────────────────── */
+    .tab-page { display: none; padding: 0 0 16px; }
+    .tab-page.active { display: block; }
+
+    /* ─── MODAL PAUSE ──────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: absolute; inset: 0;
+      background: rgba(7,22,43,0.7);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal-sheet {
+      background: var(--white);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 32px;
+      width: 100%;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle {
+      width: 40px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 0 auto 20px;
+    }
+    .modal-title {
+      font-family: var(--font-head); font-size: 16px; font-weight: 600;
+      color: var(--text-main); margin-bottom: 6px;
+    }
+    .modal-sub { font-size: 13px; color: var(--text-sec); margin-bottom: 20px; line-height: 1.4; }
+    .sheet-options { display: flex; flex-direction: column; gap: 10px; }
+    .sheet-option {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 12px;
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .sheet-option:hover { border-color: var(--navy); background: var(--muted); }
+    .sheet-option.selected { border-color: var(--navy); background: var(--navy); }
+    .sheet-option.selected .option-letter { background: var(--amber); }
+    .sheet-option.selected .option-label,
+    .sheet-option.selected .option-desc { color: var(--white); }
+    .option-letter {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--muted); display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--navy);
+      flex-shrink: 0; transition: background var(--transition);
+    }
+    .option-info { flex: 1; }
+    .option-label { font-size: 14px; font-weight: 600; color: var(--text-main); }
+    .option-desc { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+    .sheet-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .sheet-confirm {
+      background: var(--navy); color: var(--white);
+      border: none; border-radius: var(--radius);
+      padding: 14px; font-family: var(--font-head); font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background var(--transition);
+      opacity: 0.4;
+    }
+    .sheet-confirm.ready { opacity: 1; }
+    .sheet-confirm.ready:hover { background: var(--navy-light); }
+    .sheet-cancel {
+      background: none; color: var(--text-sec);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px; font-size: 14px; cursor: pointer;
+      font-family: var(--font-body);
+    }
+
+    /* ─── FEUILLET PAGE ──────────────────────────────────────────────── */
+    .page-header-inner {
+      background: var(--navy); padding: 16px 16px 20px;
+    }
+    .page-title-inner {
+      font-family: var(--font-head); font-size: 18px; font-weight: 600;
+      color: var(--white); margin-bottom: 4px;
+    }
+    .page-sub-inner { font-size: 13px; color: rgba(255,255,255,0.6); }
+    .feuillet-date-picker {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 6px 10px;
+      font-family: var(--font-body); font-size: 13px; color: var(--text-main);
+      margin: 12px 16px 0; width: calc(100% - 32px); cursor: pointer;
+    }
+    .feuillet-grid {
+      margin: 12px 16px 0;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+    }
+    .feuillet-row {
+      display: flex; align-items: center;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .feuillet-row:last-child { border-bottom: none; }
+    .feuillet-row.total { background: var(--muted); }
+    .feuillet-row.error-row { background: var(--danger-bg); }
+    .feuillet-cat {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      flex-shrink: 0; margin-right: 12px;
+    }
+    .feuillet-cat.A { background: rgba(13,34,66,0.1); color: var(--navy); }
+    .feuillet-cat.B { background: rgba(21,101,192,0.1); color: #1565C0; }
+    .feuillet-cat.C { background: rgba(237,108,2,0.1); color: var(--warning); }
+    .feuillet-cat.D { background: rgba(46,125,50,0.1); color: var(--success); }
+    .feuillet-cat.E { background: rgba(13,34,66,0.15); color: var(--navy); }
+    .feuillet-label { flex: 1; font-size: 13px; color: var(--text-sec); }
+    .feuillet-value { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--text-main); }
+    .conformity-badge {
+      margin: 10px 16px 0; padding: 10px 16px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .conformity-badge.ok  { background: var(--success-bg); color: var(--success); }
+    .conformity-badge.bad { background: var(--danger-bg); color: var(--danger); }
+    .signature-section { margin: 12px 16px 0; }
+    .sig-title {
+      font-family: var(--font-head); font-size: 13px; font-weight: 600;
+      color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .pin-row { display: flex; gap: 8px; }
+    .pin-input {
+      flex: 1; padding: 12px 16px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 20px; letter-spacing: 8px; text-align: center;
+      font-family: var(--font-head);
+      background: var(--white);
+    }
+    .pin-input:focus { outline: none; border-color: var(--navy); }
+    .btn-sign {
+      background: var(--navy); color: var(--white);
+      border: none; border-radius: var(--radius-sm); padding: 12px 20px;
+      font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background var(--transition); white-space: nowrap;
+    }
+    .btn-sign:hover { background: var(--navy-light); }
+    .btn-export-feuillet {
+      display: block; width: calc(100% - 32px); margin: 10px 16px 0;
+      padding: 12px; background: var(--muted); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px;
+      color: var(--text-main); cursor: pointer; text-align: center;
+      transition: background var(--transition);
+    }
+    .btn-export-feuillet:hover { background: var(--border); }
+
+    /* ─── HISTORIQUE PAGE ──────────────────────────────────────────────── */
+    .hist-search {
+      margin: 12px 16px 0; display: flex; gap: 8px;
+    }
+    .hist-date-input {
+      flex: 1; padding: 10px 14px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-family: var(--font-body); font-size: 13px; color: var(--text-main);
+      background: var(--white);
+    }
+    .hist-date-input:focus { outline: none; border-color: var(--navy); }
+    .hist-list { margin: 10px 16px 0; display: flex; flex-direction: column; gap: 6px; }
+    .hist-item {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .hist-item:hover { border-color: var(--navy); box-shadow: var(--shadow); }
+    .hist-item:active { transform: scale(0.99); }
+    .hist-date-col { width: 90px; flex-shrink: 0; }
+    .hist-date-main { font-family: var(--font-head); font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .hist-date-day  { font-size: 11px; color: var(--text-sec); margin-top: 1px; }
+    .hist-totals { flex: 1; display: flex; gap: 8px; font-size: 11px; color: var(--text-sec); flex-wrap: wrap; }
+    .hist-total-item { display: flex; align-items: center; gap: 3px; }
+    .hist-total-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .hist-total-dot.A { background: var(--navy); }
+    .hist-total-dot.B { background: #1976D2; }
+    .hist-total-dot.D { background: var(--success); }
+    .hist-chevron { color: var(--text-sec); font-size: 12px; }
+
+    /* ─── PROFIL PAGE ──────────────────────────────────────────────────── */
+    .profil-hero {
+      background: var(--navy); padding: 24px 20px 32px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .profil-avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: var(--amber); display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 24px; font-weight: 700; color: var(--white);
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+    .profil-name { font-family: var(--font-head); font-size: 20px; font-weight: 600; color: var(--white); }
+    .profil-role { font-size: 13px; color: rgba(255,255,255,0.6); }
+    .profil-section {
+      margin: 16px 16px 0;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+    }
+    .profil-section-title {
+      background: var(--muted); padding: 10px 16px;
+      font-family: var(--font-head); font-size: 12px; font-weight: 600;
+      color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .profil-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--border); gap: 12px;
+    }
+    .profil-row:last-child { border-bottom: none; }
+    .profil-row-label { font-size: 13px; color: var(--text-sec); flex-shrink: 0; }
+    .profil-row-value { font-size: 13px; font-weight: 600; color: var(--text-main); text-align: right; }
+    .profil-contact-btn {
+      display: block; width: calc(100% - 32px); margin: 12px 16px 0;
+      padding: 12px; background: var(--muted); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px;
+      color: var(--navy); cursor: pointer; text-align: center; font-weight: 600;
+      transition: background var(--transition);
+    }
+    .profil-contact-btn:hover { background: var(--border); }
+
+    /* ─── BADGE ──────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; font-family: var(--font-head);
+      white-space: nowrap; letter-spacing: 0.2px;
+    }
+    .badge-success { background: var(--success-bg); color: var(--success); }
+    .badge-danger  { background: var(--danger-bg);  color: var(--danger); }
+    .badge-warning { background: var(--warning-bg); color: var(--warning); }
+    .badge-muted   { background: var(--muted); color: var(--text-sec); }
+    .badge-navy    { background: rgba(13,34,66,0.08); color: var(--navy); }
+
+    /* ─── TOAST MOBILE ──────────────────────────────────────────────── */
+    .mob-toast {
+      position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(13,34,66,0.92); color: var(--white);
+      padding: 10px 20px; border-radius: 24px;
+      font-size: 13px; font-family: var(--font-body);
+      white-space: nowrap; z-index: 200;
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+    }
+    .mob-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ─── EMPTY STATE ──────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 32px 20px;
+      color: var(--text-sec); font-size: 14px; line-height: 1.5;
+    }
+    .empty-state-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .filter-btn {
+      background: #ECEFF1; border: none; color: var(--navy);
+      font-size: 13px; font-weight: 600; padding: 8px 16px;
+      border-radius: 8px; cursor: pointer; transition: background var(--transition);
+    }
+    .filter-btn.active { background: var(--navy); color: white; }
+  </style>
+</head>
+<body>
+  <div class="phone-frame" role="main">
+
+    <!-- STATUS BAR -->
+    <div class="status-bar" aria-hidden="true">
+      <span class="status-time" id="mob-time">00:00</span>
+      <div class="status-icons">
+        <span>●●●●</span><span>WiFi</span><span>🔋</span>
+      </div>
+    </div>
+
+    <!-- APP HEADER -->
+    <header class="app-header">
+      <div class="app-brand">
+        <div class="app-logo" aria-hidden="true">S2</div>
+        <span class="app-name">START2WAY</span>
+      </div>
+      <div class="header-actions">
+        <button id="net-toggle-btn" onclick="toggleNetworkStatus()" title="Simuler l'état du réseau" style="font-size:11px;display:flex;align-items:center;gap:4px;background:#ECEFF1;padding:4px 8px;border-radius:20px;border:1px solid #CFD8DC;font-weight:bold;color:#37474F;cursor:pointer">
+          <span id="net-status-indicator" style="color:#2E7D32">🟢</span> <span id="net-status-text">En ligne</span>
+        </button>
+        <button class="icon-btn" id="notif-btn" aria-label="Notifications (3 alertes)" onclick="toggleAlert()">
+          🔔
+          <span class="notif-dot" aria-hidden="true"></span>
+        </button>
+        <button class="icon-btn" aria-label="Mon profil" onclick="switchTab('profil')">👤</button>
+      </div>
+    </header>
+
+    <!-- SCROLL AREA -->
+    <div class="scroll-area" id="main-scroll" role="region" aria-label="Contenu principal">
+
+      <!-- ═══════ ONGLET ACCUEIL ═══════ -->
+      <div class="tab-page active" id="tab-accueil" role="tabpanel" aria-labelledby="tab-btn-accueil">
+
+        <!-- ALERTE BANNER -->
+        <div class="alert-banner hidden" id="mob-alert-banner" role="alert">
+          <span class="alert-banner-icon">⚠</span>
+          <div class="alert-banner-text" id="mob-alert-text">
+            Approche de 4h30 sans pause — Pause obligatoire dans 2 min
+          </div>
+          <button class="alert-banner-close" onclick="dismissMobAlert()" aria-label="Fermer l'alerte">✕</button>
+        </div>
+
+        <!-- VEHICULE -->
+        <div class="vehicle-section">
+          <div class="vehicle-pill" onclick="selectVehicle()" tabindex="0" role="button"
+            aria-label="Véhicule actif DX-847-AZ, appuyer pour changer">
+            <span aria-hidden="true">🚚</span>
+            <div>
+              <div class="vehicle-plate">DX-847-AZ</div>
+              <div class="vehicle-model">Renault Master — 3.5t</div>
+            </div>
+            <span class="vehicle-pill-icon" aria-hidden="true">▼</span>
+          </div>
+        </div>
+
+        <!-- TIMER -->
+        <div class="timer-section">
+          <div class="timer-card" role="region" aria-label="Chronomètre principal">
+            <div class="timer-state-row">
+              <span class="timer-state idle" id="timer-state" aria-live="polite">En attente</span>
+              <span class="timer-cat-badge" id="timer-cat-badge" style="display:none">—</span>
+            </div>
+            <div class="timer-display" id="timer-display" aria-label="Temps écoulé" aria-live="off">00:00:00</div>
+            <p class="timer-hint" id="timer-hint">Appuyez sur Démarrer pour débuter votre journée</p>
+            <div class="action-row" role="group" aria-label="Contrôles de chronométrage">
+              <button class="action-btn-main btn-start" id="btn-start"
+                onclick="startTimer()" aria-label="Démarrer la session de travail">
+                <span class="btn-icon" aria-hidden="true">▶</span>
+                <span>Démarrer</span>
+              </button>
+              <button class="action-btn-main btn-pause" id="btn-pause"
+                onclick="pauseTimer()" disabled aria-label="Mettre en pause" aria-disabled="true">
+                <span class="btn-icon" aria-hidden="true">⏸</span>
+                <span>Pause</span>
+              </button>
+              <button class="action-btn-main btn-stop" id="btn-stop"
+                onclick="stopTimer()" disabled aria-label="Arrêter la session" aria-disabled="true">
+                <span class="btn-icon" aria-hidden="true">⏹</span>
+                <span>Arrêter</span>
+              </button>
+            </div>
+            <div style="font-size:9.5px;color:var(--text-sec);text-align:center;margin-top:14px;padding:6px;background:#ECEFF1;border-radius:6px;line-height:1.3;display:flex;align-items:center;justify-content:center;gap:4px;">
+              <span>📍</span> <span>Collecte GPS active uniquement au démarrage et à la clôture (limites CNIL).</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS A/B/C/D -->
+        <div class="stats-section">
+          <div class="stats-row" role="region" aria-label="Totaux de la journée">
+            <div class="stat-card">
+              <div class="stat-cat A">A</div>
+              <div class="stat-value" id="stat-A">0h00</div>
+              <div class="stat-label">Conduite</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-cat B">B</div>
+              <div class="stat-value" id="stat-B">0h00</div>
+              <div class="stat-label">Travail</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-cat C">C</div>
+              <div class="stat-value" id="stat-C">0h00</div>
+              <div class="stat-label">Dispo.</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-cat D">D</div>
+              <div class="stat-value" id="stat-D">0h00</div>
+              <div class="stat-label">Repos</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline-section">
+          <div class="section-header-row">
+            <span class="section-label">Chronologie du jour</span>
+            <span class="section-link" onclick="switchTab('feuillet')" role="button" tabindex="0">Feuillet →</span>
+          </div>
+          <div class="timeline-bar" id="timeline-bar" role="img" aria-label="Timeline A/B/C/D de la journée">
+            <div class="tl-seg" style="width:100%; background: var(--muted) !important;" id="tl-placeholder"></div>
+          </div>
+          <div class="timeline-legend" aria-hidden="true">
+            <div class="tl-legend-item"><div class="tl-dot A"></div> A — Conduite</div>
+            <div class="tl-legend-item"><div class="tl-dot B"></div> B — Travail</div>
+            <div class="tl-legend-item"><div class="tl-dot C"></div> C — Disponibilité</div>
+            <div class="tl-legend-item"><div class="tl-dot D"></div> D — Repos</div>
+          </div>
+        </div>
+
+        <!-- JAUGES -->
+        <div class="gauge-section">
+          <div class="gauge-card" role="region" aria-label="Indicateurs de conformité réglementaire">
+            <div class="gauge-header">
+              <span class="gauge-title">Conformité réglementaire</span>
+              <span class="badge badge-navy" style="font-size:10px">R3315</span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-row-label">Conduite (9h)</span>
+              <div class="gauge-bar-wrap">
+                <div class="gauge-fill ok" id="gauge-drive" style="width:0%"
+                  role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                  aria-label="0h de conduite sur 9h maximum"></div>
+              </div>
+              <span class="gauge-val" id="gauge-drive-val">0h00</span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-row-label">Sans pause (4h30)</span>
+              <div class="gauge-bar-wrap">
+                <div class="gauge-fill ok" id="gauge-pause" style="width:0%"
+                  role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+                  aria-label="0h sans pause sur 4h30 maximum"></div>
+              </div>
+              <span class="gauge-val" id="gauge-pause-val">0h00</span>
+            </div>
+            <div class="gauge-row">
+              <span class="gauge-row-label">Repos hebdo (45h)</span>
+              <div class="gauge-bar-wrap">
+                <div class="gauge-fill ok" id="gauge-weekly" style="width:82%"
+                  role="progressbar" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"
+                  aria-label="Repos hebdomadaire conforme"></div>
+              </div>
+              <span class="gauge-val">Conforme</span>
+            </div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ ONGLET FEUILLET ═══════ -->
+      <div class="tab-page" id="tab-feuillet" role="tabpanel" aria-labelledby="tab-btn-feuillet">
+        <div class="page-header-inner">
+          <div class="page-title-inner">Feuillet quotidien</div>
+          <div class="page-sub-inner" id="feuillet-subtitle">DUPONT Martin — PL</div>
+        </div>
+        <input type="date" class="feuillet-date-picker" id="feuillet-date-picker"
+          aria-label="Sélectionner une date"
+          onchange="renderFeuillet(this.value)">
+        <div id="feuillet-content"></div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ ONGLET ARCHIVES ═══════ -->
+      <div class="tab-page" id="tab-archives" role="tabpanel" aria-labelledby="tab-btn-archives">
+        <div class="page-header-inner">
+          <div class="page-title-inner">Archives</div>
+          <div class="page-sub-inner">Documents officiels et rapports de tournée</div>
+        </div>
+        
+        <div style="display:flex;margin:12px;gap:8px">
+          <button class="filter-btn active" id="arch-tab-docs-btn" onclick="switchArchSubTab('docs')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px">Documents</button>
+          <button class="filter-btn" id="arch-tab-tours-btn" onclick="switchArchSubTab('tours')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px">Rapports</button>
+        </div>
+
+        <!-- Sub-onglet Documents -->
+        <div id="arch-sub-docs" style="padding:12px;background:white;margin:12px;border-radius:12px;border:1px solid var(--border)">
+          <div id="arch-docs-list-container"></div>
+        </div>
+
+        <!-- Sub-onglet Rapports de Tournée -->
+        <div id="arch-sub-tours" style="display:none;padding:12px">
+          <!-- Rapport DREAL Mensuel (LIC) -->
+          <div style="background:#FFF3E0;border:1px solid #FFE0B2;border-radius:12px;padding:12px;margin-bottom:12px;">
+            <div style="font-weight:700;font-size:12px;color:#E65100;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+              <span>📑</span> <span>Rapport DREAL Mensuel (LIC)</span>
+            </div>
+            <div style="font-size:10px;color:#5D4037;margin-bottom:8px;line-height:1.3;">
+              Générez le registre mensuel de vos feuillets d'activité scellés pour contrôle administratif (DREAL).
+            </div>
+            <div style="display:flex;gap:6px;">
+              <input type="month" id="mob-dreal-month" value="2026-08" style="flex:1;padding:6px;border-radius:6px;border:1px solid #ccc;font-size:12px;">
+              <button onclick="generateMobDrealReport()" style="background:#ED6C02;color:white;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:bold;cursor:pointer;">Exporter</button>
+            </div>
+          </div>
+
+          <div class="hist-search" style="margin-bottom:12px">
+            <input type="date" class="hist-date-input" id="hist-date-filter"
+              aria-label="Filtrer par date" oninput="filterHistorique(this.value)">
+          </div>
+          <div class="hist-list" id="hist-list" role="list" aria-label="Historique des journées"></div>
+        </div>
+        
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ ONGLET MESSAGERIE ═══════ -->
+      <div class="tab-page" id="tab-messagerie" role="tabpanel" aria-labelledby="tab-btn-messagerie">
+        <div class="page-header-inner">
+          <div class="page-title-inner">Messagerie</div>
+          <div class="page-sub-inner">Échanges directs avec l'employeur</div>
+        </div>
+        <div style="display:flex;flex-direction:column;height:calc(100vh - 210px);background:white;margin:12px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+          <div id="driver-chat-log" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:#FAFAFA">
+            <!-- Messages rendered dynamically -->
+          </div>
+          <div style="padding:10px;background:#FFF;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
+            <button onclick="requestRepriseCode()" style="background:#FFF3E0;color:#E65100;border:1px dashed #E65100;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;width:100%">
+              Demander un Code Reprise (erreur de saisie)
+            </button>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="driver-chat-input" class="form-control" placeholder="Écrire un message..." style="flex:1;font-size:13px" onkeydown="if(event.key==='Enter') sendDriverMessage()">
+              <button onclick="sendDriverMessage()" class="btn-primary" style="padding:8px 16px;font-size:13px;border-radius:8px;background:var(--navy);color:white;border:none;cursor:pointer;font-weight:600">Envoyer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════ ONGLET PROFIL ═══════ -->
+      <div class="tab-page" id="tab-profil" role="tabpanel" aria-labelledby="tab-btn-profil">
+        <div id="profil-content"></div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ ONGLET ACTIVATION ═══════ -->
+      <div class="tab-page" id="tab-activation" role="tabpanel" aria-labelledby="tab-btn-activation">
+        <div class="activation-container">
+          <div class="profil-hero">
+            <span style="font-size:48px" aria-hidden="true">🔑</span>
+            <div class="profil-name" style="margin-top:10px">Activer mon compte</div>
+            <p style="font-size:13px;color:var(--text-sec);margin-top:4px">Rattachez votre compte à votre entreprise à l'aide du code d'invitation.</p>
+          </div>
+          <div style="padding:16px">
+            <div class="form-group" style="margin-bottom:16px">
+              <label class="form-label" for="activation-code" style="font-weight:600;font-size:13px;color:var(--navy);display:block;margin-bottom:6px">Code d'invitation *</label>
+              <input type="text" id="activation-code" class="form-control" placeholder="Ex: INV-AMT-2026-XXXX" style="text-transform:uppercase;font-family:monospace;letter-spacing:1px;font-weight:600">
+            </div>
+            <button class="btn-action-primary" onclick="submitActivationCode()" style="background:var(--amber);color:var(--navy);font-weight:600;padding:12px;border-radius:8px;border:none;width:100%;font-size:14px;cursor:pointer">Valider le code d'activation</button>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ ONGLET SUPPORT CHATBOT ═══════ -->
+      <div class="tab-page" id="tab-support" role="tabpanel" aria-labelledby="tab-btn-support">
+        <div class="support-container" style="display:flex;flex-direction:column;height:calc(100vh - 180px)">
+          <div class="profil-hero" style="padding:16px 8px 8px 8px">
+            <span style="font-size:32px" aria-hidden="true">🤖</span>
+            <div class="profil-name" style="font-size:16px;margin-top:4px">Support Technique START2WAY</div>
+            <p style="font-size:11px;color:var(--text-sec)">Votre assistant IA pour toute question technique.</p>
+          </div>
+          <div id="support-chat-log" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:#F9F9F9;border-radius:8px;margin:8px">
+            <div class="chat-msg bot" style="background:#E1F5FE;color:#01579B;padding:10px 14px;border-radius:12px 12px 12px 0;align-self:flex-start;max-width:85%;font-size:13px">
+              Bonjour ! Je suis l'assistant technique de START2WAY. Comment puis-je vous aider aujourd'hui ? Vous pouvez me poser des questions sur l'utilisation du chronomètre, l'activation du compte ou la modification d'un feuillet.
+            </div>
+          </div>
+          <div style="padding:8px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--surface)">
+            <input type="text" id="support-chat-input" class="form-control" placeholder="Posez votre question..." style="flex:1" onkeydown="if(event.key==='Enter') sendSupportChatMessage()">
+            <button class="btn-action-primary" onclick="sendSupportChatMessage()" style="background:var(--amber);border:none;border-radius:8px;padding:8px 16px;color:var(--navy);font-weight:600;font-size:13px;cursor:pointer">Envoyer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="bottom-nav" role="tablist" aria-label="Navigation principale">
+      <button class="nav-tab active" id="tab-btn-accueil" role="tab"
+        aria-selected="true" aria-controls="tab-accueil" onclick="switchTab('accueil')">
+        <span class="nav-tab-icon" aria-hidden="true">⏱</span>
+        Accueil
+      </button>
+      <button class="nav-tab" id="tab-btn-feuillet" role="tab"
+        aria-selected="false" aria-controls="tab-feuillet" onclick="switchTab('feuillet')">
+        <span class="nav-tab-icon" aria-hidden="true">📋</span>
+        Feuillet
+      </button>
+      <button class="nav-tab" id="tab-btn-messagerie" role="tab"
+        aria-selected="false" aria-controls="tab-messagerie" onclick="switchTab('messagerie')">
+        <span class="nav-tab-icon" aria-hidden="true">💬</span>
+        Messagerie
+      </button>
+      <button class="nav-tab" id="tab-btn-archives" role="tab"
+        aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
+        <span class="nav-tab-icon" aria-hidden="true">🗄</span>
+        Archives
+      </button>
+      <button class="nav-tab" id="tab-btn-profil" role="tab"
+        aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
+        <span class="nav-tab-icon" aria-hidden="true">👤</span>
+        Profil
+      </button>
+    </nav>
+
+    <!-- MODAL PAUSE -->
+    <div class="modal-overlay" id="pause-modal" role="dialog" aria-modal="true"
+      aria-labelledby="pause-modal-title">
+      <div class="modal-sheet">
+        <div class="modal-handle" aria-hidden="true"></div>
+        <h2 class="modal-title" id="pause-modal-title">Type de pause</h2>
+        <p class="modal-sub">Sélectionnez la catégorie correspondant à votre pause (article R3315 du Code des transports).</p>
+        <div class="sheet-options" role="radiogroup" aria-label="Type de pause">
+          <div class="sheet-option" id="opt-B" onclick="selectPauseCat('B')"
+            role="radio" aria-checked="false" tabindex="0">
+            <div class="option-letter">B</div>
+            <div class="option-info">
+              <div class="option-label">Autre travail</div>
+              <div class="option-desc">Chargement, livraison, démarches administratives</div>
+            </div>
+          </div>
+          <div class="sheet-option" id="opt-C" onclick="selectPauseCat('C')"
+            role="radio" aria-checked="false" tabindex="0">
+            <div class="option-letter">C</div>
+            <div class="option-info">
+              <div class="option-label">Disponibilité</div>
+              <div class="option-desc">Temps d'attente rémunéré hors conduite</div>
+            </div>
+          </div>
+          <div class="sheet-option" id="opt-D" onclick="selectPauseCat('D')"
+            role="radio" aria-checked="false" tabindex="0">
+            <div class="option-letter">D</div>
+            <div class="option-info">
+              <div class="option-label">Repos</div>
+              <div class="option-desc">Pause, repas, repos journalier ou hebdomadaire</div>
+            </div>
+          </div>
+        </div>
+        <div class="sheet-actions">
+          <button class="sheet-confirm" id="pause-confirm-btn" onclick="confirmPause()"
+            disabled aria-label="Confirmer le type de pause">Confirmer la pause</button>
+          <button class="sheet-cancel" onclick="closePauseModal()">Annuler — reprendre la conduite</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="mob-toast" id="mob-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+  /* ─── INIT ─────────────────────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', async () => {
+    await S2W.init();
+    updateMobTime();
+    setInterval(updateMobTime, 10000);
+    // Date picker feuillet
+    const dp = document.getElementById('feuillet-date-picker');
+    if (dp) dp.value = '2026-08-15';
+
+    const user = S2W.find('users', 'usr_001');
+    updateNavigationUI(user);
+    if (user && !user.company_id) {
+      switchTab('profil');
+    } else {
+      checkUnsignedFeuillets();
+    }
+    // Démarrer le polling 15s
+    setInterval(() => {
+      if (_isOnline) {
+        triggerSyncPush();
+      }
+    }, 15000);
+  });
+
+  let _isOnline = true;
+
+  function toggleNetworkStatus() {
+    _isOnline = !_isOnline;
+    const indicator = document.getElementById('net-status-indicator');
+    const label = document.getElementById('net-status-text');
+    if (indicator && label) {
+      if (_isOnline) {
+        indicator.textContent = '🟢';
+        indicator.style.color = '#2E7D32';
+        label.textContent = 'En ligne';
+        showMobToast('📡 Connexion réseau rétablie. Synchronisation...');
+        triggerSyncPush();
+      } else {
+        indicator.textContent = '🔴';
+        indicator.style.color = '#D32F2F';
+        label.textContent = 'Hors-ligne';
+        showMobToast('📡 Mode hors-ligne activé. Actions stockées en attente.');
+      }
+    }
+  }
+
+  function queueSyncAction(actionType, payload) {
+    const data = S2W.get();
+    if (!data.sync_queue) {
+      data.sync_queue = [];
+    }
+    const syncItem = {
+      id: S2WUtils.uid('syn'),
+      user_id: 'usr_001',
+      action_type: actionType,
+      payload: payload,
+      status: 'PENDING',
+      created_at: new Date().toISOString()
+    };
+    data.sync_queue.push(syncItem);
+    S2W.set(data);
+    
+    if (!_isOnline) {
+      showMobToast(`💾 Action '${actionType}' enregistrée en local.`);
+    } else {
+      triggerSyncPush();
+    }
+  }
+
+  function triggerSyncPush() {
+    if (!_isOnline) return;
+    const data = S2W.get();
+    const queue = data.sync_queue || [];
+    const pending = queue.filter(item => item.status === 'PENDING');
+    
+    if (pending.length === 0) return;
+    
+    pending.forEach(item => {
+      item.status = 'COMPLETED';
+    });
+    
+    data.sync_queue = queue.filter(item => item.status !== 'COMPLETED');
+    S2W.set(data);
+    
+    showMobToast(`🔄 Synchro réussie (${pending.length} action(s) poussée(s) ✓)`);
+  }
+
+  function updateNavigationUI(user) {
+    const isActivated = user && user.company_id;
+    const nav = document.querySelector('.bottom-nav');
+    if (!nav) return;
+    
+    if (isActivated) {
+      nav.innerHTML = `
+        <button class="nav-tab active" id="tab-btn-accueil" role="tab"
+          aria-selected="true" aria-controls="tab-accueil" onclick="switchTab('accueil')">
+          <span class="nav-tab-icon" aria-hidden="true">⏱</span>
+          Accueil
+        </button>
+        <button class="nav-tab" id="tab-btn-feuillet" role="tab"
+          aria-selected="false" aria-controls="tab-feuillet" onclick="switchTab('feuillet')">
+          <span class="nav-tab-icon" aria-hidden="true">📋</span>
+          Feuillet
+        </button>
+        <button class="nav-tab" id="tab-btn-messagerie" role="tab"
+          aria-selected="false" aria-controls="tab-messagerie" onclick="switchTab('messagerie')">
+          <span class="nav-tab-icon" aria-hidden="true">💬</span>
+          Messagerie
+        </button>
+        <button class="nav-tab" id="tab-btn-archives" role="tab"
+          aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
+          <span class="nav-tab-icon" aria-hidden="true">🗄</span>
+          Archives
+        </button>
+        <button class="nav-tab" id="tab-btn-profil" role="tab"
+          aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
+          <span class="nav-tab-icon" aria-hidden="true">👤</span>
+          Profil
+        </button>
+      `;
+    } else {
+      nav.innerHTML = `
+        <button class="nav-tab active" id="tab-btn-profil" role="tab"
+          aria-selected="true" aria-controls="tab-profil" onclick="switchTab('profil')">
+          <span class="nav-tab-icon" aria-hidden="true">👤</span>
+          Profil
+        </button>
+        <button class="nav-tab" id="tab-btn-activation" role="tab"
+          aria-selected="false" aria-controls="tab-activation" onclick="switchTab('activation')">
+          <span class="nav-tab-icon" aria-hidden="true">🔑</span>
+          Activer
+        </button>
+        <button class="nav-tab" id="tab-btn-support" role="tab"
+          aria-selected="false" aria-controls="tab-support" onclick="switchTab('support')">
+          <span class="nav-tab-icon" aria-hidden="true">🤖</span>
+          Support
+        </button>
+      `;
+    }
+  }
+
+  function submitActivationCode() {
+    const input = document.getElementById('activation-code');
+    const code = input ? input.value.trim().toUpperCase() : '';
+    if (!code) { showMobToast('Veuillez saisir un code'); return; }
+
+    const invitations = S2W.table('invitations') || [];
+    const inv = invitations.find(i => i.code.toUpperCase() === code);
+
+    if (!inv) {
+      showMobToast('Code invalide ou inconnu.');
+      return;
+    }
+
+    if (inv.status !== 'pending') {
+      showMobToast('Ce code a déjà été utilisé ou est expiré.');
+      return;
+    }
+
+    inv.status = 'used';
+    inv.used_at = new Date().toISOString();
+    inv.used_by_user_id = 'usr_001';
+    S2W.update('invitations', inv.id, inv);
+
+    const user = S2W.find('users', 'usr_001');
+    if (user) {
+      user.company_id = inv.company_id;
+      S2W.update('users', user.id, user);
+    }
+
+    showMobToast('Compte activé avec succès !');
+    
+    setTimeout(() => {
+      location.reload();
+    }, 1500);
+  }
+
+  const CHATBOT_FAQ = [
+    { keys: ['chrono', 'chronomètre', 'démarrer', 'commencer', 'lancer'], answer: "Pour démarrer votre service, allez sur l'onglet 'Accueil' (⏱) et cliquez sur le bouton 'Démarrer'. Cela ouvrira votre session et lancera le chronomètre en catégorie A (Conduite)." },
+    { keys: ['pause', 'repas', 'repos', 'catégorie'], answer: "Pendant votre service, vous pouvez enregistrer une pause en cliquant sur 'Pause'. Vous pourrez alors choisir la catégorie réglementaire (B : Autre travail, C : Disponibilité, D : Repos)." },
+    { keys: ['code', 'reprise', 'correction', 'erreur', 'modifier'], answer: "Si vous avez fait une erreur ou oublié d'arrêter le chronomètre, vous devez demander un 'Code Reprise' à votre employeur via la Messagerie. Une fois le code reçu, allez dans Archives > Rapport de Tournée, cliquez sur Modifier pour le jour concerné, et saisissez le code pour ouvrir le formulaire de correction." },
+    { keys: ['activer', 'activation', 'invitation', 'entreprise'], answer: "Pour lier votre compte à votre entreprise, demandez à votre gérant de vous fournir un Code Invitation, puis saisissez-le dans l'onglet 'Activer' (🔑)." },
+    { keys: ['aide', 'humain', 'technicien', 'support', 'bloqué'], answer: "J'ai bien pris en compte votre demande d'assistance humaine. Un ticket de support a été créé et un technicien START2WAY vous contactera dans les plus brefs délais sur votre numéro enregistré." }
+  ];
+
+  let botFailedCount = 0;
+
+  function sendSupportChatMessage() {
+    const input = document.getElementById('support-chat-input');
+    if (!input) return;
+    const txt = input.value.trim();
+    if (!txt) return;
+
+    input.value = '';
+
+    const log = document.getElementById('support-chat-log');
+    if (!log) return;
+
+    const userMsg = document.createElement('div');
+    userMsg.className = 'chat-msg user';
+    userMsg.style.cssText = 'background:var(--navy);color:white;padding:10px 14px;border-radius:12px 12px 0 12px;align-self:flex-end;max-width:85%;font-size:13px';
+    userMsg.textContent = txt;
+    log.appendChild(userMsg);
+
+    let answer = "Désolé, je ne comprends pas votre demande. Veuillez reformuler votre question ou taper 'technicien' pour être mis en relation avec un conseiller humain.";
+    const query = txt.toLowerCase();
+    
+    let matched = false;
+    for (const faq of CHATBOT_FAQ) {
+      if (faq.keys.some(k => query.includes(k))) {
+        answer = faq.answer;
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) {
+      botFailedCount++;
+      if (botFailedCount >= 2) {
+        answer = "Je n'arrive pas à répondre à votre question. J'ai automatiquement escaladé votre demande à un technicien START2WAY qui va vous contacter pour vous débloquer.";
+        botFailedCount = 0;
+      }
+    } else {
+      botFailedCount = 0;
+    }
+
+    setTimeout(() => {
+      const botMsg = document.createElement('div');
+      botMsg.className = 'chat-msg bot';
+      botMsg.style.cssText = 'background:#E1F5FE;color:#01579B;padding:10px 14px;border-radius:12px 12px 12px 0;align-self:flex-start;max-width:85%;font-size:13px';
+      botMsg.textContent = answer;
+      log.appendChild(botMsg);
+      log.scrollTop = log.scrollHeight;
+    }, 500);
+
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function renderDriverChat() {
+    const log = document.getElementById('driver-chat-log');
+    if (!log) return;
+    
+    const messages = S2W.table('messages') || [];
+    const driverMessages = messages.filter(m => m.sender_id === 'usr_001' || m.receiver_id === 'usr_001');
+
+    log.innerHTML = driverMessages.map(m => {
+      const isMe = m.sender_id === 'usr_001';
+      const bg = isMe ? 'var(--navy)' : '#E1F5FE';
+      const col = isMe ? 'white' : '#01579B';
+      const align = isMe ? 'flex-end' : 'flex-start';
+      const radius = isMe ? '12px 12px 0 12px' : '12px 12px 12px 0';
+      return `
+        <div class="chat-msg" style="background:${bg};color:${col};padding:10px 14px;border-radius:${radius};align-self:${align};max-width:85%;font-size:13px">
+          ${m.text}
+          <div style="font-size:9px;opacity:0.7;margin-top:4px;text-align:right">
+            ${new Date(m.timestamp).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    let updated = false;
+    messages.forEach(m => {
+      if (m.receiver_id === 'usr_001' && !m.is_read) {
+        m.is_read = true;
+        updated = true;
+      }
+    });
+    if (updated) {
+      const d = S2W.get();
+      d.messages = messages;
+      S2W.set(d);
+    }
+    
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function sendDriverMessage() {
+    const input = document.getElementById('driver-chat-input');
+    if (!input) return;
+    const txt = input.value.trim();
+    if (!txt) return;
+    
+    input.value = '';
+    
+    const msg = {
+      id: S2WUtils.uid('msg'),
+      sender_id: 'usr_001',
+      receiver_id: 'gerant',
+      text: txt,
+      timestamp: new Date().toISOString(),
+      is_read: false
+    };
+    S2W.push('messages', msg);
+    renderDriverChat();
+    queueSyncAction('SEND_MESSAGE', msg);
+    showMobToast('Message envoyé à l\'employeur (simulation SMTP)');
+  }
+
+  function requestRepriseCode() {
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const txt = `Bonjour, j'ai fait une erreur de saisie sur mon feuillet du ${dateStr}. Pourriez-vous me générer un Code Reprise s'il vous plaît ?`;
+    
+    const msg = {
+      id: S2WUtils.uid('msg'),
+      sender_id: 'usr_001',
+      receiver_id: 'gerant',
+      text: txt,
+      timestamp: new Date().toISOString(),
+      is_read: false
+    };
+    S2W.push('messages', msg);
+    renderDriverChat();
+    queueSyncAction('SEND_MESSAGE', msg);
+    showMobToast('Demande de Code Reprise envoyée à l\'employeur');
+  }
+
+  function updateMobTime() {
+    const d = new Date();
+    const h = d.getHours().toString().padStart(2,'0');
+    const m = d.getMinutes().toString().padStart(2,'0');
+    const el = document.getElementById('mob-time');
+    if (el) el.textContent = `${h}:${m}`;
+    checkMidnightAutoCut();
+  }
+
+  /* ─── NAVIGATION ONGLETS ────────────────────────────────────────────── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected','false');
+    });
+    const page = document.getElementById(`tab-${tab}`);
+    const btn  = document.getElementById(`tab-btn-${tab}`);
+    if (page) page.classList.add('active');
+    if (btn)  { btn.classList.add('active'); btn.setAttribute('aria-selected','true'); }
+
+    const scroll = document.getElementById('main-scroll');
+    if (scroll) scroll.scrollTop = 0;
+
+    if (tab === 'feuillet') {
+      const dp = document.getElementById('feuillet-date-picker');
+      renderFeuillet(dp ? dp.value : '2026-08-15');
+    }
+    if (tab === 'archives')   switchArchSubTab(_archSubTab);
+    if (tab === 'profil')     renderProfil();
+    if (tab === 'messagerie') renderDriverChat();
+  }
+
+  /* ─── TOAST ──────────────────────────────────────────────────────────── */
+  function showMobToast(msg) {
+    const t = document.getElementById('mob-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  /* ─── ALERTES ────────────────────────────────────────────────────────── */
+  function toggleAlert() {
+    const banner = document.getElementById('mob-alert-banner');
+    if (banner) {
+      banner.classList.toggle('hidden');
+      if (!banner.classList.contains('hidden')) {
+        document.getElementById('mob-alert-text').textContent =
+          'DUPONT Martin : 3 alertes actives — Permis LEFÈVRE Christine expiré, CT DX-847-AZ à renouveler.';
+      }
+    }
+  }
+  function dismissMobAlert() {
+    document.getElementById('mob-alert-banner')?.classList.add('hidden');
+  }
+
+  /* ─── SÉLECTION VÉHICULE ─────────────────────────────────────────────── */
+  function selectVehicle() {
+    showMobToast('Sélection du véhicule — Disponible en production');
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     CHRONOMÈTRE — STATE MACHINE
+     ═══════════════════════════════════════════════════════════════════════ */
+  let timerState = 'idle';    // idle | running | paused
+  let timerInterval = null;
+  let currentCategory = 'A';  // Catégorie en cours
+  let elapsedSeconds = 0;     // Temps total session
+  let segmentSeconds = 0;     // Temps segment actif
+  let sessionId = null;
+  let sessionDateStr = null;
+
+  // Accumulateurs par catégorie (en secondes)
+  const catTotals = { A:0, B:0, C:0, D:0 };
+  let selectedPauseCat = null;
+
+  const CAT_LABELS = { A:'Conduite', B:'Autre travail', C:'Disponibilité', D:'Repos' };
+
+  function setTimerUI(state, cat) {
+    const btnStart = document.getElementById('btn-start');
+    const btnPause = document.getElementById('btn-pause');
+    const btnStop  = document.getElementById('btn-stop');
+    const stateEl  = document.getElementById('timer-state');
+    const hintEl   = document.getElementById('timer-hint');
+    const catBadge = document.getElementById('timer-cat-badge');
+
+    btnStart.disabled = (state !== 'idle');
+    btnPause.disabled = (state !== 'running');
+    btnStop.disabled  = (state === 'idle');
+    btnStart.setAttribute('aria-disabled', state !== 'idle');
+    btnPause.setAttribute('aria-disabled', state !== 'running');
+    btnStop.setAttribute('aria-disabled',  state === 'idle');
+
+    // Retirer toutes les classes d'état actif
+    [btnStart, btnPause, btnStop].forEach(b => b.classList.remove('active-state'));
+
+    stateEl.className = `timer-state ${state}`;
+    catBadge.style.display = (state === 'running') ? 'inline-flex' : 'none';
+
+    if (state === 'idle') {
+      stateEl.textContent = 'En attente';
+      hintEl.textContent  = 'Appuyez sur Démarrer pour débuter votre journée';
+      catBadge.textContent = '—';
+    } else if (state === 'running') {
+      stateEl.textContent  = `En cours`;
+      hintEl.textContent   = `Catégorie active : ${CAT_LABELS[cat] || cat} (${cat})`;
+      catBadge.textContent = `${cat} — ${CAT_LABELS[cat]}`;
+      btnStart.classList.add('active-state');
+    } else if (state === 'paused') {
+      stateEl.textContent = 'En pause';
+      hintEl.textContent  = 'Sélectionnez la catégorie de pause';
+      catBadge.style.display = 'none';
+    }
+  }
+
+  function startTimer() {
+    if (timerState !== 'idle') return;
+
+    const todayStr = new Date().toISOString().slice(0,10);
+    const sessions = S2W.table('sessions') || [];
+    const closedToday = sessions.find(s => s.user_id === 'usr_001' && s.date === todayStr && s.status === 'closed');
+    
+    if (closedToday) {
+      const confirmReopen = confirm("Vous avez déjà clôturé votre service aujourd'hui. Souhaitez-vous réouvrir la session existante pour la continuer ?");
+      if (confirmReopen) {
+        const pin = prompt("Veuillez saisir votre Code PIN de signature pour valider la réouverture :");
+        if (pin && pin.length === 4 && /^\d{4}$/.test(pin)) {
+          // Logger la réouverture
+          const logRecord = {
+            id: S2WUtils.uid('reop'),
+            session_id: closedToday.id,
+            reopened_at: new Date().toISOString(),
+            user_id: 'usr_001',
+            pin_verified: true
+          };
+          S2W.push('reopen_logs', logRecord);
+
+          // Réactiver la session
+          closedToday.status = 'active';
+          closedToday.stopped_at = null;
+          S2W.update('sessions', closedToday.id, closedToday);
+
+          // Supprimer le feuillet temporaire généré
+          const feuillets = S2W.table('feuillets') || [];
+          const targetFeuillet = feuillets.find(f => f.session_id === closedToday.id);
+          if (targetFeuillet) {
+            const data = S2W.get();
+            data.feuillets = data.feuillets.filter(f => f.id !== targetFeuillet.id);
+            S2W.set(data);
+          }
+
+          // Restaurer l'état
+          timerState = 'running';
+          sessionId = closedToday.id;
+          sessionDateStr = todayStr;
+          
+          // Recharger les secondes déjà écoulées
+          const allSegs = S2W.table('segments') || [];
+          const sessionSegs = allSegs.filter(s => s.session_id === closedToday.id);
+          
+          Object.keys(catTotals).forEach(k => catTotals[k] = 0);
+          elapsedSeconds = 0;
+          sessionSegs.forEach(s => {
+            catTotals[s.category] = (catTotals[s.category] || 0) + s.duration_sec;
+            elapsedSeconds += s.duration_sec;
+          });
+          
+          currentCategory = 'A';
+          segmentSeconds = 0;
+
+          setTimerUI('running', 'A');
+          timerInterval = setInterval(tickTimer, 1000);
+          queueSyncAction('REOPEN_SESSION', { session_id: closedToday.id });
+          showMobToast('Service réouvert avec succès ✓');
+          return;
+        } else {
+          showMobToast('Code PIN incorrect ou invalide. Réouverture annulée.');
+          return;
+        }
+      }
+    }
+
+    timerState = 'running';
+    currentCategory = 'A';
+    elapsedSeconds = 0;
+    segmentSeconds = 0;
+    Object.keys(catTotals).forEach(k => catTotals[k] = 0);
+
+    sessionDateStr = todayStr;
+    sessionId = S2WUtils.uid('ses');
+    const serverStart = new Date().toISOString();
+    const localStart = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
+
+    S2W.push('sessions', {
+      id: sessionId, user_id: 'usr_001', vehicle_id: 'veh_001',
+      date: todayStr,
+      started_at: serverStart,
+      stopped_at: null, status: 'active'
+    });
+
+    // Logger l'événement d'embauche avec dérive d'horloge et GPS
+    const eventRecord = {
+      id: S2WUtils.uid('evt'),
+      session_id: sessionId,
+      event_type: 'CLOCK_IN',
+      local_timestamp: localStart,
+      server_timestamp: serverStart,
+      device_clock_diff: _devClockDriftSec,
+      gps_latitude: 49.4181,
+      gps_longitude: 2.8224,
+      integrity_hash: 'lh_evt_' + Math.random().toString(36).slice(2, 10)
+    };
+    S2W.push('event_logs', eventRecord);
+
+    setTimerUI('running', 'A');
+    timerInterval = setInterval(tickTimer, 1000);
+    if (navigator.vibrate) navigator.vibrate(50);
+    queueSyncAction('START_SESSION', { session_id: sessionId, date: todayStr, event: eventRecord });
+    showMobToast('Session démarrée — Catégorie A (Conduite)');
+  }
+
+  function pauseTimer() {
+    if (timerState !== 'running') return;
+    clearInterval(timerInterval);
+    timerState = 'paused';
+    setTimerUI('paused');
+    openPauseModal();
+  }
+
+  function stopTimer() {
+    if (timerState === 'idle') return;
+    clearInterval(timerInterval);
+
+    if (sessionId) {
+      catTotals[currentCategory] += segmentSeconds;
+      const serverStop = new Date().toISOString();
+      const localStop = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
+
+      S2W.update('sessions', sessionId, {
+        stopped_at: serverStop, status: 'closed'
+      });
+
+      // Logger l'événement de débauche avec dérive d'horloge et GPS
+      const eventRecord = {
+        id: S2WUtils.uid('evt'),
+        session_id: sessionId,
+        event_type: 'CLOCK_OUT',
+        local_timestamp: localStop,
+        server_timestamp: serverStop,
+        device_clock_diff: _devClockDriftSec,
+        gps_latitude: 49.4181,
+        gps_longitude: 2.8224,
+        integrity_hash: 'lh_evt_' + Math.random().toString(36).slice(2, 10)
+      };
+      S2W.push('event_logs', eventRecord);
+
+      const total_a_sec = catTotals.A;
+      const total_b_sec = catTotals.B;
+      const total_c_sec = catTotals.C;
+      const total_d_sec = catTotals.D;
+      
+      const fmt = (sec) => S2WUtils.fmtDuration(sec);
+      
+      const E = total_a_sec + total_b_sec + total_c_sec;
+      const total = E + total_d_sec;
+      const check24 = Math.abs(total - 86400) <= 120;
+      const checkDrive = total_a_sec <= 9 * 3600;
+      const status = (check24 && checkDrive) ? 'conforme' : 'non_conforme';
+
+      S2W.push('feuillets', {
+        id: S2WUtils.uid('feu'),
+        session_id: sessionId,
+        total_a_sec,
+        total_b_sec,
+        total_c_sec,
+        total_d_sec,
+        total_a: fmt(total_a_sec),
+        total_b: fmt(total_b_sec),
+        total_c: fmt(total_c_sec),
+        total_d: fmt(total_d_sec),
+        status: status,
+        integrity_hash: 'lh_' + Math.random().toString(36).slice(2, 10),
+        generated_at: serverStop,
+        signed_at: null
+      });
+      queueSyncAction('STOP_SESSION', { session_id: sessionId, event: eventRecord });
+    }
+
+    timerState = 'idle';
+    setTimerUI('idle');
+    elapsedSeconds = 0;
+    segmentSeconds = 0;
+    document.getElementById('timer-display').textContent = '00:00:00';
+    updateTimeline();
+    updateGauges(0, 0);
+
+    if (navigator.vibrate) navigator.vibrate([100,50,100]);
+    showMobToast('Session terminée — Feuillet disponible dans l\'onglet Feuillet');
+  }
+
+  function tickTimer() {
+    elapsedSeconds++;
+    segmentSeconds++;
+    catTotals[currentCategory] = (catTotals[currentCategory] || 0) + 1;
+
+    checkMidnightAutoCut();
+
+    document.getElementById('timer-display').textContent = S2WUtils.fmtChrono(elapsedSeconds);
+
+    updateStats();
+    updateTimeline();
+    updateGauges(catTotals.A, segmentSeconds);
+    checkThresholds();
+  }
+
+  function checkMidnightAutoCut() {
+    if (timerState === 'idle') return;
+    const nowStr = new Date().toISOString().slice(0, 10);
+    if (sessionDateStr && nowStr !== sessionDateStr) {
+      if (sessionId) {
+        // Clôturer la session d'hier
+        S2W.update('sessions', sessionId, {
+          stopped_at: sessionDateStr + 'T23:59:59Z', status: 'closed'
+        });
+
+        // Générer le feuillet d'hier
+        const total_a_sec = catTotals.A;
+        const total_b_sec = catTotals.B;
+        const total_c_sec = catTotals.C;
+        const total_d_sec = catTotals.D;
+        const fmt = (sec) => S2WUtils.fmtDuration(sec);
+        
+        const E = total_a_sec + total_b_sec + total_c_sec;
+        const total = E + total_d_sec;
+        const check24 = Math.abs(total - 86400) <= 120;
+        const checkDrive = total_a_sec <= 9 * 3600;
+        const status = (check24 && checkDrive) ? 'conforme' : 'non_conforme';
+
+        S2W.push('feuillets', {
+          id: S2WUtils.uid('feu'),
+          session_id: sessionId,
+          total_a_sec,
+          total_b_sec,
+          total_c_sec,
+          total_d_sec,
+          total_a: fmt(total_a_sec),
+          total_b: fmt(total_b_sec),
+          total_c: fmt(total_c_sec),
+          total_d: fmt(total_d_sec),
+          status: status,
+          integrity_hash: 'lh_' + Math.random().toString(36).slice(2, 10),
+          generated_at: sessionDateStr + 'T23:59:59Z',
+          signed_at: null // Statut Non signé
+        });
+      }
+
+      // Ouvrir la session d'aujourd'hui
+      const oldCategory = currentCategory;
+      sessionDateStr = nowStr;
+      sessionId = S2WUtils.uid('ses');
+
+      S2W.push('sessions', {
+        id: sessionId, user_id: 'usr_001', vehicle_id: 'veh_001',
+        date: nowStr,
+        started_at: nowStr + 'T00:00:00Z',
+        stopped_at: null, status: 'active'
+      });
+
+      // Réinitialiser les compteurs
+      elapsedSeconds = 0;
+      segmentSeconds = 0;
+      Object.keys(catTotals).forEach(k => catTotals[k] = 0);
+      currentCategory = oldCategory;
+      catTotals[currentCategory] = 1;
+
+      showMobToast('Minuit passé : Clôture de la journée précédente et ouverture de la nouvelle journée.');
+    }
+  }
+
+  function updateStats() {
+    ['A','B','C','D'].forEach(cat => {
+      const el = document.getElementById(`stat-${cat}`);
+      if (el) el.textContent = S2WUtils.fmtDuration(catTotals[cat]);
+    });
+  }
+
+  function updateTimeline() {
+    const bar = document.getElementById('timeline-bar');
+    if (!bar) return;
+    const total = elapsedSeconds || 1;
+    const MAX = 24 * 3600;
+    const fraction = (sec) => Math.max(0, Math.min(100, (sec / MAX) * 100)).toFixed(1);
+
+    const placeholder = document.getElementById('tl-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    bar.innerHTML = ['A','B','C','D'].map(cat =>
+      catTotals[cat] > 0
+        ? `<div class="tl-seg ${cat}" style="width:${fraction(catTotals[cat])}%"
+             title="${cat}: ${S2WUtils.fmtDuration(catTotals[cat])}"></div>`
+        : ''
+    ).join('');
+
+    // Reste de la journée
+    const used = Object.values(catTotals).reduce((a,b)=>a+b,0);
+    const remaining = Math.max(0, MAX - used);
+    if (remaining > 0) {
+      bar.innerHTML += `<div class="tl-seg D" style="width:${fraction(remaining)}%;opacity:0.15"></div>`;
+    }
+  }
+
+  function updateGauges(driveA, sinceLastPause) {
+    const MAX_DRIVE = 9 * 3600;
+    const MAX_PAUSE = 4.5 * 3600;
+    const drivePct = Math.min(100, (driveA / MAX_DRIVE) * 100);
+    const pausePct = Math.min(100, (sinceLastPause / MAX_PAUSE) * 100);
+
+    const gDrive = document.getElementById('gauge-drive');
+    const gPause = document.getElementById('gauge-pause');
+    const gDriveVal = document.getElementById('gauge-drive-val');
+    const gPauseVal = document.getElementById('gauge-pause-val');
+
+    if (gDrive) {
+      gDrive.style.width = drivePct + '%';
+      gDrive.className = `gauge-fill ${drivePct >= 100 ? 'bad' : drivePct >= 85 ? 'warn' : 'ok'}`;
+    }
+    if (gPause) {
+      gPause.style.width = pausePct + '%';
+      gPause.className = `gauge-fill ${pausePct >= 100 ? 'bad' : pausePct >= 85 ? 'warn' : 'ok'}`;
+    }
+    if (gDriveVal) gDriveVal.textContent = S2WUtils.fmtDuration(driveA);
+    if (gPauseVal) gPauseVal.textContent = S2WUtils.fmtDuration(sinceLastPause);
+  }
+
+  function checkThresholds() {
+    const banner = document.getElementById('mob-alert-banner');
+    const text   = document.getElementById('mob-alert-text');
+    if (!banner || !text) return;
+
+    // Alerte proche 4h30 sans pause
+    if (currentCategory === 'A' && S2WUtils.nearPauseLimit(segmentSeconds)) {
+      const remaining = Math.max(0, 4.5 * 3600 - segmentSeconds);
+      text.textContent = `⚠ Pause obligatoire dans ${S2WUtils.fmtDuration(remaining)} — Max. 4h30 sans pause (R3315-2)`;
+      banner.classList.remove('hidden');
+      if (navigator.vibrate && segmentSeconds % 300 === 0) navigator.vibrate([50,50,50]);
+    }
+
+    // Alerte dépassement 9h conduite
+    if (catTotals.A > 9 * 3600) {
+      text.textContent = '🚨 Dépassement des 9h de conduite — Arrêtez votre session (R3315-1)';
+      banner.classList.remove('hidden');
+    }
+
+    // Alerte service oublié (>12h)
+    if (elapsedSeconds > 12 * 3600) {
+      text.textContent = '⚠ Service supérieur à 12h. Pensez à clôturer votre shift.';
+      banner.classList.remove('hidden');
+    }
+  }
+
+  function checkUnsignedFeuillets() {
+    const sessions = S2W.table('sessions') || [];
+    const userSessionIds = sessions.filter(s => s.user_id === 'usr_001').map(s => s.id);
+    const feuillets = S2W.table('feuillets') || [];
+    const unsigned = feuillets.filter(f => userSessionIds.includes(f.session_id) && !f.signed_at);
+    
+    const banner = document.getElementById('mob-alert-banner');
+    const text   = document.getElementById('mob-alert-text');
+    
+    if (unsigned.length > 0 && banner && text) {
+      text.innerHTML = `✍ Vous avez <strong>${unsigned.length} feuillet(s) non signé(s)</strong>. <span onclick="switchTab('feuillet')" style="text-decoration:underline;cursor:pointer">Signer maintenant →</span>`;
+      banner.classList.remove('hidden');
+    }
+  }
+
+  /* ─── MODAL PAUSE ────────────────────────────────────────────────────── */
+  function openPauseModal() {
+    selectedPauseCat = null;
+    ['B','C','D'].forEach(c => {
+      const opt = document.getElementById(`opt-${c}`);
+      if (opt) { opt.classList.remove('selected'); opt.setAttribute('aria-checked','false'); }
+    });
+    const confirmBtn = document.getElementById('pause-confirm-btn');
+    if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.classList.remove('ready'); }
+    document.getElementById('pause-modal').classList.add('open');
+  }
+
+  function closePauseModal() {
+    document.getElementById('pause-modal').classList.remove('open');
+    if (timerState === 'paused') {
+      // Reprise sans changer de catégorie
+      timerState = 'running';
+      setTimerUI('running', currentCategory);
+      timerInterval = setInterval(tickTimer, 1000);
+    }
+  }
+
+  function selectPauseCat(cat) {
+    selectedPauseCat = cat;
+    ['B','C','D'].forEach(c => {
+      const opt = document.getElementById(`opt-${c}`);
+      if (opt) { opt.classList.remove('selected'); opt.setAttribute('aria-checked','false'); }
+    });
+    const opt = document.getElementById(`opt-${cat}`);
+    if (opt) { opt.classList.add('selected'); opt.setAttribute('aria-checked','true'); }
+    const confirmBtn = document.getElementById('pause-confirm-btn');
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.classList.add('ready'); }
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  function confirmPause() {
+    if (!selectedPauseCat) return;
+    // Sauvegarder le segment A terminé
+    catTotals[currentCategory] = catTotals[currentCategory] || 0;
+    // Commencer le nouveau segment
+    currentCategory = selectedPauseCat;
+    segmentSeconds = 0;
+    timerState = 'running';
+
+    document.getElementById('pause-modal').classList.remove('open');
+    setTimerUI('running', currentCategory);
+    timerInterval = setInterval(tickTimer, 1000);
+    if (navigator.vibrate) navigator.vibrate(50);
+    queueSyncAction('CHANGE_CATEGORY', { category: currentCategory });
+    showMobToast(`Pause démarrée — Catégorie ${currentCategory} (${CAT_LABELS[currentCategory]})`);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ONGLET FEUILLET
+     ═══════════════════════════════════════════════════════════════════════ */
+  // Données feuillets mockées fixes pour la démo
+  const FEUILLETS_DEMO = {
+    '2026-08-15': { A_sec:27000, B_sec:2700, C_sec:1800, D_sec:54900, signed:true },
+    '2026-08-14': { A_sec:32520, B_sec:0,    C_sec:0,    D_sec:54480, signed:false },
+  };
+
+  function getFeuilletSegments(sessionId, data) {
+    let segments = [];
+    
+    // Si on a des segments persistés dans le localStorage
+    const allSegs = S2W.table('segments') || [];
+    segments = allSegs.filter(s => s.session_id === sessionId);
+    
+    if (segments.length === 0) {
+      // Générer une répartition fictive réaliste et proportionnelle
+      const aVal = data.A_sec || 0;
+      const bVal = data.B_sec || 0;
+      const cVal = data.C_sec || 0;
+      const dVal = data.D_sec || (86400 - (aVal + bVal + cVal));
+
+      const d1 = Math.floor(dVal * 0.4);
+      const d2 = Math.floor(dVal * 0.1);
+      const d3 = Math.max(0, dVal - d1 - d2);
+      const a1 = Math.floor(aVal * 0.5);
+      const a2 = Math.max(0, aVal - a1);
+      
+      let current = 0;
+      const addSeg = (cat, sec) => {
+        if (sec <= 0) return;
+        segments.push({
+          category: cat,
+          started_at: new Date(new Date('2026-08-15T00:00:00Z').getTime() + current * 1000).toISOString(),
+          ended_at: new Date(new Date('2026-08-15T00:00:00Z').getTime() + (current + sec) * 1000).toISOString(),
+          duration_sec: sec
+        });
+        current += sec;
+      };
+      
+      addSeg('D', d1);
+      addSeg('A', a1);
+      addSeg('B', bVal);
+      addSeg('D', d2);
+      addSeg('A', a2);
+      addSeg('C', cVal);
+      addSeg('D', d3);
+    }
+    return segments;
+  }
+
+  function renderLICGridSVG(segments) {
+    const sorted = [...segments].sort((a,b) => a.started_at.localeCompare(b.started_at));
+    const getSecs = (isoStr) => {
+      const d = new Date(isoStr);
+      return d.getUTCHours() * 3600 + d.getUTCMinutes() * 60 + d.getUTCSeconds();
+    };
+
+    const rowY = { A: 20, B: 60, C: 100, D: 140 };
+    const rowColors = { A: '#0D2242', B: '#1565C0', C: '#ED6C02', D: '#2E7D32' };
+
+    let paths = '';
+    let lastX = 0;
+    let lastY = rowY.D;
+
+    sorted.forEach((s, idx) => {
+      const startSec = getSecs(s.started_at);
+      const endSec = getSecs(s.ended_at);
+      
+      const x1 = (startSec / 86400) * 960;
+      const x2 = (endSec / 86400) * 960;
+      const y = rowY[s.category] || rowY.D;
+      const col = rowColors[s.category] || rowColors.D;
+
+      if (x1 > lastX) {
+        paths += `<line x1="${lastX}" y1="${lastY}" x2="${x1}" y2="${rowY.D}" stroke="#2E7D32" stroke-width="3" />`;
+        paths += `<line x1="${x1}" y1="${rowY.D}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="3" stroke-dasharray="2,2" />`;
+      } else if (idx > 0 && y !== lastY) {
+        paths += `<line x1="${x1}" y1="${lastY}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="3" />`;
+      }
+
+      paths += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${col}" stroke-width="4" />`;
+      
+      lastX = x2;
+      lastY = y;
+    });
+
+    if (lastX < 960) {
+      paths += `<line x1="${lastX}" y1="${lastY}" x2="960" y2="${rowY.D}" stroke="#2E7D32" stroke-width="3" />`;
+    }
+
+    let gridLines = '';
+    gridLines += `<line x1="0" y1="40" x2="960" y2="40" stroke="#E0E0E0" stroke-width="1" />`;
+    gridLines += `<line x1="0" y1="80" x2="960" y2="80" stroke="#E0E0E0" stroke-width="1" />`;
+    gridLines += `<line x1="0" y1="120" x2="960" y2="120" stroke="#E0E0E0" stroke-width="1" />`;
+
+    for (let h = 0; h <= 24; h++) {
+      const x = h * 40;
+      const isMajor = h % 4 === 0;
+      const strokeCol = isMajor ? '#B0BEC5' : '#ECEFF1';
+      const strokeW = isMajor ? 1.5 : 1;
+      gridLines += `<line x1="${x}" y1="0" x2="${x}" y2="160" stroke="${strokeCol}" stroke-width="${strokeW}" />`;
+      
+      if (h < 24) {
+        gridLines += `<line x1="${x+10}" y1="0" x2="${x+10}" y2="160" stroke="#ECEFF1" stroke-width="0.5" stroke-dasharray="1,2" />`;
+        gridLines += `<line x1="${x+20}" y1="0" x2="${x+20}" y2="160" stroke="#ECEFF1" stroke-width="0.5" stroke-dasharray="1,2" />`;
+        gridLines += `<line x1="${x+30}" y1="0" x2="${x+30}" y2="160" stroke="#ECEFF1" stroke-width="0.5" stroke-dasharray="1,2" />`;
+      }
+    }
+
+    return `
+      <div style="background:white;padding:12px;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shadow-sm);margin:12px 16px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--navy);margin-bottom:6px">
+          <span>00h</span>
+          <span>06h</span>
+          <span>12h</span>
+          <span>18h</span>
+          <span>24h</span>
+        </div>
+        <div style="position:relative;width:100%;overflow-x:auto">
+          <svg viewBox="0 0 960 160" style="width:100%;min-width:600px;display:block">
+            <rect width="960" height="160" fill="#FAFAFA" />
+            <rect width="960" height="40" fill="rgba(13,34,66,0.02)" />
+            <rect y="80" width="960" height="40" fill="rgba(237,108,2,0.02)" />
+            ${gridLines}
+            ${paths}
+            <text x="5" y="25" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0D2242">A</text>
+            <text x="5" y="65" font-family="sans-serif" font-size="12" font-weight="bold" fill="#1565C0">B</text>
+            <text x="5" y="105" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ED6C02">C</text>
+            <text x="5" y="145" font-family="sans-serif" font-size="12" font-weight="bold" fill="#2E7D32">D</text>
+          </svg>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px;font-size:9px;justify-content:center;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:4px;background:#0D2242;display:inline-block"></span>A (Conduite)</span>
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:4px;background:#1565C0;display:inline-block"></span>B (Travail)</span>
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:4px;background:#ED6C02;display:inline-block"></span>C (Dispo)</span>
+          <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:4px;background:#2E7D32;display:inline-block"></span>D (Repos)</span>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderFeuillet(dateStr) {
+    const container = document.getElementById('feuillet-content');
+    if (!container) return;
+
+    const dp = document.getElementById('feuillet-date-picker');
+    if (dp && dp.value !== dateStr) dp.value = dateStr;
+
+    // Chercher dans les données demo ou dans l'historique mocké
+    let data = FEUILLETS_DEMO[dateStr];
+
+    if (!data) {
+      // Chercher dans le localStorage
+      const feuillets = S2W.table('feuillets');
+      const sessions  = S2W.table('sessions');
+      const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+      if (sess) {
+        const f = feuillets.find(f => f.session_id === sess.id);
+        if (f) {
+          data = {
+            A_sec: f.total_a_sec || 0, B_sec: f.total_b_sec || 0,
+            C_sec: f.total_c_sec || 0, D_sec: f.total_d_sec || 0,
+            signed: !!f.signed_at
+          };
+        }
+      }
+    }
+
+    if (!data) {
+      container.innerHTML = `<div class="empty-state">
+        <span class="empty-state-icon">📋</span>
+        Aucun feuillet enregistré pour le ${S2WUtils.fmtDateShort(dateStr)}.
+      </div>`;
+      return;
+    }
+
+    const fmt = (sec) => S2WUtils.fmtDuration(sec);
+    const E = data.A_sec + data.B_sec + data.C_sec;
+    const total = E + data.D_sec;
+    const check24 = Math.abs(total - 86400) <= 120;
+    const checkDrive = data.A_sec <= 9 * 3600;
+    const conforme = check24 && checkDrive;
+
+    const dateLabel = S2WUtils.fmtDateLong(dateStr);
+
+    const sessions = S2W.table('sessions') || [];
+    const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+    const segments = getFeuilletSegments(sess?.id || 'mock_session', data);
+    const licGridHtml = renderLICGridSVG(segments);
+
+    container.innerHTML = `
+      <div class="conformity-badge ${conforme ? 'ok' : 'bad'}" role="status">
+        <span>${conforme ? '✓' : '✗'}</span>
+        <span>${conforme ? 'Journée conforme' : 'Non conforme'} — ${dateLabel}</span>
+      </div>
+
+      ${!conforme ? `<div style="margin:8px 16px 0;padding:10px 14px;background:var(--danger-bg);border-radius:8px;font-size:12px;color:var(--danger);">
+        ${!checkDrive ? `<div>⚠ Conduite : ${fmt(data.A_sec)} (max 9h — R3315-1)</div>` : ''}
+        ${!check24   ? `<div>⚠ Total ≠ 24h : E+D = ${fmt(total)} (attendu 24h00)</div>` : ''}
+      </div>` : ''}
+
+      ${licGridHtml}
+
+      <div class="feuillet-grid" role="table" aria-label="Détail du feuillet A/B/C/D">
+        <div class="feuillet-row" role="row">
+          <div class="feuillet-cat A" aria-hidden="true">A</div>
+          <div class="feuillet-label">Conduite</div>
+          <div class="feuillet-value ${data.A_sec > 9*3600 ? 'text-danger' : ''}">${fmt(data.A_sec)}</div>
+        </div>
+        <div class="feuillet-row" role="row">
+          <div class="feuillet-cat B" aria-hidden="true">B</div>
+          <div class="feuillet-label">Autre travail</div>
+          <div class="feuillet-value">${fmt(data.B_sec)}</div>
+        </div>
+        <div class="feuillet-row" role="row">
+          <div class="feuillet-cat C" aria-hidden="true">C</div>
+          <div class="feuillet-label">Disponibilité</div>
+          <div class="feuillet-value">${fmt(data.C_sec)}</div>
+        </div>
+        <div class="feuillet-row" role="row">
+          <div class="feuillet-cat D" aria-hidden="true">D</div>
+          <div class="feuillet-label">Repos</div>
+          <div class="feuillet-value">${fmt(data.D_sec)}</div>
+        </div>
+        <div class="feuillet-row total" role="row">
+          <div class="feuillet-cat E" style="font-size:11px;font-weight:700;background:rgba(13,34,66,0.1);color:var(--navy)" aria-hidden="true">E</div>
+          <div class="feuillet-label"><strong>E = A+B+C</strong></div>
+          <div class="feuillet-value"><strong>${fmt(E)}</strong></div>
+        </div>
+        <div class="feuillet-row ${check24 ? 'total' : 'error-row'}" role="row">
+          <div class="feuillet-cat" style="font-size:10px;font-weight:700;background:${check24?'rgba(46,125,50,0.1)':'rgba(211,47,47,0.1)'};color:${check24?'var(--success)':'var(--danger)'}" aria-hidden="true">24h</div>
+          <div class="feuillet-label">E + D ${check24 ? '= 24h ✓' : '≠ 24h ✗'}</div>
+          <div class="feuillet-value">${fmt(total)}</div>
+        </div>
+      </div>
+
+      ${!data.signed ? `
+      <div class="signature-section" style="margin: 16px; padding: 16px; background: #f9f9f9; border-radius: 12px; border: 1px dashed #ccc;">
+        <div class="sig-title" style="font-weight:700;color:var(--navy);font-size:13px;margin-bottom:12px;text-align:center;">Signature de fin de journée (au choix)</div>
+        
+        <!-- Option A: Dessin -->
+        <div style="background:white;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:bold;color:var(--navy);margin-bottom:6px;">✍ Option A : Signature manuscrite</div>
+          <canvas id="signature-canvas" width="300" height="100" style="background:#fafafa;border:1px solid #ddd;border-radius:6px;width:100%;height:100px;touch-action:none;"></canvas>
+          <div style="display:flex;justify-content:flex-end;margin-top:4px;">
+            <button class="btn-secondary" onclick="clearSignatureCanvas()" style="font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid #ccc;background:none;cursor:pointer;">Effacer</button>
+          </div>
+        </div>
+
+        <!-- Option B: PIN -->
+        <div style="background:white;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div style="font-size:11px;font-weight:bold;color:var(--navy);">🔑 Option B : Signature par Code PIN</div>
+            <div style="font-size:9.5px;color:var(--text-sec);">Saisissez votre PIN de validation (0000)</div>
+          </div>
+          <input type="password" class="pin-input" id="pin-field" maxlength="4"
+            inputmode="numeric" pattern="[0-9]{4}" placeholder="••••"
+            aria-label="Code PIN de signature (4 chiffres)" style="width:70px;text-align:center;font-size:18px;border-radius:6px;border:1px solid #ccc;height:36px;margin:0;">
+        </div>
+
+        <button class="btn-sign" onclick="signFeuillet('${dateStr}')" style="width:100%;height:40px;background:var(--navy);color:white;font-weight:bold;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Signer et Verrouiller le Feuillet</button>
+      </div>
+      ` : `
+      <div style="margin:10px 16px 0;padding:10px 14px;background:var(--success-bg);border-radius:8px;font-size:13px;color:var(--success);font-weight:600;">
+        ✓ Feuillet signé et verrouillé
+      </div>
+      `}
+      <button class="btn-export-feuillet" onclick="exportFeuillet('${dateStr}')">
+        ↓ Exporter ce feuillet en PDF
+      </button>`;
+
+    if (!data.signed) {
+      setTimeout(initSignatureCanvas, 100);
+    }
+  }
+
+  let isDrawingSig = false;
+  let lastSigX = 0;
+  let lastSigY = 0;
+  let signaturePaths = [];
+
+  function initSignatureCanvas() {
+    const canvas = document.getElementById('signature-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0D2242';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    signaturePaths = [];
+
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+      };
+    };
+
+    const startDraw = (e) => {
+      e.preventDefault();
+      isDrawingSig = true;
+      const pos = getPos(e);
+      lastSigX = pos.x;
+      lastSigY = pos.y;
+      signaturePaths.push(`M ${pos.x.toFixed(1)} ${pos.y.toFixed(1)}`);
+    };
+
+    const draw = (e) => {
+      if (!isDrawingSig) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(lastSigX, lastSigY);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      lastSigX = pos.x;
+      lastSigY = pos.y;
+      signaturePaths.push(`L ${pos.x.toFixed(1)} ${pos.y.toFixed(1)}`);
+    };
+
+    const stopDraw = () => {
+      isDrawingSig = false;
+    };
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+
+    canvas.addEventListener('touchstart', startDraw, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDraw);
+  }
+
+  function clearSignatureCanvas() {
+    const canvas = document.getElementById('signature-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    signaturePaths = [];
+  }
+
+  async function signFeuillet(dateStr) {
+    const pin = document.getElementById('pin-field')?.value || '';
+    const hasPin = pin.length > 0;
+    const hasDraw = signaturePaths.length > 0;
+
+    if (!hasPin && !hasDraw) {
+      showMobToast('Choisissez au moins une option : dessinez ou saisissez votre PIN.');
+      return;
+    }
+
+    let signatureStr = '';
+    let pinCode = '';
+    let method = '';
+
+    if (hasPin) {
+      if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+        showMobToast('Le code PIN doit comporter 4 chiffres');
+        return;
+      }
+      pinCode = pin;
+      method = 'PIN';
+    }
+
+    if (hasDraw) {
+      signatureStr = signaturePaths.join(' ');
+      method = hasPin ? 'HYBRIDE' : 'MANUSCRITE';
+    }
+
+    const payload = `${dateStr}|${signatureStr}|${pinCode}|${SECRET_KEY_LOCAL}`;
+    const combinedSeal = await S2W.sha256(payload);
+
+    const sessions = S2W.table('sessions') || [];
+    const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+    
+    if (sess) {
+      const feuillets = S2W.table('feuillets') || [];
+      const f = feuillets.find(f => f.session_id === sess.id);
+      if (f) {
+        f.signed_at = new Date().toISOString();
+        f.signature_path = signatureStr || null;
+        f.pin_code = pinCode || null;
+        f.signature_method = method;
+        f.integrity_hash = combinedSeal;
+        S2W.update('feuillets', f.id, f);
+      }
+    }
+
+    if (FEUILLETS_DEMO[dateStr]) FEUILLETS_DEMO[dateStr].signed = true;
+    
+    queueSyncAction('SIGN_FEUILLET', { date: dateStr, seal: combinedSeal, method: method });
+
+    if (navigator.vibrate) navigator.vibrate([50,30,50]);
+    showMobToast(`Feuillet du ${S2WUtils.fmtDateShort(dateStr)} signé (${method}) ✓`);
+    setTimeout(() => renderFeuillet(dateStr), 500);
+  }
+
+  function exportFeuillet(dateStr) {
+    showMobToast('Export PDF simulé — Disponible en production');
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ONGLET HISTORIQUE
+     ═══════════════════════════════════════════════════════════════════════ */
+  function renderHistorique() {
+    const listEl = document.getElementById('hist-list');
+    if (!listEl) return;
+
+    const sessions = S2W.table('sessions') || [];
+    const userSessionIds = sessions.filter(s => s.user_id === 'usr_001').map(s => s.id);
+
+    const feuillets = (S2W.table('feuillets') || [])
+      .filter(f => userSessionIds.includes(f.session_id) || f.session_id?.startsWith('ses_ref') || f.session_id?.startsWith('ses_hist'))
+      .sort((a,b) => (b.generated_at || '').localeCompare(a.generated_at || ''));
+
+    const visibleFeuillets = feuillets.filter(f => !f.hidden_local);
+
+    if (!visibleFeuillets.length) {
+      listEl.innerHTML = `<div class="empty-state">
+        <span class="empty-state-icon">📅</span>
+        Aucune journée enregistrée.
+      </div>`;
+      return;
+    }
+
+    listEl.innerHTML = visibleFeuillets.map(f => {
+      const sess = sessions.find(s => s.id === f.session_id);
+      const dateStr = sess?.date || f.generated_at?.slice(0,10) || '';
+      const dateLabel = dateStr ? new Date(dateStr+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}) : '—';
+      const dayLabel  = dateStr ? new Date(dateStr+'T12:00:00').toLocaleDateString('fr-FR',{year:'numeric'}) : '';
+
+      const diffDays = (new Date() - new Date(f.generated_at || sess?.started_at)) / (86400 * 1000);
+      const modDisabled = diffDays > 6 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : '';
+      
+      const correctionWatermark = f.corrected_at ? `<div style="font-size:10px;color:#E65100;font-weight:600;margin-top:4px">✏ Corrigé le ${S2WUtils.fmtDatetime(f.corrected_at)}</div>` : '';
+      const signedLabel = f.signed_at ? 'Signé' : 'Non signé';
+      const signedBadge = f.signed_at ? 'badge-success' : 'badge-danger';
+
+      return `
+        <div class="hist-item" role="listitem" tabindex="0" style="flex-direction:column;align-items:stretch;padding:12px;gap:8px"
+          aria-label="Feuillet du ${dateLabel} — ${f.status === 'conforme' ? 'Conforme' : f.status === 'non_conforme' ? 'Non conforme' : 'En attente'}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="hist-date-col" style="margin:0" onclick="goToFeuillet('${dateStr}')">
+              <div class="hist-date-main">${dateLabel}</div>
+              <div class="hist-date-day">${dayLabel}</div>
+            </div>
+            <div class="hist-totals" onclick="goToFeuillet('${dateStr}')">
+              <span class="hist-total-item"><span class="hist-total-dot A"></span>A ${f.total_a}</span>
+              <span class="hist-total-item"><span class="hist-total-dot B"></span>B ${f.total_b}</span>
+              <span class="hist-total-item"><span class="hist-total-dot D"></span>D ${f.total_d}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              ${S2WUtils.badgeConformity(f.status)}
+              <span class="badge ${signedBadge}" style="font-size:9px">${signedLabel}</span>
+            </div>
+          </div>
+          ${correctionWatermark}
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:6px;border-top:1px solid #eee;padding-top:8px">
+            <button onclick="shareLocalFeuillet('${f.id}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Partager</button>
+            <button onclick="exportLocalFeuillet('${dateStr}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Export</button>
+            <button onclick="deleteLocalFeuillet('${f.id}')" style="background:#FFEBEE;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#C62828">Supprimer</button>
+            <button onclick="promptRepriseCode('${f.id}')" ${modDisabled} style="background:#FFF3E0;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#E65100">Modifier</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function goToFeuillet(dateStr) {
+    const dp = document.getElementById('feuillet-date-picker');
+    if (dp) dp.value = dateStr;
+    switchTab('feuillet');
+    renderFeuillet(dateStr);
+  }
+
+  let _archSubTab = 'docs';
+  function switchArchSubTab(subTab) {
+    _archSubTab = subTab;
+    const btnDocs = document.getElementById('arch-tab-docs-btn');
+    const btnTours = document.getElementById('arch-tab-tours-btn');
+    const divDocs = document.getElementById('arch-sub-docs');
+    const divTours = document.getElementById('arch-sub-tours');
+    
+    if (subTab === 'docs') {
+      btnDocs.classList.add('active');
+      btnTours.classList.remove('active');
+      divDocs.style.display = '';
+      divTours.style.display = 'none';
+      renderArchDocs();
+    } else {
+      btnDocs.classList.remove('active');
+      btnTours.classList.add('active');
+      divDocs.style.display = 'none';
+      divTours.style.display = '';
+      renderHistorique();
+    }
+  }
+
+  function renderArchDocs() {
+    const container = document.getElementById('arch-docs-list-container');
+    if (!container) return;
+    
+    const user = S2W.find('users', 'usr_001');
+    const docs = S2W.findWhere('documents', 'owner_id', 'usr_001') || [];
+    const isVL = ['B', 'B1', 'BE'].includes(user?.license_category);
+    const visibleDocs = docs.filter(d => !(isVL && d.type === 'fco_fimo'));
+    
+    const docTypeLabels = {
+      permis: 'Permis de conduire',
+      fco_fimo: 'FCO/FIMO',
+      visite_medicale: 'Visite médicale'
+    };
+
+    container.innerHTML = visibleDocs.map(d => `
+      <div class="profil-row" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:var(--navy)">${docTypeLabels[d.type] || d.type}</div>
+          <div style="font-size:11px;color:var(--text-sec)">Expire le ${S2WUtils.fmtDateShort(d.expires_at)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${S2WUtils.badgeExpiry(d.expires_at)}
+          <button onclick="showMobToast('Téléchargement du document lancé')" style="background:none;border:none;color:var(--navy);font-size:16px;cursor:pointer;padding:4px">📥</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function generateMobDrealReport() {
+    const monthVal = document.getElementById('mob-dreal-month')?.value;
+    if (!monthVal) {
+      showMobToast("Veuillez sélectionner un mois.");
+      return;
+    }
+    const user = S2W.find('users', 'usr_001');
+    const company = S2W.find('companies', user?.company_id) || { id: 'cmp_001', legal_name: 'AMT Transport', siret: '803 492 109 00021' };
+    
+    const year = parseInt(monthVal.split('-')[0]);
+    const month = parseInt(monthVal.split('-')[1]);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    const allDates = [];
+    const includedDates = [];
+    const sessions = S2W.table('sessions') || [];
+    const feuillets = S2W.table('feuillets') || [];
+    
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dayStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      allDates.push(dayStr);
+      
+      const sess = sessions.find(s => s.date === dayStr && s.user_id === 'usr_001');
+      if (sess) {
+        const f = feuillets.find(f => f.session_id === sess.id);
+        if (f) {
+          includedDates.push(dayStr);
+        }
+      }
+    }
+    
+    if (includedDates.length === 0) {
+      showMobToast("Aucun shift clôturé ce mois-ci.");
+      return;
+    }
+    
+    const hash = await S2W.computeReportHash(company.id, includedDates[0], includedDates[includedDates.length - 1]);
+    
+    const report = {
+      id: S2WUtils.uid('rpt'),
+      company_id: company.id,
+      driver_id: 'usr_001',
+      month: monthVal,
+      included_dates: includedDates,
+      all_dates: allDates,
+      hash: hash,
+      generated_at: new Date().toISOString(),
+      status: 'verrouille'
+    };
+    S2W.push('reports', report);
+    
+    showMobToast("Rapport DREAL généré avec succès !");
+    
+    previewMobReportPDF(report.id);
+  }
+
+  function previewMobReportPDF(reportId) {
+    const r = S2W.find('reports', reportId);
+    if (!r) return;
+    
+    const driver = S2W.find('users', r.driver_id);
+    const company = S2W.find('companies', r.company_id) || { legal_name: 'AMT Transport', siret: '803 492 109 00021' };
+    
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert("Veuillez autoriser les fenêtres surgissantes pour afficher le PDF.");
+      return;
+    }
+    
+    let pagesHtml = '';
+    const allDates = r.all_dates || [];
+    
+    allDates.forEach((dateStr, idx) => {
+      const isIncluded = r.included_dates.includes(dateStr);
+      const pageNum = idx + 1;
+      
+      let bodyHtml = '';
+      if (isIncluded) {
+        const sessions = S2W.table('sessions').filter(s => s.user_id === r.driver_id);
+        const sess = sessions.find(s => s.date === dateStr);
+        const feuillets = S2W.table('feuillets') || [];
+        const f = sess ? feuillets.find(f => f.session_id === sess.id) : null;
+        
+        const data = f ? {
+          A_sec: f.total_a_sec || 0, B_sec: f.total_b_sec || 0,
+          C_sec: f.total_c_sec || 0, D_sec: f.total_d_sec || 0,
+          total_a: f.total_a || '0h00', total_b: f.total_b || '0h00',
+          total_c: f.total_c || '0h00', total_d: f.total_d || '24h00',
+          corrected_at: f.corrected_at,
+          observations: f.observations
+        } : {
+          A_sec: 0, B_sec: 0, C_sec: 0, D_sec: 86400,
+          total_a: '0h00', total_b: '0h00', total_c: '0h00', total_d: '24h00'
+        };
+
+        const segments = getFeuilletSegments(sess?.id || 'mock_session', data);
+        const gridSvg = renderLICGridSVG(segments);
+        
+        bodyHtml = `
+          <div class="header-box">
+            <div>
+              <h2 style="font-size: 16px; font-weight:bold; color:#0D2242; margin:0 0 4px 0;">LIVRET INDIVIDUEL DE CONTRÔLE</h2>
+              <p style="font-size: 11px; color:#555; margin:0;">Feuillet quotidien d'activité réglementaire (LIC)</p>
+            </div>
+            <div style="text-align:right">
+              <h3 style="font-size: 14px; font-weight:bold; color:#C9922F; margin:0 0 4px 0;">FEUILLET N°${pageNum}</h3>
+              <p style="font-size: 11px; color:#555; margin:0;">Date : <strong>${new Date(dateStr+'T12:00:00').toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</strong></p>
+            </div>
+          </div>
+
+          <div class="grid-container" style="background: #fafafa; border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin-bottom: 20px;">
+            ${gridSvg}
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+            <table class="totals-table" style="width:100%; border-collapse: collapse; font-size: 12px;">
+              <thead>
+                <tr>
+                  <th style="background: #0D2242; color: white; text-align: left; padding: 8px; font-weight: bold; border: 1px solid #0D2242;">Catégorie d'activité</th>
+                  <th style="background: #0D2242; color: white; text-align: left; padding: 8px; font-weight: bold; border: 1px solid #0D2242;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #eee;"><span class="dot A" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #0D2242;"></span> <strong>A</strong> - Conduite</td>
+                  <td style="padding: 8px; border: 1px solid #eee;"><strong>${data.total_a}</strong></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #eee;"><span class="dot B" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #1565C0;"></span> <strong>B</strong> - Autre travail</td>
+                  <td style="padding: 8px; border: 1px solid #eee;"><strong>${data.total_b}</strong></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #eee;"><span class="dot C" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #ED6C02;"></span> <strong>C</strong> - Disponibilité</td>
+                  <td style="padding: 8px; border: 1px solid #eee;"><strong>${data.total_c}</strong></td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #eee;"><span class="dot D" style="width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: #2E7D32;"></span> <strong>D</strong> - Repos</td>
+                  <td style="padding: 8px; border: 1px solid #eee;"><strong>${data.total_d}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="sec-box" style="border: 1px solid #FFE0B2; background: #FFFDE7; padding: 15px; border-radius: 8px; font-size: 11px;">
+              <h4 style="margin: 0 0 6px 0; font-size: 12px; color:#E65100; font-weight:bold;">Vérification administrative</h4>
+              <p>Statut du shift : <strong>CONFORME</strong></p>
+              <p>Signature numérique : <span class="seal" style="font-family: monospace; font-size: 9.5px; color:#555; background: #f0f0f0; padding: 2px 4px; border-radius: 3px; word-break: break-all;">${f?.integrity_hash ? f.integrity_hash.slice(0,24) + '...' : 'Vérifiée par clé publique'}</span></p>
+              ${data.corrected_at ? `<p style="color:#ED6C02;font-weight:bold;font-size:11px;">✏ Modifié par Code Reprise le ${new Date(data.corrected_at).toLocaleString('fr-FR')}</p>` : ''}
+              ${data.observations ? `<p style="font-size:11.5px;margin-top:6px;border-top:1px solid #ddd;padding-top:4px;">Obs: <em>${data.observations}</em></p>` : ''}
+            </div>
+          </div>
+        `;
+      } else {
+        bodyHtml = `
+          <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;background:#fdfdfd;border:2px dashed #ccc;border-radius:12px;padding:60px 40px;box-sizing:border-box;">
+            <div class="watermark" style="position: absolute; font-size: 42px; font-weight: 900; color: rgba(211,47,47,0.06); transform: rotate(-30deg); top: 40%; left: 15%; right: 15%; text-align: center; pointer-events: none; border: 6px solid rgba(211,47,47,0.06); padding: 20px; border-radius: 12px;">JOUR NON-TRAVAILLÉ</div>
+            <span style="font-size:64px;margin-bottom:20px;opacity:0.6;">🏖️</span>
+            <h2 style="font-size:20px;color:#555;margin-bottom:8px;">JOURNAL D'ACTIVITÉ VIDE</h2>
+            <p style="font-size:13px;color:#888;text-align:center;">Aucune session de service ou conduite n'a été enregistrée pour le ${new Date(dateStr+'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'})}.</p>
+            <div style="margin-top:20px;font-size:11px;color:#aaa;">Numéro de page : ${pageNum} — Certifié exempt d'activité START2WAY</div>
+          </div>
+        `;
+      }
+
+      pagesHtml += `
+        <div class="page" style="background: white; width: 210mm; height: 297mm; padding: 15mm 20mm; box-sizing: border-box; position: relative; margin: 10px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); page-break-after: always;">
+          <div class="page-top-meta" style="display:flex; justify-content:space-between; font-size: 10px; color:#777; text-transform:uppercase; letter-spacing:0.5px;">
+            <div><strong>START2WAY</strong> - Livret de Contrôle Électronique</div>
+            <div>Entreprise : <strong>${company.legal_name}</strong> (SIRET: ${company.siret || '—'})</div>
+          </div>
+          <hr style="border:none;border-top:1px solid #eee;margin-bottom:15px;"/>
+          
+          ${bodyHtml}
+
+          <div class="page-footer-meta" style="position:absolute; bottom: 15mm; left:20mm; right:20mm; display:flex; justify-content:space-between; font-size:10px; color:#777; border-top:1px solid #eee; padding-top:10px;">
+            <div>Conducteur : <strong>${S2WUtils.fullName(driver)}</strong></div>
+            <div>Certificat général de conformité du rapport : <span class="seal" style="font-family: monospace; font-size: 9.5px; color:#555; background: #f0f0f0; padding: 2px 4px; border-radius: 3px; word-break: break-all;">${r.hash.slice(0,16)}…</span></div>
+            <div>Page ${pageNum} sur ${allDates.length}</div>
+          </div>
+        </div>
+      `;
+    });
+
+    w.document.write(\`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Rapport DREAL - \${S2WUtils.fullName(driver)} - \${r.month}</title>
+        <style>
+          @page { size: A4 portrait; margin: 0; }
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background:#ccc; margin:0; padding:0; -webkit-print-color-adjust: exact; }
+          .page { background: white; width: 210mm; height: 297mm; padding: 15mm 20mm; box-sizing: border-box; position: relative; margin: 10px auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); page-break-after: always; }
+          
+          @media print {
+            body { background: none; }
+            .page { margin: 0; box-shadow: none; page-break-after: always; }
+          }
+        </style>
+      </head>
+      <body>
+        \${pagesHtml}
+        <script>
+          window.onload = function() { window.print(); };
+        <\/script>
+      </body>
+      </html>
+    \`);
+    w.document.close();
+  }
+
+  let _activeCorrectionFeuilletId = null;
+  let _activeRepriseCodeRecord = null;
+
+  function promptRepriseCode(feuilletId) {
+    const code = prompt("Veuillez saisir le Code Reprise fourni par votre employeur pour corriger ce feuillet :");
+    if (code === null) return;
+    const trimmedCode = code.trim().toUpperCase();
+    if (!trimmedCode) { showMobToast("Veuillez saisir un code."); return; }
+
+    const reps = S2W.table('reprise_codes') || [];
+    const record = reps.find(r => r.code === trimmedCode && r.user_id === 'usr_001' && r.feuillet_id === feuilletId);
+
+    if (!record) {
+      showMobToast("Code de reprise invalide ou non associé à ce feuillet.");
+      return;
+    }
+
+    const isExpired = new Date(record.expires_at) < new Date();
+    if (record.status !== 'pending' || isExpired) {
+      showMobToast("Ce code est expiré (validité 24h) ou a déjà été utilisé.");
+      return;
+    }
+
+    _activeCorrectionFeuilletId = feuilletId;
+    _activeRepriseCodeRecord = record;
+
+    showCorrectionFormModal(feuilletId);
+  }
+
+  function showCorrectionFormModal(feuilletId) {
+    const f = S2W.find('feuillets', feuilletId);
+    if (!f) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'correction-modal';
+    modal.className = 'modal-overlay open';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px';
+    
+    const aMin = Math.floor(f.total_a_sec / 60);
+    const bMin = Math.floor(f.total_b_sec / 60);
+    const cMin = Math.floor(f.total_c_sec / 60);
+    const dMin = Math.floor(f.total_d_sec / 60);
+
+    modal.innerHTML = `
+      <div class="modal-sheet" style="max-height:85vh;overflow-y:auto;padding:20px;background:white;border-radius:16px;width:100%;max-width:400px;position:relative">
+        <!-- Filigrane de traçabilité -->
+        <div style="position:absolute;top:20px;right:20px;font-size:9px;color:rgba(230,81,0,0.4);font-weight:700;border:1px dashed rgba(230,81,0,0.4);padding:2px 6px;transform:rotate(5deg);pointer-events:none">
+          CORRECTION EN COURS
+        </div>
+
+        <h2 style="font-size:16px;color:var(--navy);font-weight:700;margin-bottom:8px">Formulaire de Correction</h2>
+        <p style="font-size:11px;color:var(--text-sec);margin-bottom:16px">La somme totale doit être de 24h00 pile.</p>
+        
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600;font-size:13px;color:var(--navy)">Conduite (A) :</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="corr-a-h" class="form-control" value="${Math.floor(aMin/60)}" style="width:50px;text-align:center" min="0" max="24"> h
+              <input type="number" id="corr-a-m" class="form-control" value="${aMin%60}" style="width:50px;text-align:center" min="0" max="59"> min
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600;font-size:13px;color:var(--navy)">Autre travail (B) :</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="corr-b-h" class="form-control" value="${Math.floor(bMin/60)}" style="width:50px;text-align:center" min="0" max="24"> h
+              <input type="number" id="corr-b-m" class="form-control" value="${bMin%60}" style="width:50px;text-align:center" min="0" max="59"> min
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600;font-size:13px;color:var(--navy)">Disponibilité (C) :</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="corr-c-h" class="form-control" value="${Math.floor(cMin/60)}" style="width:50px;text-align:center" min="0" max="24"> h
+              <input type="number" id="corr-c-m" class="form-control" value="${cMin%60}" style="width:50px;text-align:center" min="0" max="59"> min
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span style="font-weight:600;font-size:13px;color:var(--navy)">Repos (D) :</span>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input type="number" id="corr-d-h" class="form-control" value="${Math.floor(dMin/60)}" style="width:50px;text-align:center" min="0" max="24"> h
+              <input type="number" id="corr-d-m" class="form-control" value="${dMin%60}" style="width:50px;text-align:center" min="0" max="59"> min
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+            <label style="font-weight:600;font-size:12px;color:var(--navy)">Motif / Observations *</label>
+            <textarea id="corr-obs" class="form-control" rows="2" placeholder="Pourquoi corrigez-vous ce feuillet ?" style="font-size:12px"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:20px">
+          <button onclick="closeCorrectionModal()" style="flex:1;background:#ECEFF1;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Annuler</button>
+          <button onclick="submitCorrectionFeuillet()" style="flex:1;background:var(--amber);color:var(--navy);border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Enregistrer</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  }
+
+  function closeCorrectionModal() {
+    const m = document.getElementById('correction-modal');
+    if (m) m.remove();
+    _activeCorrectionFeuilletId = null;
+    _activeRepriseCodeRecord = null;
+  }
+
+  function submitCorrectionFeuillet() {
+    const valOf = (hId, mId) => {
+      const h = parseInt(document.getElementById(hId).value) || 0;
+      const m = parseInt(document.getElementById(mId).value) || 0;
+      return h * 3600 + m * 60;
+    };
+
+    const aSec = valOf('corr-a-h', 'corr-a-m');
+    const bSec = valOf('corr-b-h', 'corr-b-m');
+    const cSec = valOf('corr-c-h', 'corr-c-m');
+    const dSec = valOf('corr-d-h', 'corr-d-m');
+    const obs = document.getElementById('corr-obs').value.trim();
+
+    if (!obs) {
+      alert("Veuillez saisir un motif ou une observation.");
+      return;
+    }
+
+    const sum = aSec + bSec + cSec + dSec;
+    if (sum !== 86400) {
+      alert(`La somme des durées doit être de 24h00 pile. Actuel : ${S2WUtils.fmtDuration(sum)}.`);
+      return;
+    }
+
+    const f = S2W.find('feuillets', _activeCorrectionFeuilletId);
+    if (f) {
+      f.total_a_sec = aSec;
+      f.total_b_sec = bSec;
+      f.total_c_sec = cSec;
+      f.total_d_sec = dSec;
+      f.total_a = S2WUtils.fmtDuration(aSec);
+      f.total_b = S2WUtils.fmtDuration(bSec);
+      f.total_c = S2WUtils.fmtDuration(cSec);
+      f.total_d = S2WUtils.fmtDuration(dSec);
+      f.corrected_at = new Date().toISOString();
+      f.observations = obs;
+      
+      const checkDrive = aSec <= 9 * 3600;
+      f.status = checkDrive ? 'conforme' : 'non_conforme';
+      
+      S2W.update('feuillets', f.id, f);
+    }
+
+    if (_activeRepriseCodeRecord) {
+      _activeRepriseCodeRecord.status = 'used';
+      S2W.update('reprise_codes', _activeRepriseCodeRecord.id, _activeRepriseCodeRecord);
+    }
+
+    closeCorrectionModal();
+    renderHistorique();
+    showMobToast('Feuillet corrigé et scellé.');
+  }
+
+  function shareLocalFeuillet(feuilletId) {
+    showMobToast('Partage du document initié.');
+  }
+
+  function exportLocalFeuillet(dateStr) {
+    showMobToast('Export PDF du feuillet lancé.');
+  }
+
+  function deleteLocalFeuillet(feuilletId) {
+    const f = S2W.find('feuillets', feuilletId);
+    if (f) {
+      f.hidden_local = true;
+      S2W.update('feuillets', f.id, f);
+      showMobToast('Feuillet masqué de votre liste locale.');
+      renderHistorique();
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     ONGLET PROFIL
+     ═══════════════════════════════════════════════════════════════════════ */
+  function renderProfil() {
+    const container = document.getElementById('profil-content');
+    if (!container) return;
+
+    const user    = S2W.find('users','usr_001');
+    const company = S2W.find('companies', user?.company_id);
+    const docs    = S2W.findWhere('documents','owner_id','usr_001');
+
+    const isVL = ['B', 'B1', 'BE'].includes(user?.license_category);
+    const visibleDocs = docs.filter(d => !(isVL && d.type === 'fco_fimo'));
+
+    const docTypeLabels = {
+      permis: 'Permis de conduire',
+      fco_fimo: 'FCO/FIMO',
+      visite_medicale: 'Visite médicale'
+    };
+
+    container.innerHTML = `
+      <div class="profil-hero">
+        <div class="profil-avatar" aria-hidden="true">${S2WUtils.initials(user)}</div>
+        <div class="profil-name">${S2WUtils.fullName(user)}</div>
+        <div class="profil-role">${user?.company_id ? ((isVL ? 'Conducteur VL' : 'Conducteur Poids Lourd') + ' — ' + (company?.trade_name || 'AMT')) : 'Conducteur — En attente d\'activation'}</div>
+      </div>
+
+      <div class="profil-section">
+        <div class="profil-section-title">Informations personnelles</div>
+        <div class="profil-row">
+          <span class="profil-row-label">Nom</span>
+          <span class="profil-row-value">${S2WUtils.fullName(user)}</span>
+        </div>
+        <div class="profil-row">
+          <span class="profil-row-label">Permis</span>
+          <span class="profil-row-value">${user?.license_category || '—'}</span>
+        </div>
+        <div class="profil-row">
+          <span class="profil-row-label">Téléphone</span>
+          <span class="profil-row-value">${user?.phone || '—'}</span>
+        </div>
+        <div class="profil-row">
+          <span class="profil-row-label">Email</span>
+          <span class="profil-row-value" style="font-size:12px">${user?.email || '—'}</span>
+        </div>
+      </div>
+
+      <div class="profil-section">
+        <div class="profil-section-title">Documents</div>
+        ${visibleDocs.map(d => `
+        <div class="profil-row">
+          <span class="profil-row-label">${docTypeLabels[d.type] || d.type}</span>
+          ${S2WUtils.badgeExpiry(d.expires_at)}
+        </div>`).join('')}
+      </div>
+
+      <div class="profil-section">
+        <div class="profil-section-title">Entreprise</div>
+        <div class="profil-row">
+          <span class="profil-row-label">Employeur</span>
+          <span class="profil-row-value">${company?.legal_name || '—'}</span>
+        </div>
+        <div class="profil-row">
+          <span class="profil-row-label">SIRET</span>
+          <span class="profil-row-value" style="font-size:12px">${company?.siret || '—'}</span>
+        </div>
+      </div>
+
+      <div class="profil-section">
+        <div class="profil-section-title">Contact d'urgence</div>
+        <div class="profil-row">
+          <span class="profil-row-label">Nom & Tél.</span>
+          <span class="profil-row-value" style="font-size:12px">${user?.emergency_contact || 'Non renseigné'}</span>
+        </div>
+      </div>
+
+      <button class="profil-contact-btn" onclick="showMobToast('Fonctionnalité disponible en production')">
+        ✉ Contacter l'employeur
+      </button>
+
+      <!-- Options développeur (Simulateur) -->
+      <div class="profil-section" style="background:#FFF9C4;border:1px solid #FBC02D;border-radius:12px;padding:16px;margin-top:20px;">
+        <div class="profil-section-title" style="color:#F57F17;font-weight:bold;margin-bottom:12px;">🔧 Options développeur (Simulateur)</div>
+        <div style="font-size:11px;color:#5D4037;margin-bottom:12px;line-height:1.4;">
+          <strong>Conformité GPS / CNIL :</strong><br>
+          START2WAY collecte vos coordonnées GPS uniquement au moment de l'embauche (clock-in) et de la débauche (clock-out). Aucun suivi continu n'est effectué. Vos coordonnées GPS ne seront lues que pour la validation du shift.
+        </div>
+        
+        <label style="font-size:12px;font-weight:bold;color:#5D4037;display:block;margin-bottom:6px;">Falsification d'horloge de l'appareil :</label>
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          <button onclick="setDevClockDrift(0, this)" class="btn-drift ${(_devClockDriftSec===0)?'active':''}" style="flex:1;font-size:10px;padding:6px;border-radius:4px;border:1px solid #FBC02D;background:white;cursor:pointer;font-weight:bold;${(_devClockDriftSec===0)?'background:#FFF59D;':''}">Réel</button>
+          <button onclick="setDevClockDrift(7200, this)" class="btn-drift ${(_devClockDriftSec===7200)?'active':''}" style="flex:1;font-size:10px;padding:6px;border-radius:4px;border:1px solid #FBC02D;background:white;cursor:pointer;font-weight:bold;${(_devClockDriftSec===7200)?'background:#FFF59D;':''}">+2h ⏰</button>
+          <button onclick="setDevClockDrift(18000, this)" class="btn-drift ${(_devClockDriftSec===18000)?'active':''}" style="flex:1;font-size:10px;padding:6px;border-radius:4px;border:1px solid #FBC02D;background:white;cursor:pointer;font-weight:bold;${(_devClockDriftSec===18000)?'background:#FFF59D;':''}">+5h ⏰</button>
+        </div>
+        
+        <div style="font-size:11px;color:#7F5F00;font-style:italic;" id="drift-status-label">
+          ${_devClockDriftSec === 0 ? 'Horloge synchronisée avec les serveurs de temps (dérive : 0s).' : `⚠️ Horloge décalée de <strong>+${_devClockDriftSec/3600}h00</strong>.`}
+        </div>
+      </div>
+    `;
+  }
+
+  let _devClockDriftSec = 0;
+
+  function setDevClockDrift(sec, btn) {
+    _devClockDriftSec = sec;
+    document.querySelectorAll('.btn-drift').forEach(b => {
+      b.style.background = 'white';
+      b.classList.remove('active');
+    });
+    if (btn) {
+      btn.classList.add('active');
+      btn.style.background = '#FFF59D';
+    }
+    
+    const label = document.getElementById('drift-status-label');
+    if (label) {
+      if (sec === 0) {
+        label.textContent = 'Horloge synchronisée avec les serveurs de temps (dérive : 0s).';
+      } else {
+        label.innerHTML = `⚠️ Horloge décalée de <strong>+${sec/3600}h00</strong>. START2WAY comparera ce décalage avec les serveurs NTP.`;
+      }
+    }
+    showMobToast('Décalage de l\'horloge simulé.');
+  }
+  </script>
+</body>
+</html>
