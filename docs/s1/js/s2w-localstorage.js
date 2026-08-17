@@ -257,7 +257,7 @@ const S2W = {
           <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px;">ID de la Base Airtable</label>
           <input type="text" id="s2w-cfg-base" placeholder="app..." style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;box-sizing:border-box;font-size:14px;" />
           
-          <button id="s2w-cfg-submit" style="width:100%;background:#ED6C02;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;">Enregistrer et se connecter</button>
+          <button id="s2w-cfg-submit" style="width:100%;background:#009A44;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;">Enregistrer et se connecter</button>
         </div>
       `;
       
