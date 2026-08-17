@@ -1410,7 +1410,8 @@
 
   function genInviteCode(userId) {
     const code = 'INV-' + Math.random().toString(36).slice(2,6).toUpperCase() + '-' + Date.now().toString(36).toUpperCase().slice(-4);
-    S2W.push('invitations', { id:S2WUtils.uid('inv'), code, company_id:'cmp_001', type:'usage_unique', created_at:new Date().toISOString(), used_at:null, status:'pending' });
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
+    S2W.push('invitations', { id:S2WUtils.uid('inv'), code, company_id: company.id, type:'usage_unique', created_at:new Date().toISOString(), used_at:null, status:'pending' });
     showToast(`Code généré : ${code} — Valable 48h`, 'success');
   }
 
@@ -2465,8 +2466,9 @@
     document.getElementById('sal-code-info').style.display = '';
     document.getElementById('btn-sal-step2').disabled = false;
     window._genCode = code;
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
     S2W.push('invitations', {
-      id: S2WUtils.uid('inv'), code, company_id:'cmp_001', type:'usage_unique',
+      id: S2WUtils.uid('inv'), code, company_id: company.id, type:'usage_unique',
       created_at: new Date().toISOString(), expires_at: new Date(Date.now()+48*3600000).toISOString(),
       used_at: null, status:'pending'
     });
@@ -2491,8 +2493,9 @@
     const licVal = document.getElementById('f-sal-lic')?.value || 'B';
     const licNum = document.getElementById('f-sal-lic-num')?.value || 'N/A';
     
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
     const user = {
-      id: S2WUtils.uid('usr'), company_id:'cmp_001',
+      id: S2WUtils.uid('usr'), company_id: company.id,
       last_name: last.toUpperCase(), first_name: first,
       license_category: licVal,
       phone: document.getElementById('f-sal-phone')?.value,
