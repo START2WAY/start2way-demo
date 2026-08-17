@@ -594,41 +594,7 @@
     <!-- APP HEADER -->
     <header class="app-header">
       <div class="app-brand">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 80" width="130" height="30" style="display: block; --logo-text-color: #FFFFFF;">
-          <defs>
-            <linearGradient id="powerGradBgMobile" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#007D34" stop-opacity="0.85" />
-              <stop offset="50%" stop-color="#009A44" stop-opacity="0.85" />
-              <stop offset="100%" stop-color="#00C055" stop-opacity="0.85" />
-            </linearGradient>
-            <linearGradient id="gpsGradMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#FFFFFF" />
-              <stop offset="100%" stop-color="#B0BEC5" />
-            </linearGradient>
-          </defs>
-          <style>
-            .logo-text-svg-mobile {
-              font-family: 'Outfit', 'Montserrat', 'Segoe UI', sans-serif;
-              font-weight: 800;
-              fill: var(--logo-text-color, #FFFFFF);
-              font-size: 48px;
-              letter-spacing: -1px;
-            }
-          </style>
-          <g transform="translate(5, 5) scale(0.6)">
-            <path d="M 40,32 A 38,38 0 1,0 76,32" fill="none" stroke="url(#powerGradBgMobile)" stroke-width="12" stroke-linecap="round" />
-            <line x1="58" y1="10" x2="58" y2="46" stroke="url(#powerGradBgMobile)" stroke-width="12" stroke-linecap="round" />
-          </g>
-          <g transform="translate(85, 54)">
-            <text x="0" y="0" class="logo-text-svg-mobile">TO</text>
-            <g transform="translate(75, -42) scale(0.66)">
-              <path d="M 10,80 L 32,22 L 48,52 L 68,26 L 82,78" fill="none" stroke="url(#gpsGradMobile)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M 64,22 L 86,18 L 82,40 Z" fill="url(#gpsGradMobile)" />
-              <path d="M 102,73 L 122,22 L 142,73 Z" fill="var(--logo-text-color, #FFFFFF)" />
-              <text x="148" y="64" class="logo-text-svg-mobile">Y</text>
-            </g>
-          </g>
-        </svg>
+        <img src="logo.png" alt="START2WAY" style="height: 30px; display: block;">
       </div>
       <div class="header-actions">
         <button id="net-toggle-btn" onclick="toggleNetworkStatus()" title="Simuler l'état du réseau" style="font-size:11px;display:flex;align-items:center;gap:4px;background:#ECEFF1;padding:4px 8px;border-radius:20px;border:1px solid #CFD8DC;font-weight:bold;color:#37474F;cursor:pointer">
