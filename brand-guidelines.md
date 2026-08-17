@@ -7,7 +7,7 @@
 | Élément | Code Hex | Description / Usage |
 | :--- | :--- | :--- |
 | **Couleur principale** | `#0D2242` | Navy profond. En-têtes, navigation, boutons principaux, fond des sections importantes. Évoque la rigueur administrative et la nuit des longs trajets. |
-| **Couleur accent** | `#C9922F` | Amber doré. Boutons secondaires, badges d'alerte, éléments de confirmation. Clin d'œil direct au tampon et aux teintes du Livret Individuel de Contrôle papier original. |
+| **Couleur accent** | `#009A44` | Vert Europcar franc. Boutons secondaires, badges d'alerte, éléments de confirmation. Assure une lisibilité moderne et s'associe parfaitement au Navy profond. |
 | **Fond principal** | `#F8F6F3` | Blanc cassé / papier vieilli. Fond des écrans, des cartes, des feuillets quotidiens. Évoque le papier du livret original. |
 | **Fond secondaire (cartes)** | `#FFFFFF` | Blanc pur. Cartes, modales, zones de saisie. |
 | **Texte principal** | `#1A1A1A` | Noir très foncé. Lisibilité maximale sur fond clair. |
@@ -46,10 +46,10 @@
 
 | Élément | Spécification |
 | :--- | :--- |
-| **Choix retenu** | Option C — Monogramme "S2" + nom complet "START2WAY" |
-| **Position** | En haut à gauche (site vitrine, application, documents) |
-| **Sur fond navy** | Monogramme et texte en blanc, avec accent en amber (`#C9922F`) |
-| **Sur fond clair** | Monogramme et texte en navy (`#0D2242`), avec accent en amber |
+| **Choix retenu** | Logo "TO WAY" avec symbole Power en arrière-plan et W en flèche GPS fine |
+| **Position** | Centré verticalement/horizontalement selon le layout |
+| **Sur fond navy** | Texte en blanc, symbole Power en dégradé de vert Europcar (`#009A44`) |
+| **Sur fond clair** | Texte en navy (`#0D2242`), symbole Power en dégradé de vert Europcar |
 | **Sur fond blanc cassé** | Identique à fond clair |
 | **Format** | Vectoriel (SVG) pour le site, PNG pour les emails et documents PDF |
 
