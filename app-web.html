@@ -787,6 +787,9 @@
 
   function buildMessagerie(el) {
     const users = S2W.table('users').filter(u => u.role === 'salarie' && u.status === 'actif');
+    if (users.length > 0 && !users.some(u => u.id === _activeChatUserId)) {
+      _activeChatUserId = users[0].id;
+    }
     const messages = S2W.table('messages') || [];
     
     let leftHtml = '';

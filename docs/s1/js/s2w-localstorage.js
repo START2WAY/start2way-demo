@@ -17,7 +17,7 @@ const S2W = {
   // En production, toutes les requêtes Airtable doivent transiter par un serveur backend sécurisé.
   AIRTABLE_TOKEN: '',
   BASE_ID: '',
-  TABLES_LIST: ['companies', 'users', 'sessions', 'feuillets', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents'],
+  TABLES_LIST: ['companies', 'users', 'sessions', 'feuillets', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports'],
 
   /* Lecture complète du cache local */
   get() {
@@ -283,15 +283,47 @@ const S2W = {
     return this._credentialsPromise;
   },
 
+  _serializeFields(record) {
+    const fields = {};
+    for (const [k, v] of Object.entries(record)) {
+      if (k.startsWith('_')) continue;
+      if (v === null || v === undefined) continue;
+      
+      // Serialize arrays or objects to JSON string for Airtable multilineText fields
+      if (typeof v === 'object') {
+        fields[k] = JSON.stringify(v);
+      } else {
+        fields[k] = v;
+      }
+    }
+    return fields;
+  },
+
+  _deserializeFields(fields) {
+    const item = { ...fields };
+    const jsonKeys = ['signature_path', 'maintenance_thresholds', 'docs', 'included_dates', 'all_dates'];
+    for (const key of jsonKeys) {
+      if (typeof item[key] === 'string' && item[key].trim().startsWith('[')) {
+        try {
+          item[key] = JSON.parse(item[key]);
+        } catch (e) {
+          console.warn(`[S2W] Failed to parse JSON field ${key}:`, e);
+        }
+      } else if (typeof item[key] === 'string' && item[key].trim().startsWith('{')) {
+        try {
+          item[key] = JSON.parse(item[key]);
+        } catch (e) {
+          console.warn(`[S2W] Failed to parse JSON field ${key}:`, e);
+        }
+      }
+    }
+    return item;
+  },
+
   async insertToAirtable(tableName, record) {
     await this.ensureCredentials();
     try {
-      const fields = {};
-      for (const [k, v] of Object.entries(record)) {
-        if (k.startsWith('_')) continue;
-        if (v === null || v === undefined) continue;
-        fields[k] = v;
-      }
+      const fields = this._serializeFields(record);
       
       const res = await fetch(`https://api.airtable.com/v0/${this.BASE_ID}/${tableName}`, {
         method: 'POST',
@@ -335,11 +367,7 @@ const S2W = {
         return;
       }
 
-      const fields = {};
-      for (const [k, v] of Object.entries(patch)) {
-        if (k.startsWith('_')) continue;
-        fields[k] = (v === null || v === undefined) ? '' : v;
-      }
+      const fields = this._serializeFields(patch);
 
       const res = await fetch(`https://api.airtable.com/v0/${this.BASE_ID}/${tableName}/${record._airtable_id}`, {
         method: 'PATCH',
@@ -406,7 +434,7 @@ const S2W = {
     for (const tableName of this.TABLES_LIST) {
       const records = await this.fetchAllFromAirtable(tableName);
       updatedCache[tableName] = records.map(r => {
-        const item = { ...r.fields, _airtable_id: r.id };
+        const item = this._deserializeFields({ ...r.fields, _airtable_id: r.id });
         if (tableName === 'messages' && item.is_read === undefined) item.is_read = false;
         if (tableName === 'alerts' && item.acknowledged === undefined) item.acknowledged = false;
         if (tableName === 'documents' && item.validated_by_employer === undefined) item.validated_by_employer = false;
@@ -455,7 +483,7 @@ const S2W = {
     for (const tableName of this.TABLES_LIST) {
       const records = await this.fetchAllFromAirtable(tableName);
       cache[tableName] = records.map(r => {
-        const item = { ...r.fields, _airtable_id: r.id };
+        const item = this._deserializeFields({ ...r.fields, _airtable_id: r.id });
         if (tableName === 'messages' && item.is_read === undefined) item.is_read = false;
         if (tableName === 'alerts' && item.acknowledged === undefined) item.acknowledged = false;
         if (tableName === 'documents' && item.validated_by_employer === undefined) item.validated_by_employer = false;
