@@ -390,9 +390,22 @@ const S2W = {
     await this.ensureCredentials();
     console.log('[S2W] Synchronisation depuis Airtable en cours...');
     const cache = this.get();
+    
+    // 1. Uploader les enregistrements locaux non synchronisés (qui n'ont pas de _airtable_id)
+    for (const tableName of this.TABLES_LIST) {
+      const localRecords = cache[tableName] || [];
+      for (const r of localRecords) {
+        if (!r._airtable_id) {
+          await this.insertToAirtable(tableName, r);
+        }
+      }
+    }
+    
+    // 2. Télécharger les derniers enregistrements distants
+    const updatedCache = this.get(); // Re-lire le cache mis à jour avec les nouveaux _airtable_id
     for (const tableName of this.TABLES_LIST) {
       const records = await this.fetchAllFromAirtable(tableName);
-      cache[tableName] = records.map(r => {
+      updatedCache[tableName] = records.map(r => {
         const item = { ...r.fields, _airtable_id: r.id };
         if (tableName === 'messages' && item.is_read === undefined) item.is_read = false;
         if (tableName === 'alerts' && item.acknowledged === undefined) item.acknowledged = false;
@@ -400,7 +413,7 @@ const S2W = {
         return item;
       });
     }
-    this.set(cache);
+    this.set(updatedCache);
     console.log('[S2W] Synchronisation Airtable terminée ✓');
   },
 

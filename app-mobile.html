@@ -950,43 +950,83 @@
 
   <script>
   /* ─── INIT ─────────────────────────────────────────────────────────── */
-  document.addEventListener('DOMContentLoaded', async () => {
-    await S2W.init();
+  function checkAirtableConfig() {
+    const token = localStorage.getItem('s2w_airtable_token');
+    const baseId = localStorage.getItem('s2w_airtable_base_id');
+    const warningBanner = document.getElementById('airtable-warning-banner');
     
-    // S'assurer que le profil chauffeur de démo (usr_001) existe dans la base vide
-    let user = S2W.find('users', 'usr_001');
-    if (!user) {
-      user = {
-        id: 'usr_001',
-        email: 'chauffeur@start2way.com',
-        first_name: 'Chauffeur',
-        last_name: 'Démo',
-        license_category: 'PL',
-        phone: '06 00 00 00 00',
-        status: 'actif',
-        created_at: new Date().toISOString()
-      };
-      S2W.push('users', user);
+    if (!token || !baseId) {
+      if (!warningBanner) {
+        const banner = document.createElement('div');
+        banner.id = 'airtable-warning-banner';
+        banner.style = 'background:#FFF3CD;color:#856404;padding:12px 20px;font-size:13px;font-family:sans-serif;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #FFEBAA;cursor:pointer;position:sticky;top:0;z-index:99999;';
+        banner.innerHTML = `
+          <span>⚠️ Configuration Airtable manquante — cliquez ici pour connecter la base de données.</span>
+          <button style="background:#856404;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">Configurer</button>
+        `;
+        banner.onclick = async () => {
+          const success = await S2W.ensureCredentials();
+          if (success) {
+            banner.remove();
+            showMobToast('Airtable configuré avec succès ! Connexion en cours...');
+            location.reload();
+          }
+        };
+        document.body.insertBefore(banner, document.body.firstChild);
+      }
+    } else {
+      if (warningBanner) warningBanner.remove();
     }
+  }
 
+  document.addEventListener('DOMContentLoaded', async () => {
     updateMobTime();
     setInterval(updateMobTime, 10000);
     // Date picker feuillet
     const dp = document.getElementById('feuillet-date-picker');
     if (dp) dp.value = '2026-08-15';
 
-    updateNavigationUI(user);
-    if (user && !user.company_id) {
-      switchTab('profil');
-    } else {
-      checkUnsignedFeuillets();
-    }
-    // Démarrer le polling 15s
-    setInterval(() => {
-      if (_isOnline) {
-        triggerSyncPush();
+    checkAirtableConfig();
+
+    (async () => {
+      try {
+        await S2W.init();
+        const banner = document.getElementById('airtable-warning-banner');
+        if (banner) banner.remove();
+
+        // S'assurer que le profil chauffeur de démo (usr_001) existe dans la base vide
+        let user = S2W.find('users', 'usr_001');
+        if (!user) {
+          user = {
+            id: 'usr_001',
+            email: 'chauffeur@start2way.com',
+            first_name: 'Chauffeur',
+            last_name: 'Démo',
+            license_category: 'PL',
+            phone: '06 00 00 00 00',
+            status: 'actif',
+            created_at: new Date().toISOString()
+          };
+          S2W.push('users', user);
+        }
+
+        updateNavigationUI(user);
+        if (user && !user.company_id) {
+          switchTab('profil');
+        } else {
+          checkUnsignedFeuillets();
+        }
+
+        // Démarrer le polling 15s
+        setInterval(() => {
+          if (_isOnline) {
+            triggerSyncPush();
+          }
+        }, 15000);
+      } catch (e) {
+        console.error("Erreur d'initialisation de la base mobile :", e);
       }
-    }, 15000);
+    })();
   });
 
   let _isOnline = true;

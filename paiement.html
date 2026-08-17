@@ -353,27 +353,34 @@
       document.getElementById('loading-overlay').style.display = 'block';
 
       // Simuler l'enregistrement dans localStorage après 2 secondes
-      setTimeout(() => {
+      setTimeout(async () => {
         // Enregistrer la nouvelle entreprise dans localStorage
         if (tempData.legal_name) {
-          // On initialise la base de données S2W
-          S2W.init(); 
+          const cache = S2W.get();
+          if (!cache.companies) cache.companies = [];
           
-          // Récupérer les entreprises existantes
-          const companies = S2W.table('companies');
+          const newCompany = {
+            id: 'cmp_001',
+            legal_name: tempData.legal_name,
+            trade_name: tempData.trade_name || tempData.legal_name,
+            legal_form: tempData.legal_form,
+            siret: tempData.siret,
+            address: tempData.address,
+            iban: tempData.iban,
+            bic: tempData.bic
+          };
           
-          // Mettre à jour la première entreprise existante (démo) avec ces détails
-          if (companies.length > 0) {
-            const current = companies[0];
-            current.legal_name = tempData.legal_name;
-            current.trade_name = tempData.trade_name;
-            current.legal_form = tempData.legal_form;
-            current.siret      = tempData.siret;
-            current.address    = tempData.address;
-            current.iban       = tempData.iban; // Simulé
-            current.bic        = tempData.bic;
-            S2W.update('companies', current.id, current);
+          // Chiffrer l'IBAN si possible
+          if (typeof S2W.encryptIbanEnvelope === 'function') {
+            try {
+              newCompany.iban = await S2W.encryptIbanEnvelope(tempData.iban);
+            } catch (err) {
+              console.warn("Erreur de chiffrement de l'IBAN :", err);
+            }
           }
+          
+          cache.companies.push(newCompany);
+          S2W.set(cache);
         }
 
         // Nettoyer sessionStorage

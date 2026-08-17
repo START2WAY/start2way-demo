@@ -556,15 +556,58 @@
   let _activePage = 'dashboard';
   let _pollingInterval = null;
 
+  function checkAirtableConfig() {
+    const token = localStorage.getItem('s2w_airtable_token');
+    const baseId = localStorage.getItem('s2w_airtable_base_id');
+    const warningBanner = document.getElementById('airtable-warning-banner');
+    
+    if (!token || !baseId) {
+      if (!warningBanner) {
+        const banner = document.createElement('div');
+        banner.id = 'airtable-warning-banner';
+        banner.style = 'background:#FFF3CD;color:#856404;padding:12px 20px;font-size:13px;font-family:sans-serif;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #FFEBAA;cursor:pointer;position:sticky;top:0;z-index:99999;';
+        banner.innerHTML = `
+          <span>⚠️ Configuration Airtable manquante — cliquez ici pour connecter la base de données.</span>
+          <button style="background:#856404;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">Configurer</button>
+        `;
+        banner.onclick = async () => {
+          const success = await S2W.ensureCredentials();
+          if (success) {
+            banner.remove();
+            showToast('Airtable configuré avec succès ! Connexion en cours...', 'success');
+            await S2W.init();
+            updateCompanyUI();
+            switchPage(_activePage);
+          }
+        };
+        document.body.insertBefore(banner, document.body.firstChild);
+      }
+    } else {
+      if (warningBanner) warningBanner.remove();
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', async () => {
-    await S2W.init();
     updateClock();
     setInterval(updateClock, 10000);
-    updateCompanyUI();
-    checkEmployerMidnightAutoCut();
-    updateUnreadMessageBadge();
     switchPage('dashboard');
-    startPagePolling();
+
+    checkAirtableConfig();
+
+    (async () => {
+      try {
+        await S2W.init();
+        const banner = document.getElementById('airtable-warning-banner');
+        if (banner) banner.remove();
+        updateCompanyUI();
+        checkEmployerMidnightAutoCut();
+        updateUnreadMessageBadge();
+        switchPage(_activePage);
+        startPagePolling();
+      } catch (e) {
+        console.error("Erreur d'initialisation de la base :", e);
+      }
+    })();
   });
 
   function checkEmployerMidnightAutoCut() {
@@ -1928,10 +1971,10 @@
       `;
     });
 
-    w.document.write(\`
+    w.document.write(`
       <html>
         <head>
-          <title>Rapport DREAL - \${S2WUtils.fullName(driver)} - \${r.month}</title>
+          <title>Rapport DREAL - ${S2WUtils.fullName(driver)} - ${r.month}</title>
           <style>
             @media print {
               body { margin: 0; padding: 0; background: none; }
@@ -1946,13 +1989,13 @@
         </head>
         <body>
           <div class="no-print-bar no-print">
-            <span style="font-size:14px;font-weight:bold">Rapport DREAL : \${S2WUtils.fullName(driver)} (\${r.month})</span>
+            <span style="font-size:14px;font-weight:bold">Rapport DREAL : ${S2WUtils.fullName(driver)} (${r.month})</span>
             <button class="btn" onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button>
           </div>
-          \${pagesHtml}
+          ${pagesHtml}
         </body>
       </html>
-    \`);
+    `);
     w.document.close();
   }
 
