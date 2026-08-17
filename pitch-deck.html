@@ -12,8 +12,8 @@
     :root {
       --navy:       #0D2242;
       --navy-light: #1a3460;
-      --amber:      #009A44;
-      --amber-light:#26B462;
+      --brand-green:      #009A44;
+      --brand-green-light:#26B462;
       --paper:      #F8F6F3;
       --white:      #FFFFFF;
       --text-main:  #1A1A1A;
@@ -43,7 +43,7 @@
       color: var(--white); display: flex; align-items: center; gap: 10px;
     }
     .nav-logo {
-      width: 32px; height: 32px; background: var(--amber); border-radius: 8px;
+      width: 32px; height: 32px; background: var(--brand-green); border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 800; color: var(--white);
     }
@@ -55,19 +55,19 @@
       cursor: pointer; transition: all 0.2s;
     }
     .act-btn:hover   { background: rgba(255,255,255,0.18); color: var(--white); }
-    .act-btn.current { background: var(--amber); color: var(--white); }
+    .act-btn.current { background: var(--brand-green); color: var(--white); }
     .nav-cta {
-      background: var(--amber); color: var(--white); border: none;
+      background: var(--brand-green); color: var(--white); border: none;
       border-radius: 8px; padding: 8px 20px;
       font-family: var(--font-head); font-size: 13px; font-weight: 600;
       cursor: pointer; transition: background 0.2s; white-space: nowrap;
     }
-    .nav-cta:hover { background: var(--amber-light); }
+    .nav-cta:hover { background: var(--brand-green-light); }
     .progress-line {
       position: fixed; top: 56px; left: 0; right: 0; height: 3px;
       background: rgba(255,255,255,0.1); z-index: 100;
     }
-    .progress-fill { height: 100%; background: var(--amber); transition: width 0.3s; }
+    .progress-fill { height: 100%; background: var(--brand-green); transition: width 0.3s; }
 
     /* ─── SLIDE ──────────────────────────────────────────────────────── */
     .slide {
@@ -81,14 +81,14 @@
     .hero-eyebrow {
       font-family: var(--font-head); font-size: 12px; font-weight: 600;
       letter-spacing: 2px; text-transform: uppercase;
-      color: var(--amber); margin-bottom: 20px;
+      color: var(--brand-green); margin-bottom: 20px;
     }
     .hero-title {
       font-family: var(--font-head); font-size: clamp(36px, 6vw, 64px);
       font-weight: 800; color: var(--white); line-height: 1.1;
       margin-bottom: 16px;
     }
-    .hero-title em { color: var(--amber); font-style: normal; }
+    .hero-title em { color: var(--brand-green); font-style: normal; }
     .hero-sub {
       font-size: 18px; color: rgba(255,255,255,0.65); max-width: 580px;
       line-height: 1.6; margin-bottom: 48px;
@@ -104,14 +104,14 @@
     .lic-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .lic-title-block h4 { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: var(--white); }
     .lic-title-block p  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
-    .lic-stamp { background: rgba(201,146,47,0.2); border: 1px solid var(--amber); color: var(--amber); font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; font-family: var(--font-head); letter-spacing: 1px; }
+    .lic-stamp { background: rgba(201,146,47,0.2); border: 1px solid var(--brand-green); color: var(--brand-green); font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; font-family: var(--font-head); letter-spacing: 1px; }
     .lic-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; }
     .lic-cell { background: rgba(255,255,255,0.04); padding: 8px 6px; text-align: center; }
     .lic-cell.header { background: rgba(201,146,47,0.15); }
-    .lic-cell-label { font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--amber); }
+    .lic-cell-label { font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--brand-green); }
     .lic-cell-val   { font-size: 12px; color: rgba(255,255,255,0.7); margin-top: 4px; }
     .lic-row-date   { grid-column: 1/-1; background: rgba(255,255,255,0.02); padding: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
-    .lic-x { color: var(--amber); font-weight: 700; font-size: 14px; }
+    .lic-x { color: var(--brand-green); font-weight: 700; font-size: 14px; }
 
     /* Problèmes cards */
     .problems-grid {
@@ -131,7 +131,7 @@
     /* Chiffres-clés */
     .kpi-row { display: flex; gap: 24px; flex-wrap: wrap; }
     .kpi-stat { text-align: center; }
-    .kpi-num  { font-family: var(--font-head); font-size: 36px; font-weight: 800; color: var(--amber); }
+    .kpi-num  { font-family: var(--font-head); font-size: 36px; font-weight: 800; color: var(--brand-green); }
     .kpi-lbl  { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; max-width: 130px; line-height: 1.3; }
 
     /* ─── SLIDE 2 : SOLUTION ─────────────────────────────────────────── */
@@ -139,7 +139,7 @@
     .solution-header { text-align: center; margin-bottom: 48px; }
     .solution-eyebrow {
       font-family: var(--font-head); font-size: 12px; font-weight: 600;
-      letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 12px;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--brand-green); margin-bottom: 12px;
     }
     .solution-title {
       font-family: var(--font-head); font-size: clamp(28px, 4vw, 48px);
@@ -165,9 +165,9 @@
       font-family: var(--font-head); font-size: 14px; font-weight: 600;
       transition: background 0.2s;
     }
-    .cta-card:hover .cta-link { background: var(--amber); }
-    .cta-card.mobile-card .cta-link { background: var(--amber); }
-    .cta-card.mobile-card:hover .cta-link { background: var(--amber-light); }
+    .cta-card:hover .cta-link { background: var(--brand-green); }
+    .cta-card.mobile-card .cta-link { background: var(--brand-green); }
+    .cta-card.mobile-card:hover .cta-link { background: var(--brand-green-light); }
 
     /* Accordéon guide démo */
     .demo-guide { margin-bottom: 48px; }
@@ -226,7 +226,7 @@
     .offer-left { }
     .offer-eyebrow {
       font-family: var(--font-head); font-size: 12px; font-weight: 600;
-      letter-spacing: 2px; text-transform: uppercase; color: var(--amber); margin-bottom: 16px;
+      letter-spacing: 2px; text-transform: uppercase; color: var(--brand-green); margin-bottom: 16px;
     }
     .offer-title {
       font-family: var(--font-head); font-size: clamp(28px, 4vw, 46px);
@@ -245,7 +245,7 @@
       padding: 14px 16px; cursor: pointer; transition: background 0.2s;
     }
     .diff-header:hover { background: rgba(255,255,255,0.04); }
-    .diff-check { color: var(--amber); font-size: 16px; flex-shrink: 0; }
+    .diff-check { color: var(--brand-green); font-size: 16px; flex-shrink: 0; }
     .diff-label { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--white); flex: 1; }
     .diff-chevron { font-size: 12px; color: rgba(255,255,255,0.4); transition: transform 0.3s; }
     .diff-item.open .diff-chevron { transform: rotate(180deg); }
@@ -258,7 +258,7 @@
       box-shadow: 0 24px 64px rgba(0,0,0,0.3);
     }
     .pricing-badge {
-      background: rgba(201,146,47,0.15); color: var(--amber);
+      background: rgba(201,146,47,0.15); color: var(--brand-green);
       font-family: var(--font-head); font-size: 12px; font-weight: 700;
       letter-spacing: 1px; padding: 4px 14px; border-radius: 20px;
       text-transform: uppercase; display: inline-block; margin-bottom: 16px;
@@ -279,11 +279,11 @@
     .pilot-check { color: var(--success); font-weight: 700; }
     .pricing-cta {
       display: block; width: 100%; padding: 14px;
-      background: var(--amber); color: var(--white); border: none; border-radius: 10px;
+      background: var(--brand-green); color: var(--white); border: none; border-radius: 10px;
       font-family: var(--font-head); font-size: 16px; font-weight: 700;
       cursor: pointer; transition: background 0.2s; text-align: center; text-decoration: none;
     }
-    .pricing-cta:hover { background: var(--amber-light); }
+    .pricing-cta:hover { background: var(--brand-green-light); }
     .pricing-cta-sec {
       display: block; width: 100%; padding: 11px; margin-top: 10px;
       background: transparent; color: var(--navy); border: 1px solid rgba(13,34,66,0.2);
@@ -303,7 +303,7 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 14px;
     }
-    .pilot-slot.taken { background: var(--amber); }
+    .pilot-slot.taken { background: var(--brand-green); }
     .pilot-slot-label { font-size: 13px; color: var(--text-sec); }
 
     /* ─── FOOTER ──────────────────────────────────────────────────────── */
@@ -314,10 +314,10 @@
     .footer-brand { font-family: var(--font-head); font-size: 20px; font-weight: 700; color: var(--white); margin-bottom: 8px; }
     .footer-contact { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 16px; }
     .footer-email {
-      color: var(--amber); font-weight: 600; text-decoration: none;
+      color: var(--brand-green); font-weight: 600; text-decoration: none;
       border-bottom: 1px solid rgba(201,146,47,0.4); transition: border-color 0.2s;
     }
-    .footer-email:hover { border-bottom-color: var(--amber); }
+    .footer-email:hover { border-bottom-color: var(--brand-green); }
     .footer-legal { font-size: 11px; color: rgba(255,255,255,0.3); line-height: 1.5; max-width: 600px; margin: 0 auto; }
 
     /* ─── KEYBOARD HINT ──────────────────────────────────────────────── */
@@ -560,7 +560,7 @@
             <div class="acc-header" onclick="toggleAcc('acc-web')" role="button" tabindex="0"
               aria-expanded="false" onkeydown="if(event.key==='Enter')toggleAcc('acc-web')">
               <div class="acc-header-left">
-                <span class="acc-badge" style="background:var(--amber)">💻 Web</span>
+                <span class="acc-badge" style="background:var(--brand-green)">💻 Web</span>
                 <span class="acc-header-title">Scénario employeur — Jean Dupont (AMT Transport)</span>
               </div>
               <span class="acc-chevron" aria-hidden="true">▼</span>
@@ -628,7 +628,7 @@
         <div class="offer-left">
           <div class="offer-eyebrow">Acte 3 — L'offre</div>
           <h2 class="offer-title" id="s3-title">
-            5 entreprises pilotes.<br>6 mois <em style="color:var(--amber);font-style:normal">offerts.</em>
+            5 entreprises pilotes.<br>6 mois <em style="color:var(--brand-green);font-style:normal">offerts.</em>
           </h2>
           <p class="offer-sub">
             Je cherche des entreprises de transport volontaires pour tester

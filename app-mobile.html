@@ -17,8 +17,8 @@
       --navy:        #0D2242;
       --navy-light:  #1a3460;
       --navy-dark:   #07162b;
-      --amber:       #009A44;
-      --amber-light: #26B462;
+      --brand-green:       #009A44;
+      --brand-green-light: #26B462;
       --paper:       #F8F6F3;
       --white:       #FFFFFF;
       --text-main:   #1A1A1A;
@@ -92,7 +92,7 @@
     .app-brand { display: flex; align-items: center; gap: 10px; }
     .app-logo {
       width: 32px; height: 32px;
-      background: var(--amber);
+      background: var(--brand-green);
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--white);
@@ -112,7 +112,7 @@
     .icon-btn:active { transform: scale(0.95); }
     .notif-dot {
       width: 8px; height: 8px;
-      background: var(--amber);
+      background: var(--brand-green);
       border-radius: 50%;
       position: absolute; top: 6px; right: 6px;
       border: 2px solid var(--navy);
@@ -189,7 +189,7 @@
     .timer-cat-badge {
       font-size: 11px; font-weight: 700; font-family: var(--font-head);
       padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
-      background: rgba(201,146,47,0.25); color: var(--amber-light);
+      background: rgba(201,146,47,0.25); color: var(--brand-green-light);
     }
     .timer-display {
       font-family: var(--font-head); font-size: 52px; font-weight: 300;
@@ -257,7 +257,7 @@
       color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.5px;
     }
     .section-link {
-      font-size: 12px; color: var(--amber); font-weight: 600; cursor: pointer;
+      font-size: 12px; color: var(--brand-green); font-weight: 600; cursor: pointer;
       text-decoration: none;
     }
     .timeline-bar {
@@ -319,7 +319,7 @@
       position: relative;
     }
     .nav-tab:hover { color: var(--navy); }
-    .nav-tab.active { color: var(--navy); border-top-color: var(--amber); }
+    .nav-tab.active { color: var(--navy); border-top-color: var(--brand-green); }
     .nav-tab-icon { font-size: 20px; }
 
     /* ─── TAB CONTENT PAGES ──────────────────────────────────────────── */
@@ -364,7 +364,7 @@
     }
     .sheet-option:hover { border-color: var(--navy); background: var(--muted); }
     .sheet-option.selected { border-color: var(--navy); background: var(--navy); }
-    .sheet-option.selected .option-letter { background: var(--amber); }
+    .sheet-option.selected .option-letter { background: var(--brand-green); }
     .sheet-option.selected .option-label,
     .sheet-option.selected .option-desc { color: var(--white); }
     .option-letter {
@@ -509,7 +509,7 @@
     }
     .profil-avatar {
       width: 72px; height: 72px; border-radius: 50%;
-      background: var(--amber); display: flex; align-items: center; justify-content: center;
+      background: var(--brand-green); display: flex; align-items: center; justify-content: center;
       font-family: var(--font-head); font-size: 24px; font-weight: 700; color: var(--white);
       border: 3px solid rgba(255,255,255,0.2);
     }
@@ -881,7 +881,7 @@
               <label class="form-label" for="activation-code" style="font-weight:600;font-size:13px;color:var(--navy);display:block;margin-bottom:6px">Code d'invitation *</label>
               <input type="text" id="activation-code" class="form-control" placeholder="Ex: INV-AMT-2026-XXXX" style="text-transform:uppercase;font-family:monospace;letter-spacing:1px;font-weight:600">
             </div>
-            <button class="btn-action-primary" onclick="submitActivationCode()" style="background:var(--amber);color:var(--navy);font-weight:600;padding:12px;border-radius:8px;border:none;width:100%;font-size:14px;cursor:pointer">Valider le code d'activation</button>
+            <button class="btn-action-primary" onclick="submitActivationCode()" style="background:var(--brand-green);color:var(--navy);font-weight:600;padding:12px;border-radius:8px;border:none;width:100%;font-size:14px;cursor:pointer">Valider le code d'activation</button>
           </div>
         </div>
         <div style="height:16px"></div>
@@ -902,7 +902,7 @@
           </div>
           <div style="padding:8px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--surface)">
             <input type="text" id="support-chat-input" class="form-control" placeholder="Posez votre question..." style="flex:1" onkeydown="if(event.key==='Enter') sendSupportChatMessage()">
-            <button class="btn-action-primary" onclick="sendSupportChatMessage()" style="background:var(--amber);border:none;border-radius:8px;padding:8px 16px;color:var(--navy);font-weight:600;font-size:13px;cursor:pointer">Envoyer</button>
+            <button class="btn-action-primary" onclick="sendSupportChatMessage()" style="background:var(--brand-green);border:none;border-radius:8px;padding:8px 16px;color:var(--navy);font-weight:600;font-size:13px;cursor:pointer">Envoyer</button>
           </div>
         </div>
       </div>
@@ -2718,7 +2718,7 @@
 
         <div style="display:flex;gap:12px;margin-top:20px">
           <button onclick="closeCorrectionModal()" style="flex:1;background:#ECEFF1;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Annuler</button>
-          <button onclick="submitCorrectionFeuillet()" style="flex:1;background:var(--amber);color:var(--navy);border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Enregistrer</button>
+          <button onclick="submitCorrectionFeuillet()" style="flex:1;background:var(--brand-green);color:var(--navy);border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:600;cursor:pointer">Enregistrer</button>
         </div>
       </div>
     `;
