@@ -952,13 +952,29 @@
   /* ─── INIT ─────────────────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', async () => {
     await S2W.init();
+    
+    // S'assurer que le profil chauffeur de démo (usr_001) existe dans la base vide
+    let user = S2W.find('users', 'usr_001');
+    if (!user) {
+      user = {
+        id: 'usr_001',
+        email: 'chauffeur@start2way.com',
+        first_name: 'Chauffeur',
+        last_name: 'Démo',
+        license_category: 'PL',
+        phone: '06 00 00 00 00',
+        status: 'actif',
+        created_at: new Date().toISOString()
+      };
+      S2W.push('users', user);
+    }
+
     updateMobTime();
     setInterval(updateMobTime, 10000);
     // Date picker feuillet
     const dp = document.getElementById('feuillet-date-picker');
     if (dp) dp.value = '2026-08-15';
 
-    const user = S2W.find('users', 'usr_001');
     updateNavigationUI(user);
     if (user && !user.company_id) {
       switchTab('profil');

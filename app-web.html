@@ -625,7 +625,7 @@
 
   function startPagePolling() {
     if (_pollingInterval) clearInterval(_pollingInterval);
-    _pollingInterval = setInterval(() => {
+    _pollingInterval = setInterval(async () => {
       const main = document.getElementById('main-content');
       if (!main) return;
 
@@ -648,6 +648,8 @@
         dot.style.background = '#ED6C02';
         txt.textContent = 'Sync... ⏳';
       }
+
+      await S2W.syncFromAirtable();
 
       setTimeout(() => {
         const builders = {
