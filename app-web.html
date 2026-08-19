@@ -452,12 +452,12 @@
     }
   
     /* Logo theme adaptation rules */
-    .logo-on-light img {
-      content: url("logo-dark.png");
-    }
-    .logo-on-dark img {
-      content: url("logo.png");
-    }
+    .logo-light-bg { display: none; }
+    .logo-dark-bg { display: block; }
+    .logo-on-light .logo-light-bg { display: block !important; }
+    .logo-on-light .logo-dark-bg { display: none !important; }
+    .logo-on-dark .logo-light-bg { display: none !important; }
+    .logo-on-dark .logo-dark-bg { display: block !important; }
 </style>
 </head>
 <body>
@@ -465,7 +465,7 @@
   <aside class="sidebar" role="navigation" aria-label="Menu principal">
     <div class="sidebar-header">
       <div class="sidebar-logo logo-on-dark">
-        <img src="logo.png" alt="START2WAY" style="height: 52px; display: block; margin: 0 auto;">
+        <img src="logo.png" class="logo-dark-bg" alt="START2WAY" style="height: 52px; display: block;"><img src="logo-dark.png" class="logo-light-bg" alt="START2WAY" style="height: 52px; display: block;">
       </div>
       <div class="sidebar-company" id="sb-company-name">AMT Transport</div>
     </div>

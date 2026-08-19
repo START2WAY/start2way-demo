@@ -580,12 +580,12 @@
     .filter-btn.active { background: var(--navy); color: white; }
   
     /* Logo theme adaptation rules */
-    .logo-on-light img {
-      content: url("logo-dark.png");
-    }
-    .logo-on-dark img {
-      content: url("logo.png");
-    }
+    .logo-light-bg { display: none; }
+    .logo-dark-bg { display: block; }
+    .logo-on-light .logo-light-bg { display: block !important; }
+    .logo-on-light .logo-dark-bg { display: none !important; }
+    .logo-on-dark .logo-light-bg { display: none !important; }
+    .logo-on-dark .logo-dark-bg { display: block !important; }
 </style>
 </head>
 <body>
@@ -602,7 +602,7 @@
     <!-- APP HEADER -->
     <header class="app-header">
       <div class="app-brand logo-on-dark">
-        <img src="logo.png" alt="START2WAY" style="height: 30px; display: block;">
+        <img src="logo.png" class="logo-dark-bg" alt="START2WAY" style="height: 30px; display: block;"><img src="logo-dark.png" class="logo-light-bg" alt="START2WAY" style="height: 30px; display: block;">
       </div>
       <div class="header-actions">
         <button id="net-toggle-btn" onclick="toggleNetworkStatus()" title="Simuler l'état du réseau" style="font-size:11px;display:flex;align-items:center;gap:4px;background:#ECEFF1;padding:4px 8px;border-radius:20px;border:1px solid #CFD8DC;font-weight:bold;color:#37474F;cursor:pointer">

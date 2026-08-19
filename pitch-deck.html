@@ -341,12 +341,12 @@
     }
   
     /* Logo theme adaptation rules */
-    .logo-on-light img {
-      content: url("logo-dark.png");
-    }
-    .logo-on-dark img {
-      content: url("logo.png");
-    }
+    .logo-light-bg { display: none; }
+    .logo-dark-bg { display: block; }
+    .logo-on-light .logo-light-bg { display: block !important; }
+    .logo-on-light .logo-dark-bg { display: none !important; }
+    .logo-on-dark .logo-light-bg { display: none !important; }
+    .logo-on-dark .logo-dark-bg { display: block !important; }
 </style>
 </head>
 <body>
@@ -354,7 +354,7 @@
   <!-- PROGRESS NAV -->
   <nav class="progress-nav" aria-label="Navigation présentation">
     <div class="nav-brand logo-on-dark">
-      <img src="logo.png" alt="START2WAY" style="height: 30px; display: block;">
+      <img src="logo.png" class="logo-dark-bg" alt="START2WAY" style="height: 30px; display: block;"><img src="logo-dark.png" class="logo-light-bg" alt="START2WAY" style="height: 30px; display: block;">
     </div>
     <div class="nav-acts" role="list">
       <button class="act-btn current" id="act-1" onclick="scrollToSlide(1)" role="listitem">① Le problème</button>
