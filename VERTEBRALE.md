@@ -4,6 +4,7 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
 
 ## Règles Méthodologiques de Communication
 - **Captures d'écran :** Pour toute capture d'écran ou média destiné à la validation utilisateur, l'agent doit copier le fichier dans le dépôt local (sous `docs/screenshots/`), le commiter et le pousser, puis transmettre le lien public direct `raw.githubusercontent.com`. Les chemins locaux absolus sont proscrits.
+- **Cache-busting CDN :** Toujours ajouter un paramètre de cache-busting (`?v=timestamp` ou `?v=numéro incrémental`) à la fin de chaque lien `raw.githubusercontent.com` envoyé pour une capture d'écran, afin d'éviter que le cache CDN de 5 minutes de GitHub ne serve une ancienne version de l'image.
 
 ---
 
