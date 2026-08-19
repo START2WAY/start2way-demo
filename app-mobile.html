@@ -772,16 +772,35 @@
         <div style="height:16px"></div>
       </div>
 
-      <!-- ═══════ ONGLET ARCHIVES ═══════ -->
-      <div class="tab-page" id="tab-archives" role="tabpanel" aria-labelledby="tab-btn-archives">
+      <!-- ═══════ ONGLET HISTORIQUE ═══════ -->
+      <div class="tab-page" id="tab-historique" role="tabpanel" aria-labelledby="tab-btn-historique">
         <div class="page-header-inner">
-          <div class="page-title-inner">Archives</div>
-          <div class="page-sub-inner">Documents officiels et rapports de tournée</div>
+          <div class="page-title-inner">Historique</div>
+          <div class="page-sub-inner">Suivi de conformité des 30 derniers jours</div>
+        </div>
+        <div style="padding:12px">
+          <div class="hist-search" style="margin-bottom:12px">
+            <input type="date" class="hist-date-input" id="hist-date-filter"
+              aria-label="Filtrer par date" oninput="filterHistorique(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px;">
+          </div>
+          <div class="hist-list" id="hist-list" role="list" aria-label="Historique des journées"></div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+      <!-- ═══════ SECTION ARCHIVES (HORS BARRE BASSE) ═══════ -->
+      <div class="tab-page" id="tab-archives" role="tabpanel" aria-labelledby="tab-btn-archives" style="background:var(--paper);">
+        <div class="page-header-inner" style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div class="page-title-inner">Archives</div>
+            <div class="page-sub-inner">Documents officiels et rapports de tournée</div>
+          </div>
+          <button onclick="switchTab('profil')" style="background:var(--navy);color:white;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">← Retour</button>
         </div>
         
         <div style="display:flex;margin:12px;gap:8px">
           <button class="filter-btn active" id="arch-tab-docs-btn" onclick="switchArchSubTab('docs')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px">Documents</button>
-          <button class="filter-btn" id="arch-tab-tours-btn" onclick="switchArchSubTab('tours')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px">Rapports</button>
+          <button class="filter-btn" id="arch-tab-tours-btn" onclick="switchArchSubTab('tours')" style="flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:8px">Rapports de Tournée</button>
         </div>
 
         <!-- Sub-onglet Documents -->
@@ -806,10 +825,10 @@
           </div>
 
           <div class="hist-search" style="margin-bottom:12px">
-            <input type="date" class="hist-date-input" id="hist-date-filter"
-              aria-label="Filtrer par date" oninput="filterHistorique(this.value)">
+            <input type="date" class="hist-date-input" id="arch-date-filter"
+              aria-label="Filtrer par date" oninput="filterHistorique(this.value)" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); font-size:13px;">
           </div>
-          <div class="hist-list" id="hist-list" role="list" aria-label="Historique des journées"></div>
+          <div class="hist-list" id="arch-tours-list" role="list" aria-label="Rapports de tournée"></div>
         </div>
         
         <div style="height:16px"></div>
@@ -894,8 +913,8 @@
         <span class="nav-tab-icon" aria-hidden="true">📋</span>
         Feuillet
       </button>
-      <button class="nav-tab" id="tab-btn-archives" role="tab"
-        aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
+      <button class="nav-tab" id="tab-btn-historique" role="tab"
+        aria-selected="false" aria-controls="tab-historique" onclick="switchTab('historique')">
         <span class="nav-tab-icon" aria-hidden="true">🗄</span>
         Historique
       </button>
@@ -1112,8 +1131,8 @@
           <span class="nav-tab-icon" aria-hidden="true">📋</span>
           Feuillet
         </button>
-        <button class="nav-tab" id="tab-btn-archives" role="tab"
-          aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
+        <button class="nav-tab" id="tab-btn-historique" role="tab"
+          aria-selected="false" aria-controls="tab-historique" onclick="switchTab('historique')">
           <span class="nav-tab-icon" aria-hidden="true">🗄</span>
           Historique
         </button>
@@ -1360,6 +1379,7 @@
       const dp = document.getElementById('feuillet-date-picker');
       renderFeuillet(dp ? dp.value : '2026-08-15');
     }
+    if (tab === 'historique') renderHistorique(true);
     if (tab === 'archives')   switchArchSubTab(_archSubTab);
     if (tab === 'profil')     renderProfil();
     if (tab === 'messagerie') renderDriverChat();
@@ -2272,16 +2292,28 @@
   /* ═══════════════════════════════════════════════════════════════════════
      ONGLET HISTORIQUE
      ═══════════════════════════════════════════════════════════════════════ */
-  function renderHistorique() {
-    const listEl = document.getElementById('hist-list');
+  function renderHistorique(simple = true) {
+    const listId = simple ? 'hist-list' : 'arch-tours-list';
+    const listEl = document.getElementById(listId);
     if (!listEl) return;
+    
+    const filterInput = document.getElementById(simple ? 'hist-date-filter' : 'arch-date-filter');
+    const filterVal = filterInput ? filterInput.value : '';
 
     const sessions = S2W.table('sessions') || [];
     const userSessionIds = sessions.filter(s => s.user_id === 'usr_001').map(s => s.id);
 
-    const feuillets = (S2W.table('feuillets') || [])
+    let feuillets = (S2W.table('feuillets') || [])
       .filter(f => userSessionIds.includes(f.session_id) || f.session_id?.startsWith('ses_ref') || f.session_id?.startsWith('ses_hist'))
       .sort((a,b) => (b.generated_at || '').localeCompare(a.generated_at || ''));
+
+    if (filterVal) {
+      feuillets = feuillets.filter(f => {
+        const sess = sessions.find(s => s.id === f.session_id);
+        const dateStr = sess?.date || f.generated_at?.slice(0,10) || '';
+        return dateStr === filterVal;
+      });
+    }
 
     const visibleFeuillets = feuillets.filter(f => !f.hidden_local);
 
@@ -2306,6 +2338,15 @@
       const signedLabel = f.signed_at ? 'Signé' : 'Non signé';
       const signedBadge = f.signed_at ? 'badge-success' : 'badge-danger';
 
+      const actionButtons = simple ? '' : `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:6px;border-top:1px solid #eee;padding-top:8px">
+          <button onclick="shareLocalFeuillet('${f.id}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Partager</button>
+          <button onclick="exportLocalFeuillet('${dateStr}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Export</button>
+          <button onclick="deleteLocalFeuillet('${f.id}')" style="background:#FFEBEE;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#C62828">Supprimer</button>
+          <button onclick="promptRepriseCode('${f.id}')" ${modDisabled} style="background:#FFF3E0;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#E65100">Modifier</button>
+        </div>
+      `;
+
       return `
         <div class="hist-item" role="listitem" tabindex="0" style="flex-direction:column;align-items:stretch;padding:12px;gap:8px"
           aria-label="Feuillet du ${dateLabel} — ${f.status === 'conforme' ? 'Conforme' : f.status === 'non_conforme' ? 'Non conforme' : 'En attente'}">
@@ -2325,15 +2366,15 @@
             </div>
           </div>
           ${correctionWatermark}
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:6px;border-top:1px solid #eee;padding-top:8px">
-            <button onclick="shareLocalFeuillet('${f.id}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Partager</button>
-            <button onclick="exportLocalFeuillet('${dateStr}')" style="background:#F5F5F5;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:var(--navy)">Export</button>
-            <button onclick="deleteLocalFeuillet('${f.id}')" style="background:#FFEBEE;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#C62828">Supprimer</button>
-            <button onclick="promptRepriseCode('${f.id}')" ${modDisabled} style="background:#FFF3E0;border:none;border-radius:6px;padding:6px;font-size:11px;cursor:pointer;font-weight:600;color:#E65100">Modifier</button>
-          </div>
+          ${actionButtons}
         </div>
       `;
     }).join('');
+  }
+
+  function filterHistorique(val) {
+    const isHistActive = document.getElementById('tab-historique').classList.contains('active');
+    renderHistorique(isHistActive);
   }
 
   function goToFeuillet(dateStr) {
@@ -2362,7 +2403,7 @@
       btnTours.classList.add('active');
       divDocs.style.display = 'none';
       divTours.style.display = '';
-      renderHistorique();
+      renderHistorique(false);
     }
   }
 
@@ -2828,6 +2869,12 @@
         <div class="profil-avatar" aria-hidden="true">${S2WUtils.initials(user)}</div>
         <div class="profil-name">${S2WUtils.fullName(user)}</div>
         <div class="profil-role">${user?.company_id ? ((isVL ? 'Conducteur VL' : 'Conducteur Poids Lourd') + ' — ' + (company?.trade_name || 'AMT')) : 'Conducteur — En attente d\'activation'}</div>
+      </div>
+
+      <div style="padding:0 16px; margin: 16px 0 8px;">
+        <button onclick="switchTab('archives')" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; font-weight:bold; font-size:13px; background:var(--navy); color:white; border:none; border-radius:10px; cursor:pointer; box-shadow:var(--shadow);">
+          📂 Consulter mes Archives (Docs, Rapports)
+        </button>
       </div>
 
       <div class="profil-section">

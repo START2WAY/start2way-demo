@@ -112,3 +112,13 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - Les 3 tableaux de codes affichent le contact (email/téléphone) en sous-texte sous le nom du salarié pour une identification facilitée.
 
 
+### VERTÈBRE 13 — Distinction Historique / Archives (App Salarié)
+- **Fichiers concernés :** `app-mobile.html`
+- **Règles :**
+  - **Historique :** Onglet simple accessible directement depuis la barre de navigation basse (3e position avant Profil). Il affiche uniquement la liste des 30 derniers jours de feuillets filtrables par date avec les totaux journaliers et les statuts de conformité et de signature. Aucun bouton d'action complexe ne doit y figurer.
+  - **Archives :** Section séparée accessible uniquement par un bouton dédié situé dans l'onglet **Profil**. Elle contient deux sous-onglets :
+    - *Documents* : Affichage et téléchargement des documents officiels (Permis, FCO/FIMO, visite médicale).
+    - *Rapports de Tournée* : Liste des feuillets d'activité journaliers avec les 4 boutons d'action complexes par ligne (Partager / Export / Supprimer / Modifier) ainsi que l'interface de génération et d'export du Rapport DREAL mensuel.
+
+
+
