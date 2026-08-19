@@ -136,7 +136,7 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - Remplace l'ancienne barre d'onglets et contient 3 éléments distincts :
       - *Gauche :* Icône roue dentée `⚙️` redirigeant vers le Profil/Paramètres.
       - *Centre :* Trait noir simulant l'indicateur d'accueil natif iPhone. Entièrement décoratif dans cette version démo. Note de développement obligatoire : *"À activer avec une vraie fonction de fermeture/minimisation native lors de la génération des builds .apk (Android) et iOS en fin de projet — actuellement décoratif uniquement."*
-      - *Droite :* Raccourci support chatbot technique `💬👤` redirigeant vers l'onglet support.
+      - *Droite :* Raccourci support chatbot technique `🤖` redirigeant vers l'onglet support.
 
 
 
