@@ -97,4 +97,9 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
   - **Token_Circuit (Planification/Optimisation) :** 7,99 €/mois HT (9,59 € TTC) pour les salariés 3e+, validité de 30 jours à compter de son activation par le conducteur.
   - **Jetons de lancement :** 2 Token_Invitation de lancement (`INV-AMT-LANCx`) et 2 Token_Circuit de lancement (`CIR-AMT-LANCx`) offerts sans limite de validité dès l'inscription.
   - **Règle de conversion :** Tous les calculs financiers utilisent la TVA française de 20%, appliquée sur les tarifs HT avant facturation TTC.
+  - **Affichage & Génération (Codes Générés) :** 
+    - 3 boutons distincts en haut pour générer les invitations, reprises et circuits (chacun avec popup de saisie/sélection du salarié).
+    - Bandeau de statut résumant les salariés inclus (max 2), salariés supplémentaires actifs (à +2,99€ HT/mois) et circuits actifs (à +7,99€ HT/mois).
+    - 3 tableaux distincts affichant le nom du salarié, le code, le statut et les dates clés (création, activation, expiration).
+
 

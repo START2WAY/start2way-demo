@@ -1043,21 +1043,54 @@
 
   function buildCodes(el) {
     const invs = S2W.table('invitations') || [];
+    const users = S2W.table('users') || [];
+    const reps = S2W.table('reprise_codes') || [];
     
+    // Calcul des statistiques de l'abonnement
+    const activeUsersCount = users.filter(u => u.role === 'salarie' && u.status === 'actif').length;
+    const bannerInclus = Math.min(2, activeUsersCount);
+    const bannerSupp = Math.max(0, activeUsersCount - 2);
+    const bannerSuppCost = bannerSupp * 2.99;
+    
+    // Calcul de l'optimisation Circuit
+    const activeCircuits = invs.filter(i => {
+      if (i.type !== 'circuit' || i.status !== 'used') return false;
+      if (i.expires_at === null || i.expires_at === 'null') return true;
+      return new Date(i.expires_at) > new Date();
+    });
+    const activeCircuitCount = activeCircuits.length;
+    const paidCircuits = Math.max(0, activeCircuitCount - 2);
+    const costCircuits = paidCircuits * 7.99;
+
     // Filtre des invitations
     const invitationInvs = invs.filter(i => i.type === 'invitation' || i.type === 'usage_unique' || !i.type);
     const invRows = invitationInvs.map(i => {
       const isExpired = i.expires_at ? new Date(i.expires_at) < new Date() : false;
-      const statLabel = i.status === 'used' ? 'Utilisé' : isExpired ? 'Expiré' : 'Actif';
-      const statClass = i.status === 'used' ? 'badge-muted' : isExpired ? 'badge-danger' : 'badge-success';
+      let statLabel = 'Actif';
+      let statClass = 'badge-success';
+      if (i.status === 'used') {
+        statLabel = 'Utilisé';
+        statClass = 'badge-muted';
+      } else if (isExpired) {
+        statLabel = 'Expiré';
+        statClass = 'badge-danger';
+      } else if (i.code.includes('LANC')) {
+        statLabel = 'En attente de liaison';
+        statClass = 'badge-warning';
+      }
+      
+      const u = i.used_by_user_id ? S2W.find('users', i.used_by_user_id) : null;
+      const salName = u ? S2WUtils.fullName(u) : (i.driver_name || (i.code.includes('LANC') ? 'En attente de liaison' : '—'));
       const expiryText = i.expires_at ? S2WUtils.fmtDatetime(i.expires_at) : 'Jamais (Offre)';
+      const createdText = i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—';
+      
       return `
         <tr>
+          <td><strong>${salName}</strong></td>
           <td style="font-family:monospace;font-weight:600">${i.code}</td>
-          <td>AMT Transport</td>
-          <td>${i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—'}</td>
-          <td>${expiryText}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
+          <td>${createdText}</td>
+          <td>${expiryText}</td>
         </tr>
       `;
     }).join('');
@@ -1066,31 +1099,40 @@
     const cirInvs = invs.filter(i => i.type === 'circuit');
     const cirRows = cirInvs.map(i => {
       const isExpired = i.expires_at ? new Date(i.expires_at) < new Date() : false;
-      const statLabel = i.status === 'used' ? 'Utilisé' : isExpired ? 'Expiré' : 'Actif';
-      const statClass = i.status === 'used' ? 'badge-muted' : isExpired ? 'badge-danger' : 'badge-success';
-      
-      let expiryText = '30j après activation';
-      if (i.expires_at) {
-        expiryText = S2WUtils.fmtDatetime(i.expires_at);
-      } else if (i.code.includes('LANC')) {
-        expiryText = 'Jamais (Offre)';
+      let statLabel = 'Actif';
+      let statClass = 'badge-success';
+      if (i.status === 'used') {
+        if (i.expires_at && isExpired) {
+          statLabel = 'Expiré';
+          statClass = 'badge-danger';
+        } else {
+          statLabel = 'Utilisé';
+          statClass = 'badge-muted';
+        }
       }
       
-      const usedBy = i.used_by_user_id ? (S2W.find('users', i.used_by_user_id) ? S2WUtils.fullName(S2W.find('users', i.used_by_user_id)) : i.used_by_user_id) : '—';
-      const usedDate = i.used_at ? S2WUtils.fmtDatetime(i.used_at) : '—';
+      const u = i.used_by_user_id ? S2W.find('users', i.used_by_user_id) : null;
+      const salName = u ? S2WUtils.fullName(u) : (i.driver_name || '—');
+      const createdText = i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—';
+      const usedText = i.used_at ? S2WUtils.fmtDatetime(i.used_at) : '—';
+      
+      let expiryText = '';
+      if (i.status === 'used') {
+        expiryText = i.expires_at ? S2WUtils.fmtDatetime(i.expires_at) : 'Jamais (Offre)';
+      }
       
       return `
         <tr>
+          <td><strong>${salName}</strong></td>
           <td style="font-family:monospace;font-weight:600">${i.code}</td>
-          <td>${usedBy}</td>
-          <td>${usedDate}</td>
-          <td>${expiryText}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
+          <td>${createdText}</td>
+          <td>${usedText}</td>
+          <td>${expiryText}</td>
         </tr>
       `;
     }).join('');
 
-    const reps = S2W.table('reprise_codes') || [];
     const repRows = reps.map(r => {
       const isExpired = new Date(r.expires_at) < new Date();
       const statLabel = r.status === 'used' ? 'Utilisé' : isExpired ? 'Expiré' : 'Actif';
@@ -1098,18 +1140,13 @@
       const u = S2W.find('users', r.user_id);
       const uName = u ? S2WUtils.fullName(u) : r.user_id;
       
-      // Trouver la date du feuillet ciblé
-      const f = S2W.find('feuillets', r.feuillet_id);
-      const targetLabel = f ? `Feuillet du ${S2WUtils.fmtDateShort(f.generated_at)}` : r.feuillet_id;
-      
       return `
         <tr>
+          <td><strong>${uName}</strong></td>
           <td style="font-family:monospace;font-weight:600">${r.code}</td>
-          <td>${uName}</td>
-          <td>${targetLabel}</td>
+          <td><span class="badge ${statClass}">${statLabel}</span></td>
           <td>${S2WUtils.fmtDatetime(r.created_at)}</td>
           <td>${S2WUtils.fmtDatetime(r.expires_at)}</td>
-          <td><span class="badge ${statClass}">${statLabel}</span></td>
         </tr>
       `;
     }).join('');
@@ -1122,24 +1159,36 @@
         </div>
       </div>
 
-      <!-- Section 1 : Codes d'Invitation (Token_Invitation) -->
-      <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px;margin-bottom:24px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes d'Invitation Conducteurs (Token_Invitation)</h2>
-            <span style="font-size:11px;color:var(--text-sec);">Permet aux conducteurs de lier leur compte. Tarif : 2,99 € HT / mois par jeton (3,59 € TTC).</span>
-          </div>
-          <button class="btn btn-brand-green btn-sm" onclick="showGenerateInvitationModal()">+ Générer Code Invitation</button>
+      <!-- 3 Boutons de génération distincts -->
+      <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="btn btn-brand-green" onclick="showGenerateInvitationModal()">🔑 Générer un Code Invitation</button>
+        <button class="btn btn-brand-green" onclick="showGenerateCodeRepriseModal()">🔑 Générer un Code Reprise</button>
+        <button class="btn btn-brand-green" onclick="showGenerateCircuitModal()">🔑 Générer un Code Circuit</button>
+      </div>
+
+      <!-- Bandeau de Statut d'Abonnement -->
+      <div style="background:#E3F2FD; border:1px solid #90CAF9; border-radius:8px; padding:12px 16px; margin-bottom:24px; font-size:13.5px; color:#0D2242; font-weight:500; text-align:left; display:flex; align-items:center; gap:8px;">
+        <span>📊</span>
+        <div>
+          <strong>Statut de l'abonnement :</strong> 
+          Salariés inclus : <strong>${bannerInclus}/2</strong> utilisés — 
+          Salariés supplémentaires actifs : <strong>${bannerSupp}</strong> (+${bannerSuppCost.toFixed(2).replace('.', ',')}€ HT/mois) — 
+          Circuit actif : <strong>${activeCircuitCount}</strong> salarié(s) (+${costCircuits.toFixed(2).replace('.', ',')}€ HT/mois)
         </div>
+      </div>
+
+      <!-- Section 1 : Codes d'Invitation -->
+      <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px;margin-bottom:24px">
+        <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0 0 16px 0;text-align:left;">Codes d'Invitation</h2>
         <div class="table-container" style="overflow-x:auto">
           <table class="table">
             <thead>
               <tr>
+                <th>Salarié</th>
                 <th>Code</th>
-                <th>Entreprise</th>
-                <th>Créé le</th>
-                <th>Expire le</th>
                 <th>Statut</th>
+                <th>Généré le</th>
+                <th>Expire le</th>
               </tr>
             </thead>
             <tbody>
@@ -1149,56 +1198,44 @@
         </div>
       </div>
 
-      <!-- Section 2 : Codes d'Activation Circuit (Token_Circuit) -->
+      <!-- Section 2 : Codes de Reprise -->
       <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px;margin-bottom:24px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes d'Activation Service Circuit (Token_Circuit)</h2>
-            <span style="font-size:11px;color:var(--text-sec);">Planification et optimisation de tournées. Tarif : 7,99 € HT / mois par jeton (9,59 € TTC).</span>
-          </div>
-          <button class="btn btn-brand-green btn-sm" onclick="showGenerateCircuitModal()">+ Activer Circuit</button>
-        </div>
+        <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0 0 16px 0;text-align:left;">Codes de Reprise (Correction)</h2>
         <div class="table-container" style="overflow-x:auto">
           <table class="table">
             <thead>
               <tr>
+                <th>Salarié</th>
                 <th>Code</th>
-                <th>Conducteur lié</th>
-                <th>Activé le</th>
-                <th>Date d'expiration</th>
                 <th>Statut</th>
+                <th>Généré le</th>
+                <th>Expire le</th>
               </tr>
             </thead>
             <tbody>
-              ${cirRows || '<tr><td colspan="5" style="text-align:center;color:var(--text-sec)">Aucun code d\'activation Circuit généré</td></tr>'}
+              ${repRows || '<tr><td colspan="5" style="text-align:center;color:var(--text-sec)">Aucun code de reprise généré</td></tr>'}
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Section 3 : Codes de Reprise (Token_Reprise) -->
+      <!-- Section 3 : Codes Circuit -->
       <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes de Reprise (Correction)</h2>
-            <span style="font-size:11px;color:var(--text-sec);">Toujours gratuit. Valable 24h. Limité aux feuillets des 6 derniers jours uniquement.</span>
-          </div>
-          <button class="btn btn-brand-green btn-sm" onclick="showGenerateCodeRepriseModal()">+ Générer Code Reprise</button>
-        </div>
+        <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0 0 16px 0;text-align:left;">Codes d'Activation Service Circuit (Token_Circuit)</h2>
         <div class="table-container" style="overflow-x:auto">
           <table class="table">
             <thead>
               <tr>
+                <th>Salarié</th>
                 <th>Code</th>
-                <th>Conducteur</th>
-                <th>Feuillet Ciblé</th>
-                <th>Créé le</th>
-                <th>Expire le</th>
                 <th>Statut</th>
+                <th>Généré le</th>
+                <th>Activé le</th>
+                <th>Expire le</th>
               </tr>
             </thead>
             <tbody>
-              ${repRows || '<tr><td colspan="6" style="text-align:center;color:var(--text-sec)">Aucun code de reprise généré</td></tr>'}
+              ${cirRows || '<tr><td colspan="6" style="text-align:center;color:var(--text-sec)">Aucun code d\'activation Circuit généré</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -1214,14 +1251,22 @@
         <h2 class="modal-title">Générer un Code d'Invitation (Payant)</h2>
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
-      <div style="padding:20px; text-align:center;">
-        <p style="font-size:15px; color:var(--navy); margin-bottom:16px; font-weight:500; line-height:1.4">
-          Générer un <strong>Token_Invitation</strong> pour un 3ᵉ salarié ajoutera <strong>2,99 €/salarié/mois HT (3,59 € TTC)</strong> à votre abonnement.
+      <div style="padding:20px;">
+        <p style="font-size:13px; color:var(--text-sec); margin-bottom:16px; text-align:left; line-height:1.4;">
+          Saisissez le nom du conducteur pour générer un code d'invitation unique.
         </p>
-        <div style="background:#F5F7F8; padding:12px; border-radius:8px; font-size:13px; color:var(--text-sec); margin-bottom:20px;">
-          Ce code d'activation sera valable pendant <strong>12 heures</strong> après sa génération.
+        <div class="form-group" style="text-align:left; margin-bottom:16px;">
+          <label class="form-label" for="inv-last-name">Nom *</label>
+          <input type="text" id="inv-last-name" class="form-control" placeholder="Ex: DUPONT" required style="text-transform:uppercase;">
         </div>
-        <div style="display:flex; gap:12px; justify-content:center;">
+        <div class="form-group" style="text-align:left; margin-bottom:16px;">
+          <label class="form-label" for="inv-first-name">Prénom *</label>
+          <input type="text" id="inv-first-name" class="form-control" placeholder="Ex: Martin" required>
+        </div>
+        <div style="background:#FFF3E0; border:1px solid #FFE0B2; padding:12px; border-radius:8px; font-size:13px; color:#E65100; margin-bottom:20px; text-align:left; line-height:1.4;">
+          ⚠️ <strong>Avis de facturation :</strong> Cette génération ajoutera <strong>2,99 € HT/mois (3,59 € TTC)</strong> à votre abonnement. Le code sera valable <strong>12 heures</strong>.
+        </div>
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
           <button class="btn btn-secondary" onclick="closeModal()" style="width:120px;">Annuler</button>
           <button class="btn btn-brand-green" onclick="confirmGenerateInvitation()" style="width:160px;">Confirmer & Payer</button>
         </div>
@@ -1231,6 +1276,12 @@
   }
 
   function confirmGenerateInvitation() {
+    const lastName = document.getElementById('inv-last-name')?.value.trim().toUpperCase();
+    const firstName = document.getElementById('inv-first-name')?.value.trim();
+    if (!lastName || !firstName) {
+      alert("Veuillez saisir le nom et le prénom du conducteur.");
+      return;
+    }
     closeModal();
     const code = 'INV-AMT-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
     const company = S2W.table('companies')[0] || { id: 'cmp_001' };
@@ -1241,6 +1292,7 @@
       code,
       company_id: company.id,
       type: 'invitation',
+      driver_name: firstName + ' ' + lastName,
       created_at: new Date().toISOString(),
       expires_at: expiresAt,
       used_at: null,
@@ -1254,28 +1306,62 @@
   function showGenerateCircuitModal() {
     const box = document.getElementById('modal-box');
     box.className = 'modal-box';
-    box.innerHTML = `
-      <div class="modal-header">
-        <h2 class="modal-title">Générer un Code Circuit (Payant)</h2>
-        <button class="modal-close" onclick="closeModal()">✕</button>
-      </div>
-      <div style="padding:20px; text-align:center;">
-        <p style="font-size:15px; color:var(--navy); margin-bottom:16px; font-weight:500; line-height:1.4">
-          Activer le service <strong>Circuit</strong> pour ce salarié ajoutera <strong>7,99 €/salarié/mois HT (9,59 € TTC)</strong> à votre abonnement.
+    
+    const users = S2W.table('users').filter(u => u.role === 'salarie' && u.status === 'actif');
+    let contentHtml = '';
+    
+    if (users.length === 0) {
+      contentHtml = `
+        <p style="font-size:14px; color:var(--text-sec); margin-bottom:20px;">
+          Aucun conducteur actif trouvé. Veuillez d'abord inviter et lier des conducteurs.
         </p>
-        <div style="background:#F5F7F8; padding:12px; border-radius:8px; font-size:13px; color:var(--text-sec); margin-bottom:20px;">
-          Ce service d'optimisation de tournée sera actif pendant <strong>30 jours</strong> dès l'activation par le conducteur.
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-secondary" onclick="closeModal()" style="width:120px;">Fermer</button>
         </div>
-        <div style="display:flex; gap:12px; justify-content:center;">
+      `;
+    } else {
+      const userOptions = users.map(u => `<option value="${u.id}">${S2WUtils.fullName(u)}</option>`).join('');
+      contentHtml = `
+        <p style="font-size:13px; color:var(--text-sec); margin-bottom:16px; text-align:left;">
+          Sélectionnez le conducteur pour lequel vous souhaitez activer Circuit.
+        </p>
+        <div class="form-group" style="text-align:left; margin-bottom:16px;">
+          <label class="form-label" for="cir-driver-select">Conducteur *</label>
+          <select id="cir-driver-select" class="form-control">
+            ${userOptions}
+          </select>
+        </div>
+        <div style="background:#FFF3E0; border:1px solid #FFE0B2; padding:12px; border-radius:8px; font-size:13px; color:#E65100; margin-bottom:20px; text-align:left; line-height:1.4;">
+          ⚠️ <strong>Avis de facturation :</strong> L'activation de Circuit pour ce conducteur ajoutera <strong>7,99 € HT/mois (9,59 € TTC)</strong> à votre abonnement. Le service sera actif <strong>30 jours</strong> après utilisation.
+        </div>
+        <div style="display:flex; gap:12px; justify-content:flex-end;">
           <button class="btn btn-secondary" onclick="closeModal()" style="width:120px;">Annuler</button>
           <button class="btn btn-brand-green" onclick="confirmGenerateCircuit()" style="width:160px;">Confirmer & Payer</button>
         </div>
+      `;
+    }
+
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Activer Option Circuit</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div style="padding:20px;">
+        ${contentHtml}
       </div>
     `;
     openModal();
   }
 
   function confirmGenerateCircuit() {
+    const driverId = document.getElementById('cir-driver-select')?.value;
+    if (!driverId) {
+      alert("Veuillez sélectionner un conducteur.");
+      return;
+    }
+    const driver = S2W.find('users', driverId);
+    const driverName = driver ? S2WUtils.fullName(driver) : 'Conducteur';
+    
     closeModal();
     const code = 'CIR-AMT-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
     const company = S2W.table('companies')[0] || { id: 'cmp_001' };
@@ -1285,6 +1371,7 @@
       code,
       company_id: company.id,
       type: 'circuit',
+      driver_name: driverName,
       created_at: new Date().toISOString(),
       expires_at: null,
       used_at: null,
