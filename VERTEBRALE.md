@@ -29,9 +29,13 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
 ### VERTÈBRE 1 — Logo
 - **Fichiers concernés :** `landing.html`, `souscription.html`, `paiement.html`, `telecharger.html`, `app-web.html` (sidebar), `app-mobile.html` (header), `pitch-deck.html`
 - **Règles :** 
-  - Toujours utiliser la balise `<img src="logo.png">` (qui chargera dynamiquement `logo-dark.png` sur fond clair via CSS).
+  - Utiliser la balise double image pour la compatibilité universelle (Safari, iOS) :
+    `<img src="logo.png" class="logo-dark-bg" ...>`
+    `<img src="logo-dark.png" class="logo-light-bg" ...>`
+  - Gérer l'affichage via la classe parente `.logo-on-light` ou `.logo-on-dark` et les règles CSS associées.
   - Jamais de recréation en SVG, CSS ou texte.
   - L'icône Power verte ne change jamais.
+
 
 ### VERTÈBRE 2 — Palette de couleurs / variables CSS
 - **Fichiers concernés :** Tous les fichiers HTML
