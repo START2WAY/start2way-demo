@@ -609,6 +609,7 @@
         updateCompanyUI();
         checkEmployerMidnightAutoCut();
         updateUnreadMessageBadge();
+        checkNewSignupEmail();
         switchPage(_activePage);
         startPagePolling();
       } catch (e) {
@@ -616,6 +617,102 @@
       }
     })();
   });
+
+  function checkNewSignupEmail() {
+    const successToast = sessionStorage.getItem('s2w_success_toast');
+    if (!successToast) return;
+    
+    // Supprimer pour éviter de le réafficher
+    sessionStorage.removeItem('s2w_success_toast');
+    
+    // Afficher la modale email de confirmation
+    const box = document.getElementById('modal-box');
+    box.className = 'modal-box';
+    box.style.maxWidth = '650px';
+    box.innerHTML = `
+      <div style="background:#f4f5f6; padding:16px; border-bottom:1px solid #e0e0e0; display:flex; justify-content:space-between; align-items:center; border-top-left-radius:12px; border-top-right-radius:12px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">✉️</span>
+          <strong style="color:var(--navy); font-size:14px; font-family:var(--font-head);">Boîte de réception — E-mail de confirmation</strong>
+        </div>
+        <button class="modal-close" onclick="closeModal()" style="position:static; padding:0; background:none; border:none; font-size:16px; color:#aaa; cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:24px; font-family:sans-serif; color:#333; background:#fff; font-size:14px; line-height:1.5; border-bottom-left-radius:12px; border-bottom-right-radius:12px; max-height:80vh; overflow-y:auto; text-align:left;">
+        <div style="border-bottom:1px solid #e0e0e0; padding-bottom:16px; margin-bottom:20px;">
+          <div style="margin-bottom:6px;"><strong>De :</strong> contact@start2way.com</div>
+          <div style="margin-bottom:6px;"><strong>À :</strong> gerant@entreprise.com</div>
+          <div><strong>Objet :</strong> Bienvenue chez START2WAY - Activation de votre abonnement et jetons de lancement</div>
+        </div>
+        
+        <p style="margin-bottom:16px;">Bonjour,</p>
+        <p style="margin-bottom:16px;">Nous vous remercions pour votre confiance et votre souscription à <strong>START2WAY Pack Pro Transport</strong>.</p>
+        
+        <div style="background:#F8F6F3; border:1px solid var(--border); padding:16px; border-radius:8px; margin-bottom:20px;">
+          <h3 style="margin-top:0; font-size:14px; color:var(--navy); margin-bottom:8px; font-family:var(--font-head); font-weight:600;">Récapitulatif de votre abonnement</h3>
+          <ul style="margin:0; padding-left:20px; font-size:13px; color:var(--text-sec);">
+            <li>Abonnement de base : 14,99 €/mois HT</li>
+            <li>TVA (20%) : 3,00 €</li>
+            <li><strong>Total prélevé : 17,99 € TTC / mois</strong></li>
+            <li>Inclut : l'accès au panel de gérant et la liaison de vos 2 premiers conducteurs.</li>
+          </ul>
+        </div>
+        
+        <p style="margin-bottom:12px;">Conformément à notre offre de lancement, nous vous avons alloué <strong>4 jetons gratuits (durée illimitée)</strong> à partager avec vos collaborateurs :</p>
+        
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:13px;">
+          <thead>
+            <tr style="background:#0D2242; color:#fff; text-align:left;">
+              <th style="padding:8px; border:1px solid #e0e0e0;">Jeton</th>
+              <th style="padding:8px; border:1px solid #e0e0e0;">Code unique</th>
+              <th style="padding:8px; border:1px solid #e0e0e0;">Type</th>
+              <th style="padding:8px; border:1px solid #e0e0e0;">Validité</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-weight:600;">Jeton Invitation 1</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-family:monospace; font-weight:bold; color:var(--success)">INV-AMT-LANC1</td>
+              <td style="padding:8px; border:1px solid #e0e0e0;">Invitation Salarié</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-style:italic;">Illimitée</td>
+            </tr>
+            <tr style="background:#fcfcfc;">
+              <td style="padding:8px; border:1px solid #e0e0e0; font-weight:600;">Jeton Invitation 2</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-family:monospace; font-weight:bold; color:var(--success)">INV-AMT-LANC2</td>
+              <td style="padding:8px; border:1px solid #e0e0e0;">Invitation Salarié</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-style:italic;">Illimitée</td>
+            </tr>
+            <tr>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-weight:600;">Jeton Circuit 1</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-family:monospace; font-weight:bold; color:var(--brand-green)">CIR-AMT-LANC1</td>
+              <td style="padding:8px; border:1px solid #e0e0e0;">Optimisation Tournée</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-style:italic;">Illimitée</td>
+            </tr>
+            <tr style="background:#fcfcfc;">
+              <td style="padding:8px; border:1px solid #e0e0e0; font-weight:600;">Jeton Circuit 2</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-family:monospace; font-weight:bold; color:var(--brand-green)">CIR-AMT-LANC2</td>
+              <td style="padding:8px; border:1px solid #e0e0e0;">Optimisation Tournée</td>
+              <td style="padding:8px; border:1px solid #e0e0e0; font-style:italic;">Illimitée</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <p style="margin-bottom:16px;"><strong>Comment utiliser ces codes ?</strong><br>
+        Transmettez les codes <strong>INV-AMT-LANCx</strong> à vos conducteurs pour qu'ils lient leur application à votre compte entreprise.<br>
+        Transmettez les codes <strong>CIR-AMT-LANCx</strong> à vos conducteurs pour qu'ils activent le service de guidage Circuit directement depuis leur profil sur l'application mobile.
+        </p>
+        
+        <p style="margin-bottom:24px; color:var(--text-sec); font-size:12px;">
+          L'équipe START2WAY<br>
+          <span style="font-size:10px;">Cet e-mail est généré automatiquement par notre système après validation du paiement.</span>
+        </p>
+        
+        <div style="text-align:right;">
+          <button class="btn btn-primary" onclick="closeModal()" style="padding:8px 24px; width:auto; font-size:13px;">Accéder à mon espace</button>
+        </div>
+      </div>
+    `;
+    openModal();
+  }
 
   function checkEmployerMidnightAutoCut() {
     const sessions = S2W.table('sessions') || [];
@@ -773,7 +870,8 @@
     const titles = {
       dashboard:'Tableau de bord', registre:'Registre unique du personnel',
       documents:'Suivi des documents', flotte:'Gestion de la flotte',
-      rapports:'Rapports DREAL', archives:'Archives', messagerie:'Messagerie Conducteurs'
+      rapports:'Rapports DREAL', archives:'Archives', messagerie:'Messagerie Conducteurs',
+      codes:'Codes Générés'
     };
     document.getElementById('topbar-title').textContent = titles[page] || page;
     main.innerHTML = '';
@@ -786,6 +884,7 @@
       rapports:  buildRapports,
       archives:  buildArchives,
       messagerie: buildMessagerie,
+      codes:     buildCodes
     };
     if (builders[page]) builders[page](main);
   }
@@ -944,16 +1043,48 @@
 
   function buildCodes(el) {
     const invs = S2W.table('invitations') || [];
-    const invRows = invs.map(i => {
-      const isExpired = new Date(i.expires_at) < new Date();
+    
+    // Filtre des invitations
+    const invitationInvs = invs.filter(i => i.type === 'invitation' || i.type === 'usage_unique' || !i.type);
+    const invRows = invitationInvs.map(i => {
+      const isExpired = i.expires_at ? new Date(i.expires_at) < new Date() : false;
       const statLabel = i.status === 'used' ? 'Utilisé' : isExpired ? 'Expiré' : 'Actif';
       const statClass = i.status === 'used' ? 'badge-muted' : isExpired ? 'badge-danger' : 'badge-success';
+      const expiryText = i.expires_at ? S2WUtils.fmtDatetime(i.expires_at) : 'Jamais (Offre)';
       return `
         <tr>
           <td style="font-family:monospace;font-weight:600">${i.code}</td>
           <td>AMT Transport</td>
-          <td>${S2WUtils.fmtDatetime(i.created_at)}</td>
-          <td>${S2WUtils.fmtDatetime(i.expires_at)}</td>
+          <td>${i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—'}</td>
+          <td>${expiryText}</td>
+          <td><span class="badge ${statClass}">${statLabel}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    // Filtre des codes Circuit
+    const cirInvs = invs.filter(i => i.type === 'circuit');
+    const cirRows = cirInvs.map(i => {
+      const isExpired = i.expires_at ? new Date(i.expires_at) < new Date() : false;
+      const statLabel = i.status === 'used' ? 'Utilisé' : isExpired ? 'Expiré' : 'Actif';
+      const statClass = i.status === 'used' ? 'badge-muted' : isExpired ? 'badge-danger' : 'badge-success';
+      
+      let expiryText = '30j après activation';
+      if (i.expires_at) {
+        expiryText = S2WUtils.fmtDatetime(i.expires_at);
+      } else if (i.code.includes('LANC')) {
+        expiryText = 'Jamais (Offre)';
+      }
+      
+      const usedBy = i.used_by_user_id ? (S2W.find('users', i.used_by_user_id) ? S2WUtils.fullName(S2W.find('users', i.used_by_user_id)) : i.used_by_user_id) : '—';
+      const usedDate = i.used_at ? S2WUtils.fmtDatetime(i.used_at) : '—';
+      
+      return `
+        <tr>
+          <td style="font-family:monospace;font-weight:600">${i.code}</td>
+          <td>${usedBy}</td>
+          <td>${usedDate}</td>
+          <td>${expiryText}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
         </tr>
       `;
@@ -987,14 +1118,17 @@
       <div class="page-header">
         <div>
           <h1 class="page-title">Gestion des Codes d'Accès</h1>
-          <p class="page-subtitle">Génération et partage des invitations et codes de reprise d'activité.</p>
+          <p class="page-subtitle">Génération et partage des invitations, activations Circuit et codes de reprise d'activité.</p>
         </div>
       </div>
 
-      <!-- Section 1 : Codes d'Invitation -->
+      <!-- Section 1 : Codes d'Invitation (Token_Invitation) -->
       <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px;margin-bottom:24px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes d'Invitation Conducteurs</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes d'Invitation Conducteurs (Token_Invitation)</h2>
+            <span style="font-size:11px;color:var(--text-sec);">Permet aux conducteurs de lier leur compte. Tarif : 2,99 € HT / mois par jeton (3,59 € TTC).</span>
+          </div>
           <button class="btn btn-brand-green btn-sm" onclick="showGenerateInvitationModal()">+ Générer Code Invitation</button>
         </div>
         <div class="table-container" style="overflow-x:auto">
@@ -1015,10 +1149,40 @@
         </div>
       </div>
 
-      <!-- Section 2 : Codes de Reprise -->
+      <!-- Section 2 : Codes d'Activation Circuit (Token_Circuit) -->
+      <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px;margin-bottom:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes d'Activation Service Circuit (Token_Circuit)</h2>
+            <span style="font-size:11px;color:var(--text-sec);">Planification et optimisation de tournées. Tarif : 7,99 € HT / mois par jeton (9,59 € TTC).</span>
+          </div>
+          <button class="btn btn-brand-green btn-sm" onclick="showGenerateCircuitModal()">+ Activer Circuit</button>
+        </div>
+        <div class="table-container" style="overflow-x:auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Conducteur lié</th>
+                <th>Activé le</th>
+                <th>Date d'expiration</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cirRows || '<tr><td colspan="5" style="text-align:center;color:var(--text-sec)">Aucun code d\'activation Circuit généré</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 3 : Codes de Reprise (Token_Reprise) -->
       <div style="background:var(--surface);border-radius:12px;box-shadow:var(--shadow-sm);border:1px solid var(--border);padding:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes de Reprise (Correction)</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:15px;color:var(--navy);font-weight:600;margin:0">Codes de Reprise (Correction)</h2>
+            <span style="font-size:11px;color:var(--text-sec);">Toujours gratuit. Valable 24h. Limité aux feuillets des 6 derniers jours uniquement.</span>
+          </div>
           <button class="btn btn-brand-green btn-sm" onclick="showGenerateCodeRepriseModal()">+ Générer Code Reprise</button>
         </div>
         <div class="table-container" style="overflow-x:auto">
@@ -1043,7 +1207,92 @@
   }
 
   function showGenerateInvitationModal() {
-    showSalarieForm();
+    const box = document.getElementById('modal-box');
+    box.className = 'modal-box';
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Générer un Code d'Invitation (Payant)</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div style="padding:20px; text-align:center;">
+        <p style="font-size:15px; color:var(--navy); margin-bottom:16px; font-weight:500; line-height:1.4">
+          Générer un <strong>Token_Invitation</strong> pour un 3ᵉ salarié ajoutera <strong>2,99 €/salarié/mois HT (3,59 € TTC)</strong> à votre abonnement.
+        </p>
+        <div style="background:#F5F7F8; padding:12px; border-radius:8px; font-size:13px; color:var(--text-sec); margin-bottom:20px;">
+          Ce code d'activation sera valable pendant <strong>12 heures</strong> après sa génération.
+        </div>
+        <div style="display:flex; gap:12px; justify-content:center;">
+          <button class="btn btn-secondary" onclick="closeModal()" style="width:120px;">Annuler</button>
+          <button class="btn btn-brand-green" onclick="confirmGenerateInvitation()" style="width:160px;">Confirmer & Payer</button>
+        </div>
+      </div>
+    `;
+    openModal();
+  }
+
+  function confirmGenerateInvitation() {
+    closeModal();
+    const code = 'INV-AMT-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
+    const expiresAt = new Date(Date.now() + 12 * 3600000).toISOString();
+    
+    S2W.push('invitations', {
+      id: S2WUtils.uid('inv'),
+      code,
+      company_id: company.id,
+      type: 'invitation',
+      created_at: new Date().toISOString(),
+      expires_at: expiresAt,
+      used_at: null,
+      status: 'pending'
+    });
+    
+    showToast(`Token_Invitation ${code} généré avec succès ! (+2,99 €/mois HT)`, 'success');
+    buildCodes(document.getElementById('main-content'));
+  }
+
+  function showGenerateCircuitModal() {
+    const box = document.getElementById('modal-box');
+    box.className = 'modal-box';
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Générer un Code Circuit (Payant)</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div style="padding:20px; text-align:center;">
+        <p style="font-size:15px; color:var(--navy); margin-bottom:16px; font-weight:500; line-height:1.4">
+          Activer le service <strong>Circuit</strong> pour ce salarié ajoutera <strong>7,99 €/salarié/mois HT (9,59 € TTC)</strong> à votre abonnement.
+        </p>
+        <div style="background:#F5F7F8; padding:12px; border-radius:8px; font-size:13px; color:var(--text-sec); margin-bottom:20px;">
+          Ce service d'optimisation de tournée sera actif pendant <strong>30 jours</strong> dès l'activation par le conducteur.
+        </div>
+        <div style="display:flex; gap:12px; justify-content:center;">
+          <button class="btn btn-secondary" onclick="closeModal()" style="width:120px;">Annuler</button>
+          <button class="btn btn-brand-green" onclick="confirmGenerateCircuit()" style="width:160px;">Confirmer & Payer</button>
+        </div>
+      </div>
+    `;
+    openModal();
+  }
+
+  function confirmGenerateCircuit() {
+    closeModal();
+    const code = 'CIR-AMT-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
+    
+    S2W.push('invitations', {
+      id: S2WUtils.uid('cir'),
+      code,
+      company_id: company.id,
+      type: 'circuit',
+      created_at: new Date().toISOString(),
+      expires_at: null,
+      used_at: null,
+      status: 'pending'
+    });
+    
+    showToast(`Token_Circuit ${code} généré avec succès ! (+7,99 €/mois HT)`, 'success');
+    buildCodes(document.getElementById('main-content'));
   }
 
   function showGenerateCodeRepriseModal(preselectedUserId) {
@@ -2381,6 +2630,27 @@
   /* ═══════════════════════════════════════════════════════════════════════
      FORMULAIRE SALARIÉ (2 étapes)
      ═══════════════════════════════════════════════════════════════════════ */
+  function genNewCode() {
+    const confirmPay = confirm("Générer un Token_Invitation pour un 3e salarié ajoutera 2,99€/mois HT (3,59€/mois TTC) à votre abonnement. Confirmer ?");
+    if (!confirmPay) return;
+
+    const code = 'INV-AMT-' + new Date().getFullYear() + '-' +
+      Math.random().toString(36).slice(2,6).toUpperCase();
+    document.getElementById('gen-code').value = code;
+    document.getElementById('sal-code-info').style.display = '';
+    document.getElementById('btn-sal-step2').disabled = false;
+    window._genCode = code;
+    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
+    const expiresAt = new Date(Date.now() + 12 * 3600000).toISOString();
+    
+    S2W.push('invitations', {
+      id: S2WUtils.uid('inv'), code, company_id: company.id, type:'invitation',
+      created_at: new Date().toISOString(), expires_at: expiresAt,
+      used_at: null, status:'pending'
+    });
+    showToast(`Code ${code} généré et facturé (+2,99 €/mois HT)`, 'success');
+  }
+
   function showSalarieForm() {
     const box = document.getElementById('modal-box');
     box.className = 'modal-box';
@@ -2467,22 +2737,6 @@
         </div>
       </div>`;
     openModal();
-  }
-
-  function genNewCode() {
-    const code = 'INV-AMT-' + new Date().getFullYear() + '-' +
-      Math.random().toString(36).slice(2,6).toUpperCase();
-    document.getElementById('gen-code').value = code;
-    document.getElementById('sal-code-info').style.display = '';
-    document.getElementById('btn-sal-step2').disabled = false;
-    window._genCode = code;
-    const company = S2W.table('companies')[0] || { id: 'cmp_001' };
-    S2W.push('invitations', {
-      id: S2WUtils.uid('inv'), code, company_id: company.id, type:'usage_unique',
-      created_at: new Date().toISOString(), expires_at: new Date(Date.now()+48*3600000).toISOString(),
-      used_at: null, status:'pending'
-    });
-    showToast(`Code ${code} généré et sauvegardé`, 'success');
   }
 
   function switchSalStep2() {

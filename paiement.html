@@ -278,17 +278,21 @@
 
       <!-- SUMMARY -->
       <div class="summary-box">
-        <div class="summary-row">
-          <span>Abonnement : Pack Pro Transport (Mensuel)</span>
-          <strong>9,00 € / mois</strong>
+        <div class="summary-row" style="margin-bottom: 8px;">
+          <span>Abonnement de base (accès panel, inclut 2 salariés)</span>
+          <strong>14,99 € HT / mois</strong>
         </div>
-        <div class="summary-row">
-          <span>Période d'essai gratuit</span>
-          <span style="color:var(--success); font-weight:600;">14 jours (Jusqu'au 30/08/2026)</span>
+        <div class="summary-row" style="margin-bottom: 8px;">
+          <span>TVA (20%)</span>
+          <strong>3,00 €</strong>
         </div>
-        <div class="summary-row">
-          <span>Montant à régler aujourd'hui</span>
-          <strong>0,00 €</strong>
+        <div class="summary-row" style="padding-top: 10px; border-top: 1px solid var(--border); margin-bottom: 12px;">
+          <span>Abonnement mensuel récurrent (TTC)</span>
+          <strong>17,99 € / mois</strong>
+        </div>
+        <div class="summary-row" style="padding-top: 10px; border-top: 1.5px dashed var(--border); font-size: 15px; font-weight: 700; color: var(--navy);">
+          <span>Montant à régler aujourd'hui (TTC)</span>
+          <strong>17,99 €</strong>
         </div>
       </div>
 
@@ -317,7 +321,7 @@
       <div class="form-group-checkbox">
         <input type="checkbox" id="agree" required checked>
         <label for="agree" style="color:var(--text-sec); font-size: 13px;">
-          En cochant cette case, je signe électroniquement le mandat SEPA ci-dessus et j'autorise le prélèvement mensuel de 9,00 € TTC à l'issue de la période d'essai de 14 jours.
+          En cochant cette case, je signe électroniquement le mandat SEPA ci-dessus et j'autorise le prélèvement immédiat de 17,99 € TTC pour le premier mois, puis de 17,99 € TTC mensuels par prélèvement SEPA.
         </label>
       </div>
 
@@ -387,6 +391,38 @@
           }
           
           cache.companies.push(newCompany);
+
+          // --- GÉNÉRATION DES TOKENS DE LANCEMENT ---
+          if (!cache.invitations) cache.invitations = [];
+
+          // 2 Token_Invitation de lancement
+          for (let i = 1; i <= 2; i++) {
+            cache.invitations.push({
+              id: 'inv_lanc_' + i + '_' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+              code: 'INV-AMT-LANC' + i,
+              company_id: 'cmp_001',
+              type: 'invitation',
+              created_at: new Date().toISOString(),
+              expires_at: null,
+              used_at: null,
+              status: 'pending'
+            });
+          }
+
+          // 2 Token_Circuit de lancement
+          for (let i = 1; i <= 2; i++) {
+            cache.invitations.push({
+              id: 'cir_lanc_' + i + '_' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+              code: 'CIR-AMT-LANC' + i,
+              company_id: 'cmp_001',
+              type: 'circuit',
+              created_at: new Date().toISOString(),
+              expires_at: null,
+              used_at: null,
+              status: 'pending'
+            });
+          }
+
           S2W.set(cache);
         }
 
@@ -394,7 +430,7 @@
         sessionStorage.removeItem('temp_company_signup');
 
         // Mettre un toast de succès dans sessionStorage pour qu'il s'affiche sur le dashboard
-        sessionStorage.setItem('s2w_success_toast', 'Félicitations ! Votre entreprise a bien été enregistrée et votre période d\'essai a démarré.');
+        sessionStorage.setItem('s2w_success_toast', 'Félicitations ! Votre entreprise a bien été enregistrée et votre abonnement a démarré.');
 
         // Redirection vers le dashboard
         window.location.href = 'app-web.html';

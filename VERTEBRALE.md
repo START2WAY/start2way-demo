@@ -88,3 +88,13 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
 - **Fichiers concernés :** `docs/s1/js/s2w-localstorage.js`, `souscription.html`, `app-web.html`
 - **Règles :**
   - Chiffrement côté client (simulation démo) avec avertissement obligatoire rappelant le besoin de chiffrement serveur en production.
+
+### VERTÈBRE 12 — Modèle économique & Tokens payants (Circuit inclus)
+- **Fichiers concernés :** `landing.html`, `souscription.html`, `paiement.html`, `app-web.html` (modale email, facturation additionnelle 3e+), `app-mobile.html` (liaison onboarding, activation Circuit dans le Profil), table `invitations`
+- **Règles :**
+  - **Abonnement de base :** 14,99 €/mois HT (17,99 € TTC) incluant l'accès gérant et 2 salariés.
+  - **Token_Invitation supplémentaire :** 2,99 €/mois HT (3,59 € TTC), validité de 12 heures à la génération.
+  - **Token_Circuit (Planification/Optimisation) :** 7,99 €/mois HT (9,59 € TTC) pour les salariés 3e+, validité de 30 jours à compter de son activation par le conducteur.
+  - **Jetons de lancement :** 2 Token_Invitation de lancement (`INV-AMT-LANCx`) et 2 Token_Circuit de lancement (`CIR-AMT-LANCx`) offerts sans limite de validité dès l'inscription.
+  - **Règle de conversion :** Tous les calculs financiers utilisent la TVA française de 20%, appliquée sur les tarifs HT avant facturation TTC.
+

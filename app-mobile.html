@@ -1174,6 +1174,14 @@
     inv.status = 'used';
     inv.used_at = new Date().toISOString();
     inv.used_by_user_id = 'usr_001';
+
+    // Si c'est un code Circuit payant, calculer la date d'expiration (+30 jours)
+    if (inv.type === 'circuit' && inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + 30);
+      inv.expires_at = expDate.toISOString();
+    }
+
     S2W.update('invitations', inv.id, inv);
 
     const user = S2W.find('users', 'usr_001');
@@ -1182,7 +1190,11 @@
       S2W.update('users', user.id, user);
     }
 
-    showMobToast('Compte activé avec succès !');
+    if (inv.type === 'circuit') {
+      showMobToast('Service Circuit activé et compte rattaché !');
+    } else {
+      showMobToast('Compte activé avec succès !');
+    }
     
     setTimeout(() => {
       location.reload();
@@ -2573,11 +2585,11 @@
       `;
     });
 
-    w.document.write(\`
+    w.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Rapport DREAL - \${S2WUtils.fullName(driver)} - \${r.month}</title>
+        <title>Rapport DREAL - ${S2WUtils.fullName(driver)} - ${r.month}</title>
         <style>
           @page { size: A4 portrait; margin: 0; }
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background:#ccc; margin:0; padding:0; -webkit-print-color-adjust: exact; }
@@ -2590,13 +2602,13 @@
         </style>
       </head>
       <body>
-        \${pagesHtml}
+        ${pagesHtml}
         <script>
           window.onload = function() { window.print(); };
-        <\/script>
+        </script>
       </body>
       </html>
-    \`);
+    `);
     w.document.close();
   }
 
@@ -2798,6 +2810,28 @@
       visite_medicale: 'Visite médicale'
     };
 
+    // Calcul de l'état du service Circuit
+    const invitations = S2W.table('invitations') || [];
+    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+    let isCircuitActive = false;
+    let circuitExpiryStr = '';
+    
+    if (activeCircuit) {
+      if (activeCircuit.expires_at === null || activeCircuit.expires_at === 'null') {
+        isCircuitActive = true;
+        circuitExpiryStr = 'Offre de lancement (Illimité)';
+      } else {
+        const expDate = new Date(activeCircuit.expires_at);
+        if (expDate > new Date()) {
+          isCircuitActive = true;
+          circuitExpiryStr = 'Expire le ' + S2WUtils.fmtDateShort(activeCircuit.expires_at);
+        } else {
+          isCircuitActive = false;
+          circuitExpiryStr = 'Expiré';
+        }
+      }
+    }
+
     container.innerHTML = `
       <div class="profil-hero">
         <div class="profil-avatar" aria-hidden="true">${S2WUtils.initials(user)}</div>
@@ -2823,6 +2857,26 @@
           <span class="profil-row-label">Email</span>
           <span class="profil-row-value" style="font-size:12px">${user?.email || '—'}</span>
         </div>
+      </div>
+
+      <!-- Option Circuit -->
+      <div class="profil-section" style="border: 1px solid var(--border); background: var(--white); border-radius: 12px; padding: 16px;">
+        <div class="profil-section-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+          <span>Guidage "Circuit"</span>
+          <span style="font-size:11px; padding:3px 8px; border-radius:12px; font-weight:bold; background:${isCircuitActive ? '#E8F5E9;color:#2E7D32;' : '#FFEBEE;color:#C62828;'}">
+            ${isCircuitActive ? '🟢 Actif' : '🔴 Inactif'}
+          </span>
+        </div>
+        <p style="font-size:12px; color:var(--text-sec); margin-bottom: 12px; line-height: 1.4;">
+          ${isCircuitActive 
+            ? `Le service Circuit (optimisation de tournée) est actif sur votre compte (${circuitExpiryStr}).` 
+            : 'Le service de planification de tournée "Circuit" n\'est pas activé pour votre compte.'}
+        </p>
+        ${!isCircuitActive ? `
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="circuit-token-input" class="form-control" placeholder="Code d'activation Circuit..." style="font-size:13px; text-transform:uppercase; padding: 8px; flex:1;">
+          <button class="btn btn-brand-green" onclick="activateCircuitFromProfile()" style="padding:8px 16px; font-size:13px; white-space:nowrap; width:auto; border-radius:8px;">Activer</button>
+        </div>` : ''}
       </div>
 
       <div class="profil-section">
@@ -2878,6 +2932,48 @@
         </div>
       </div>
     `;
+  }
+
+  function activateCircuitFromProfile() {
+    const codeInput = document.getElementById('circuit-token-input');
+    const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+    if (!code) { showMobToast('Veuillez saisir un code d\'activation.'); return; }
+    
+    const invitations = S2W.table('invitations') || [];
+    const inv = invitations.find(i => i.code.toUpperCase() === code);
+    
+    if (!inv) {
+      showMobToast('Code invalide ou inconnu.');
+      return;
+    }
+    
+    if (inv.type !== 'circuit') {
+      showMobToast('Ce code n\'est pas un code d\'activation Circuit.');
+      return;
+    }
+    
+    if (inv.status !== 'pending') {
+      showMobToast('Ce code a déjà été utilisé.');
+      return;
+    }
+    
+    inv.status = 'used';
+    inv.used_at = new Date().toISOString();
+    inv.used_by_user_id = 'usr_001';
+    
+    // Si ce n'est pas un code de lancement, il expire dans 30 jours
+    if (inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + 30);
+      inv.expires_at = expDate.toISOString();
+    }
+    
+    S2W.update('invitations', inv.id, inv);
+    
+    showMobToast('Service Circuit activé avec succès !');
+    setTimeout(() => {
+      renderProfil();
+    }, 1500);
   }
 
   let _devClockDriftSec = 0;
