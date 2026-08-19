@@ -104,5 +104,10 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - 3 boutons distincts en haut pour générer les invitations, reprises et circuits (chacun avec popup de saisie/sélection du salarié).
     - Bandeau de statut résumant les salariés inclus (max 2), salariés supplémentaires actifs (à +2,99€ HT/mois) et circuits actifs (à +7,99€ HT/mois).
     - 3 tableaux distincts affichant le nom du salarié, le code, le statut et les dates clés (création, activation, expiration).
+  - **Gestion des Homonymes / Doublons :**
+    - Le lien technique est exclusivement assuré par l'ID unique du salarié, jamais par correspondance de nom.
+    - La sélection Circuit affiche le nom + contact (email ou téléphone) pour distinguer deux salariés homonymes.
+    - La saisie d'invitation lance un avertissement visuel si le nom complet existe déjà dans le Registre.
+    - Les 3 tableaux de codes affichent le contact (email/téléphone) en sous-texte sous le nom du salarié pour une identification facilitée.
 
 

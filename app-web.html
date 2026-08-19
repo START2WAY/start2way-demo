@@ -564,6 +564,11 @@
   let _pollingInterval = null;
 
   function checkAirtableConfig() {
+    if (window.location.search && window.location.search.includes('test=')) {
+      const warningBanner = document.getElementById('airtable-warning-banner');
+      if (warningBanner) warningBanner.remove();
+      return;
+    }
     const token = localStorage.getItem('s2w_airtable_token');
     const baseId = localStorage.getItem('s2w_airtable_base_id');
     const warningBanner = document.getElementById('airtable-warning-banner');
@@ -1081,12 +1086,14 @@
       
       const u = i.used_by_user_id ? S2W.find('users', i.used_by_user_id) : null;
       const salName = u ? S2WUtils.fullName(u) : (i.driver_name || (i.code.includes('LANC') ? 'En attente de liaison' : '—'));
+      const contactText = u ? (u.email || u.phone || '') : '';
+      const contactHtml = contactText ? `<div style="font-size:11px;color:var(--text-sec);font-weight:normal;margin-top:2px;">${contactText}</div>` : '';
       const expiryText = i.expires_at ? S2WUtils.fmtDatetime(i.expires_at) : 'Jamais (Offre)';
       const createdText = i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—';
       
       return `
         <tr>
-          <td><strong>${salName}</strong></td>
+          <td><strong>${salName}</strong>${contactHtml}</td>
           <td style="font-family:monospace;font-weight:600">${i.code}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
           <td>${createdText}</td>
@@ -1111,8 +1118,10 @@
         }
       }
       
-      const u = i.used_by_user_id ? S2W.find('users', i.used_by_user_id) : null;
+      const u = (i.used_by_user_id ? S2W.find('users', i.used_by_user_id) : null) || (i.target_user_id ? S2W.find('users', i.target_user_id) : null);
       const salName = u ? S2WUtils.fullName(u) : (i.driver_name || '—');
+      const contactText = u ? (u.email || u.phone || '') : '';
+      const contactHtml = contactText ? `<div style="font-size:11px;color:var(--text-sec);font-weight:normal;margin-top:2px;">${contactText}</div>` : '';
       const createdText = i.created_at ? S2WUtils.fmtDatetime(i.created_at) : '—';
       const usedText = i.used_at ? S2WUtils.fmtDatetime(i.used_at) : '—';
       
@@ -1123,7 +1132,7 @@
       
       return `
         <tr>
-          <td><strong>${salName}</strong></td>
+          <td><strong>${salName}</strong>${contactHtml}</td>
           <td style="font-family:monospace;font-weight:600">${i.code}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
           <td>${createdText}</td>
@@ -1139,10 +1148,12 @@
       const statClass = r.status === 'used' ? 'badge-muted' : isExpired ? 'badge-danger' : 'badge-success';
       const u = S2W.find('users', r.user_id);
       const uName = u ? S2WUtils.fullName(u) : r.user_id;
+      const contactText = u ? (u.email || u.phone || '') : '';
+      const contactHtml = contactText ? `<div style="font-size:11px;color:var(--text-sec);font-weight:normal;margin-top:2px;">${contactText}</div>` : '';
       
       return `
         <tr>
-          <td><strong>${uName}</strong></td>
+          <td><strong>${uName}</strong>${contactHtml}</td>
           <td style="font-family:monospace;font-weight:600">${r.code}</td>
           <td><span class="badge ${statClass}">${statLabel}</span></td>
           <td>${S2WUtils.fmtDatetime(r.created_at)}</td>
@@ -1257,12 +1268,13 @@
         </p>
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
           <label class="form-label" for="inv-last-name">Nom *</label>
-          <input type="text" id="inv-last-name" class="form-control" placeholder="Ex: DUPONT" required style="text-transform:uppercase;">
+          <input type="text" id="inv-last-name" class="form-control" placeholder="Ex: DUPONT" required style="text-transform:uppercase;" oninput="checkDuplicateInvitationName()">
         </div>
         <div class="form-group" style="text-align:left; margin-bottom:16px;">
           <label class="form-label" for="inv-first-name">Prénom *</label>
-          <input type="text" id="inv-first-name" class="form-control" placeholder="Ex: Martin" required>
+          <input type="text" id="inv-first-name" class="form-control" placeholder="Ex: Martin" required oninput="checkDuplicateInvitationName()">
         </div>
+        <div id="inv-warning-box"></div>
         <div style="background:#FFF3E0; border:1px solid #FFE0B2; padding:12px; border-radius:8px; font-size:13px; color:#E65100; margin-bottom:20px; text-align:left; line-height:1.4;">
           ⚠️ <strong>Avis de facturation :</strong> Cette génération ajoutera <strong>2,99 € HT/mois (3,59 € TTC)</strong> à votre abonnement. Le code sera valable <strong>12 heures</strong>.
         </div>
@@ -1273,6 +1285,32 @@
       </div>
     `;
     openModal();
+  }
+
+  function checkDuplicateInvitationName() {
+    const lastName = document.getElementById('inv-last-name')?.value.trim().toUpperCase();
+    const firstName = document.getElementById('inv-first-name')?.value.trim();
+    const warnBox = document.getElementById('inv-warning-box');
+    if (!warnBox) return;
+    
+    if (!lastName || !firstName) {
+      warnBox.innerHTML = '';
+      return;
+    }
+    
+    const fullName = (firstName + ' ' + lastName).toLowerCase();
+    const users = S2W.table('users') || [];
+    const exists = users.some(u => u.role === 'salarie' && u.status === 'actif' && S2WUtils.fullName(u).toLowerCase() === fullName);
+    
+    if (exists) {
+      warnBox.innerHTML = `
+        <div style="background:#FFFDE7; border:1px solid #FFF59D; color:#F57F17; padding:8px 12px; border-radius:8px; font-size:12.5px; margin-bottom:16px; text-align:left; line-height:1.4; font-weight:500;">
+          ⚠️ Un salarié nommé "${firstName} ${lastName}" existe déjà dans votre Registre — vérifiez qu'il ne s'agit pas d'un doublon avant d'envoyer ce code.
+        </div>
+      `;
+    } else {
+      warnBox.innerHTML = '';
+    }
   }
 
   function confirmGenerateInvitation() {
@@ -1320,7 +1358,10 @@
         </div>
       `;
     } else {
-      const userOptions = users.map(u => `<option value="${u.id}">${S2WUtils.fullName(u)}</option>`).join('');
+      const userOptions = users.map(u => {
+        const contact = u.email || u.phone || 'sans contact';
+        return `<option value="${u.id}">${S2WUtils.fullName(u)} (${contact})</option>`;
+      }).join('');
       contentHtml = `
         <p style="font-size:13px; color:var(--text-sec); margin-bottom:16px; text-align:left;">
           Sélectionnez le conducteur pour lequel vous souhaitez activer Circuit.
@@ -1371,6 +1412,7 @@
       code,
       company_id: company.id,
       type: 'circuit',
+      target_user_id: driverId,
       driver_name: driverName,
       created_at: new Date().toISOString(),
       expires_at: null,
