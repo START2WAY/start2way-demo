@@ -131,6 +131,7 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - Toujours visible, mais grisée et dotée d'un cadenas `🔒` si inactive pour le salarié.
     - Au clic (si inactive), ouvre une popup/modale invitant à saisir le Token_Circuit pour activer le service pour 30 jours (non reconductible automatiquement).
     - Une fois déverrouillée/active, l'option affiche une icône carte `🗺️` et donne accès à la feuille de route et l'itinéraire optimisés (`tab-circuit`).
+    - *ÉCRAN CIRCUIT :* PROTOTYPE NON SPÉCIFIÉ, construit hors-périmètre par anticipation. Données factices (Lille/Roubaix). À reprendre entièrement avec de vraies spécifications fonctionnelles avant toute mise en production — ne pas considérer comme définitif.
   - **Barre Basse Minimaliste :**
     - Remplace l'ancienne barre d'onglets et contient 3 éléments distincts :
       - *Gauche :* Icône roue dentée `⚙️` redirigeant vers le Profil/Paramètres.
