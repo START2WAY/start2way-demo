@@ -2,6 +2,9 @@
 
 Ce fichier est la carte des dépendances croisées du projet. Il doit être mis à jour systématiquement pour refléter toute nouvelle structure, table ou convention partagée.
 
+## Règles Méthodologiques de Communication
+- **Captures d'écran :** Pour toute capture d'écran ou média destiné à la validation utilisateur, l'agent doit copier le fichier dans le dépôt local (sous `docs/screenshots/`), le commiter et le pousser, puis transmettre le lien public direct `raw.githubusercontent.com`. Les chemins locaux absolus sont proscrits.
+
 ---
 
 ## Fichiers du projet et leur rôle
