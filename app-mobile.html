@@ -608,11 +608,12 @@
         <button id="net-toggle-btn" onclick="toggleNetworkStatus()" title="Simuler l'état du réseau" style="font-size:11px;display:flex;align-items:center;gap:4px;background:#ECEFF1;padding:4px 8px;border-radius:20px;border:1px solid #CFD8DC;font-weight:bold;color:#37474F;cursor:pointer">
           <span id="net-status-indicator" style="color:#2E7D32">🟢</span> <span id="net-status-text">En ligne</span>
         </button>
+        <button class="icon-btn" aria-label="Mon profil" onclick="switchTab('profil')">👤</button>
+        <button class="icon-btn" aria-label="Messagerie" onclick="switchTab('messagerie')">💬</button>
         <button class="icon-btn" id="notif-btn" aria-label="Notifications (3 alertes)" onclick="toggleAlert()">
           🔔
           <span class="notif-dot" aria-hidden="true"></span>
         </button>
-        <button class="icon-btn" aria-label="Mon profil" onclick="switchTab('profil')">👤</button>
       </div>
     </header>
 
@@ -893,15 +894,10 @@
         <span class="nav-tab-icon" aria-hidden="true">📋</span>
         Feuillet
       </button>
-      <button class="nav-tab" id="tab-btn-messagerie" role="tab"
-        aria-selected="false" aria-controls="tab-messagerie" onclick="switchTab('messagerie')">
-        <span class="nav-tab-icon" aria-hidden="true">💬</span>
-        Messagerie
-      </button>
       <button class="nav-tab" id="tab-btn-archives" role="tab"
         aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
         <span class="nav-tab-icon" aria-hidden="true">🗄</span>
-        Archives
+        Historique
       </button>
       <button class="nav-tab" id="tab-btn-profil" role="tab"
         aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
@@ -1116,15 +1112,10 @@
           <span class="nav-tab-icon" aria-hidden="true">📋</span>
           Feuillet
         </button>
-        <button class="nav-tab" id="tab-btn-messagerie" role="tab"
-          aria-selected="false" aria-controls="tab-messagerie" onclick="switchTab('messagerie')">
-          <span class="nav-tab-icon" aria-hidden="true">💬</span>
-          Messagerie
-        </button>
         <button class="nav-tab" id="tab-btn-archives" role="tab"
           aria-selected="false" aria-controls="tab-archives" onclick="switchTab('archives')">
           <span class="nav-tab-icon" aria-hidden="true">🗄</span>
-          Archives
+          Historique
         </button>
         <button class="nav-tab" id="tab-btn-profil" role="tab"
           aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
@@ -2605,7 +2596,7 @@
         ${pagesHtml}
         <script>
           window.onload = function() { window.print(); };
-        </script>
+        <\/script>
       </body>
       </html>
     `);
