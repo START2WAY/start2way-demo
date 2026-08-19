@@ -301,26 +301,164 @@
     .gauge-val { font-size: 12px; font-weight: 600; color: var(--text-main); width: 48px; text-align: right; flex-shrink: 0; }
 
     /* ─── TABS ──────────────────────────────────────────────────────── */
-    .bottom-nav {
+    /* ─── MENU DRAWER & HANDLE ────────────────────────────────────────── */
+    .drawer-handle {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 70px;
+      background: rgba(13, 34, 66, 0.25);
+      border-radius: 0 10px 10px 0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-left: none;
+      cursor: pointer;
+      z-index: 990;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 2px 0 10px rgba(13,34,66,0.1);
+      transition: background var(--transition), width var(--transition);
+    }
+    .drawer-handle:hover {
+      background: rgba(13, 34, 66, 0.4);
+      width: 22px;
+    }
+    .drawer-handle::after {
+      content: '›';
+      color: var(--white);
+      font-size: 16px;
+      font-weight: bold;
+      margin-left: -2px;
+    }
+    .drawer-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 22, 43, 0.4);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .drawer-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .nav-drawer {
+      position: absolute;
+      top: 0;
+      left: -280px;
+      width: 260px;
+      height: 100%;
+      background: var(--white);
+      box-shadow: 4px 0 24px rgba(7, 22, 43, 0.2);
+      display: flex;
+      flex-direction: column;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1001;
+    }
+    .drawer-overlay.open .nav-drawer {
+      left: 0;
+    }
+    .drawer-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      color: var(--white);
+    }
+    .drawer-close {
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .drawer-menu {
+      padding: 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .drawer-item {
+      border: none;
+      background: none;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s, color 0.2s;
+      width: 100%;
+    }
+    .drawer-item:hover {
+      background: var(--muted);
+      color: var(--navy);
+    }
+    .drawer-item.active {
+      background: rgba(0, 154, 68, 0.1);
+      color: var(--brand-green);
+    }
+    .drawer-item.locked {
+      opacity: 0.5;
+      cursor: pointer;
+    }
+    .drawer-item.locked:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* ─── BARRE BASSE MINIMALISTE ───────────────────────────────────── */
+    .minimal-bottom-bar {
       background: var(--white);
       border-top: 1px solid var(--border);
-      padding: 8px 0 12px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+      padding: 6px 16px 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       flex-shrink: 0;
+      height: 52px;
+      box-sizing: border-box;
     }
-    .nav-tab {
-      border: none; background: none; cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 6px 4px;
-      font-family: var(--font-body); font-size: 10px; font-weight: 500;
-      color: var(--text-sec);
-      transition: color var(--transition);
-      border-top: 2px solid transparent;
-      position: relative;
+    .min-bar-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity var(--transition);
     }
-    .nav-tab:hover { color: var(--navy); }
-    .nav-tab.active { color: var(--navy); border-top-color: var(--brand-green); }
-    .nav-tab-icon { font-size: 20px; }
+    .min-bar-btn:active {
+      opacity: 0.6;
+    }
+    .home-indicator-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .home-indicator {
+      width: 110px;
+      height: 5px;
+      background: #000000;
+      border-radius: 10px;
+      opacity: 0.8;
+    }
 
     /* ─── TAB CONTENT PAGES ──────────────────────────────────────────── */
     .tab-page { display: none; padding: 0 0 16px; }
@@ -591,6 +729,39 @@
 <body>
   <div class="phone-frame" role="main">
 
+    <!-- TIROIR DE NAVIGATION (DRAWER) -->
+    <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()">
+      <div class="nav-drawer" onclick="event.stopPropagation()">
+        <div class="drawer-header">
+          <div class="app-brand logo-on-dark">
+            <img src="logo.png" class="logo-dark-bg" alt="START2WAY" style="height: 24px; display: block;">
+            <img src="logo-dark.png" class="logo-light-bg" alt="START2WAY" style="height: 24px; display: block;">
+          </div>
+          <button class="drawer-close" onclick="closeDrawer()" aria-label="Fermer le menu">✕</button>
+        </div>
+        <div class="drawer-menu" id="drawer-menu-list">
+          <button class="drawer-item active" id="drawer-btn-accueil" onclick="selectDrawerTab('accueil')">
+            <span class="drawer-item-icon">⏱</span> Accueil
+          </button>
+          <button class="drawer-item" id="drawer-btn-feuillet" onclick="selectDrawerTab('feuillet')">
+            <span class="drawer-item-icon">📋</span> Feuillet
+          </button>
+          <button class="drawer-item" id="drawer-btn-historique" onclick="selectDrawerTab('historique')">
+            <span class="drawer-item-icon">🗄</span> Historique
+          </button>
+          <button class="drawer-item" id="drawer-btn-profil" onclick="selectDrawerTab('profil')">
+            <span class="drawer-item-icon">👤</span> Profil
+          </button>
+          <button class="drawer-item locked" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
+            <span class="drawer-item-icon" id="drawer-circuit-icon">🔒</span> Circuit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- POIGNÉE DU TIROIR (HANDLE) -->
+    <div class="drawer-handle" id="drawer-handle" onclick="openDrawer()" aria-label="Ouvrir le menu de navigation" role="button" tabindex="0"></div>
+
     <!-- STATUS BAR -->
     <div class="status-bar" aria-hidden="true">
       <span class="status-time" id="mob-time">00:00</span>
@@ -621,7 +792,7 @@
     <div class="scroll-area" id="main-scroll" role="region" aria-label="Contenu principal">
 
       <!-- ═══════ ONGLET ACCUEIL ═══════ -->
-      <div class="tab-page active" id="tab-accueil" role="tabpanel" aria-labelledby="tab-btn-accueil">
+      <div class="tab-page active" id="tab-accueil" role="tabpanel" aria-labelledby="drawer-btn-accueil">
 
         <!-- ALERTE BANNER -->
         <div class="alert-banner hidden" id="mob-alert-banner" role="alert">
@@ -760,7 +931,7 @@
       </div>
 
       <!-- ═══════ ONGLET FEUILLET ═══════ -->
-      <div class="tab-page" id="tab-feuillet" role="tabpanel" aria-labelledby="tab-btn-feuillet">
+      <div class="tab-page" id="tab-feuillet" role="tabpanel" aria-labelledby="drawer-btn-feuillet">
         <div class="page-header-inner">
           <div class="page-title-inner">Feuillet quotidien</div>
           <div class="page-sub-inner" id="feuillet-subtitle">DUPONT Martin — PL</div>
@@ -773,7 +944,7 @@
       </div>
 
       <!-- ═══════ ONGLET HISTORIQUE ═══════ -->
-      <div class="tab-page" id="tab-historique" role="tabpanel" aria-labelledby="tab-btn-historique">
+      <div class="tab-page" id="tab-historique" role="tabpanel" aria-labelledby="drawer-btn-historique">
         <div class="page-header-inner">
           <div class="page-title-inner">Historique</div>
           <div class="page-sub-inner">Suivi de conformité des 30 derniers jours</div>
@@ -788,8 +959,91 @@
         <div style="height:16px"></div>
       </div>
 
+      <!-- ═══════ ONGLET CIRCUIT (OPTIMISATION DE TOURNÉE) ═══════ -->
+      <div class="tab-page" id="tab-circuit" role="tabpanel" aria-labelledby="drawer-btn-circuit">
+        <div class="page-header-inner">
+          <div class="page-title-inner">Circuit</div>
+          <div class="page-sub-inner">Guidage et optimisation de tournée en temps réel</div>
+        </div>
+        <div style="padding:12px;">
+          <!-- Carte Mock SVG -->
+          <div style="background:var(--white); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;">
+            <div style="font-weight:700; font-size:14px; color:var(--navy); display:flex; align-items:center; justify-content:space-between;">
+              <span>🗺️ Carte du Circuit Optimisé</span>
+              <span class="badge badge-success" style="font-size:10px;">En cours</span>
+            </div>
+            
+            <div style="background:#e8f4fd; border-radius:8px; height:180px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border: 1px solid #d0e8fc;">
+              <!-- Beautiful SVG Roadmap mock -->
+              <svg width="100%" height="100%" viewBox="0 0 400 200" style="position:absolute; inset:0;">
+                <!-- Roads -->
+                <path d="M 50 100 Q 150 30 200 120 T 350 80" fill="none" stroke="#b0bec5" stroke-width="8" stroke-linecap="round" />
+                <path d="M 50 100 Q 150 30 200 120 T 350 80" fill="none" stroke="#2196f3" stroke-width="4" stroke-linecap="round" stroke-dasharray="8,4" />
+                
+                <!-- Pins -->
+                <!-- Start Point -->
+                <circle cx="50" cy="100" r="10" fill="#0D2242" />
+                <circle cx="50" cy="100" r="4" fill="#fff" />
+                <text x="35" y="125" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0D2242">Dépôt (Départ)</text>
+                
+                <!-- Stop 1 -->
+                <circle cx="160" cy="65" r="8" fill="#009A44" />
+                <text x="160" y="50" font-family="sans-serif" font-size="10" font-weight="bold" fill="#009A44" text-anchor="middle">Stop 1 (Lille)</text>
+                
+                <!-- Stop 2 -->
+                <circle cx="230" cy="115" r="8" fill="#ED6C02" />
+                <text x="230" y="135" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ED6C02" text-anchor="middle">Stop 2 (Roubaix)</text>
+                
+                <!-- End Point -->
+                <circle cx="350" cy="80" r="10" fill="#0D2242" />
+                <circle cx="350" cy="80" r="4" fill="#fff" />
+                <text x="315" y="105" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0D2242">Dépôt (Retour)</text>
+              </svg>
+            </div>
+            
+            <!-- Optimized Stops List -->
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+              <div style="font-weight:700; font-size:12px; color:var(--text-sec); border-bottom:1px solid #eee; padding-bottom:6px;">Feuille de route optimisée</div>
+              
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:rgba(13,34,66,0.1); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">🏁</div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">Dépôt AMT Transport (Départ)</div>
+                  <div style="font-size:11px; color:var(--text-sec);">Départ prévu : 08:00 • Prise de service</div>
+                </div>
+              </div>
+              
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:rgba(0,154,68,0.1); color:var(--brand-green); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">1</div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">45 Rue de Paris, Lille</div>
+                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 09:15 • 3 colis à livrer</div>
+                </div>
+              </div>
+              
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:rgba(237,108,2,0.1); color:#ED6C02; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">2</div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">12 Avenue des Flandres, Roubaix</div>
+                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 10:45 • 1 colis à livrer</div>
+                </div>
+              </div>
+              
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <div style="width:24px; height:24px; border-radius:50%; background:rgba(13,34,66,0.1); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">🏁</div>
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">Dépôt AMT Transport (Retour)</div>
+                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 12:30 • Fin de tournée</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
       <!-- ═══════ SECTION ARCHIVES (HORS BARRE BASSE) ═══════ -->
-      <div class="tab-page" id="tab-archives" role="tabpanel" aria-labelledby="tab-btn-archives" style="background:var(--paper);">
+      <div class="tab-page" id="tab-archives" role="tabpanel" aria-labelledby="drawer-btn-archives" style="background:var(--paper);">
         <div class="page-header-inner" style="display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div class="page-title-inner">Archives</div>
@@ -835,7 +1089,7 @@
       </div>
 
       <!-- ═══════ ONGLET MESSAGERIE ═══════ -->
-      <div class="tab-page" id="tab-messagerie" role="tabpanel" aria-labelledby="tab-btn-messagerie">
+      <div class="tab-page" id="tab-messagerie" role="tabpanel" aria-labelledby="drawer-btn-messagerie">
         <div class="page-header-inner">
           <div class="page-title-inner">Messagerie</div>
           <div class="page-sub-inner">Échanges directs avec l'employeur</div>
@@ -857,13 +1111,13 @@
       </div>
 
       <!-- ═══════ ONGLET PROFIL ═══════ -->
-      <div class="tab-page" id="tab-profil" role="tabpanel" aria-labelledby="tab-btn-profil">
+      <div class="tab-page" id="tab-profil" role="tabpanel" aria-labelledby="drawer-btn-profil">
         <div id="profil-content"></div>
         <div style="height:16px"></div>
       </div>
 
       <!-- ═══════ ONGLET ACTIVATION ═══════ -->
-      <div class="tab-page" id="tab-activation" role="tabpanel" aria-labelledby="tab-btn-activation">
+      <div class="tab-page" id="tab-activation" role="tabpanel" aria-labelledby="drawer-btn-activation">
         <div class="activation-container">
           <div class="profil-hero">
             <span style="font-size:48px" aria-hidden="true">🔑</span>
@@ -882,7 +1136,7 @@
       </div>
 
       <!-- ═══════ ONGLET SUPPORT CHATBOT ═══════ -->
-      <div class="tab-page" id="tab-support" role="tabpanel" aria-labelledby="tab-btn-support">
+      <div class="tab-page" id="tab-support" role="tabpanel" aria-labelledby="drawer-btn-support">
         <div class="support-container" style="display:flex;flex-direction:column;height:calc(100vh - 180px)">
           <div class="profil-hero" style="padding:16px 8px 8px 8px">
             <span style="font-size:32px" aria-hidden="true">🤖</span>
@@ -902,28 +1156,15 @@
       </div>
     </div>
 
-    <nav class="bottom-nav" role="tablist" aria-label="Navigation principale">
-      <button class="nav-tab active" id="tab-btn-accueil" role="tab"
-        aria-selected="true" aria-controls="tab-accueil" onclick="switchTab('accueil')">
-        <span class="nav-tab-icon" aria-hidden="true">⏱</span>
-        Accueil
-      </button>
-      <button class="nav-tab" id="tab-btn-feuillet" role="tab"
-        aria-selected="false" aria-controls="tab-feuillet" onclick="switchTab('feuillet')">
-        <span class="nav-tab-icon" aria-hidden="true">📋</span>
-        Feuillet
-      </button>
-      <button class="nav-tab" id="tab-btn-historique" role="tab"
-        aria-selected="false" aria-controls="tab-historique" onclick="switchTab('historique')">
-        <span class="nav-tab-icon" aria-hidden="true">🗄</span>
-        Historique
-      </button>
-      <button class="nav-tab" id="tab-btn-profil" role="tab"
-        aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
-        <span class="nav-tab-icon" aria-hidden="true">👤</span>
-        Profil
-      </button>
-    </nav>
+    <!-- BARRE BASSE MINIMALISTE -->
+    <div class="minimal-bottom-bar" role="navigation" aria-label="Raccourcis rapides">
+      <button class="min-bar-btn" onclick="switchTab('profil')" aria-label="Paramètres de l'application">⚙️</button>
+      <div class="home-indicator-container">
+        <!-- À activer avec une vraie fonction de fermeture/minimisation native lors de la génération des builds .apk (Android) et iOS en fin de projet — actuellement décoratif uniquement. -->
+        <div class="home-indicator" title="Indicateur d'accueil (Décoratif)"></div>
+      </div>
+      <button class="min-bar-btn" onclick="switchTab('support')" aria-label="Support technique START2WAY">💬👤</button>
+    </div>
 
     <!-- MODAL PAUSE -->
     <div class="modal-overlay" id="pause-modal" role="dialog" aria-modal="true"
@@ -1116,48 +1357,55 @@
 
   function updateNavigationUI(user) {
     const isActivated = user && user.company_id;
-    const nav = document.querySelector('.bottom-nav');
-    if (!nav) return;
-    
+    const menuList = document.getElementById('drawer-menu-list');
+    if (!menuList) return;
+
+    // Check if Circuit is active
+    const invitations = S2W.table('invitations') || [];
+    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+    let isCircuitActive = false;
+    if (activeCircuit) {
+      if (activeCircuit.expires_at === null || activeCircuit.expires_at === 'null') {
+        isCircuitActive = true;
+      } else {
+        const expDate = new Date(activeCircuit.expires_at);
+        if (expDate > new Date()) {
+          isCircuitActive = true;
+        }
+      }
+    }
+
     if (isActivated) {
-      nav.innerHTML = `
-        <button class="nav-tab active" id="tab-btn-accueil" role="tab"
-          aria-selected="true" aria-controls="tab-accueil" onclick="switchTab('accueil')">
-          <span class="nav-tab-icon" aria-hidden="true">⏱</span>
-          Accueil
+      menuList.innerHTML = `
+        <button class="drawer-item" id="drawer-btn-accueil" onclick="selectDrawerTab('accueil')">
+          <span class="drawer-item-icon">⏱</span> Accueil
         </button>
-        <button class="nav-tab" id="tab-btn-feuillet" role="tab"
-          aria-selected="false" aria-controls="tab-feuillet" onclick="switchTab('feuillet')">
-          <span class="nav-tab-icon" aria-hidden="true">📋</span>
-          Feuillet
+        <button class="drawer-item" id="drawer-btn-feuillet" onclick="selectDrawerTab('feuillet')">
+          <span class="drawer-item-icon">📋</span> Feuillet
         </button>
-        <button class="nav-tab" id="tab-btn-historique" role="tab"
-          aria-selected="false" aria-controls="tab-historique" onclick="switchTab('historique')">
-          <span class="nav-tab-icon" aria-hidden="true">🗄</span>
-          Historique
+        <button class="drawer-item" id="drawer-btn-historique" onclick="selectDrawerTab('historique')">
+          <span class="drawer-item-icon">🗄</span> Historique
         </button>
-        <button class="nav-tab" id="tab-btn-profil" role="tab"
-          aria-selected="false" aria-controls="tab-profil" onclick="switchTab('profil')">
-          <span class="nav-tab-icon" aria-hidden="true">👤</span>
-          Profil
+        <button class="drawer-item" id="drawer-btn-profil" onclick="selectDrawerTab('profil')">
+          <span class="drawer-item-icon">👤</span> Profil
+        </button>
+        <button class="drawer-item ${isCircuitActive ? '' : 'locked'}" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
+          <span class="drawer-item-icon" id="drawer-circuit-icon">${isCircuitActive ? '🗺️' : '🔒'}</span> Circuit
         </button>
       `;
     } else {
-      nav.innerHTML = `
-        <button class="nav-tab active" id="tab-btn-profil" role="tab"
-          aria-selected="true" aria-controls="tab-profil" onclick="switchTab('profil')">
-          <span class="nav-tab-icon" aria-hidden="true">👤</span>
-          Profil
+      menuList.innerHTML = `
+        <button class="drawer-item" id="drawer-btn-profil" onclick="selectDrawerTab('profil')">
+          <span class="drawer-item-icon">👤</span> Profil
         </button>
-        <button class="nav-tab" id="tab-btn-activation" role="tab"
-          aria-selected="false" aria-controls="tab-activation" onclick="switchTab('activation')">
-          <span class="nav-tab-icon" aria-hidden="true">🔑</span>
-          Activer
+        <button class="drawer-item" id="drawer-btn-activation" onclick="selectDrawerTab('activation')">
+          <span class="drawer-item-icon">🔑</span> Activer
         </button>
-        <button class="nav-tab" id="tab-btn-support" role="tab"
-          aria-selected="false" aria-controls="tab-support" onclick="switchTab('support')">
-          <span class="nav-tab-icon" aria-hidden="true">🤖</span>
-          Support
+        <button class="drawer-item" id="drawer-btn-support" onclick="selectDrawerTab('support')">
+          <span class="drawer-item-icon">🤖</span> Support
+        </button>
+        <button class="drawer-item ${isCircuitActive ? '' : 'locked'}" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
+          <span class="drawer-item-icon" id="drawer-circuit-icon">${isCircuitActive ? '🗺️' : '🔒'}</span> Circuit
         </button>
       `;
     }
@@ -1360,17 +1608,143 @@
     checkMidnightAutoCut();
   }
 
-  /* ─── NAVIGATION ONGLETS ────────────────────────────────────────────── */
+  /* ─── NAVIGATION ONGLETS & TIROIR (DRAWER) ─────────────────────────── */
+  function openDrawer() {
+    const overlay = document.getElementById('drawer-overlay');
+    if (overlay) overlay.classList.add('open');
+  }
+
+  function closeDrawer() {
+    const overlay = document.getElementById('drawer-overlay');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  function selectDrawerTab(tab) {
+    closeDrawer();
+    
+    if (tab === 'circuit') {
+      const invitations = S2W.table('invitations') || [];
+      const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+      let isCircuitActive = false;
+      if (activeCircuit) {
+        if (activeCircuit.expires_at === null || activeCircuit.expires_at === 'null') {
+          isCircuitActive = true;
+        } else {
+          const expDate = new Date(activeCircuit.expires_at);
+          if (expDate > new Date()) {
+            isCircuitActive = true;
+          }
+        }
+      }
+
+      if (!isCircuitActive) {
+        promptCircuitActivation();
+        return;
+      }
+    }
+    
+    switchTab(tab);
+  }
+
+  function promptCircuitActivation() {
+    const modalId = 'circuit-activation-modal';
+    let modal = document.getElementById(modalId);
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal-overlay';
+      modal.style = 'z-index:1100;'; // Higher z-index than the drawer
+      modal.innerHTML = `
+        <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+          <h3 style="margin-top:0; color:var(--navy); font-size:16px; display:flex; align-items:center; gap:8px;">
+            <span>🔑</span> Activer l'Option Circuit
+          </h3>
+          <p style="font-size:13px; color:var(--text-sec); line-height:1.4; margin-bottom:16px; text-align:left;">
+            L'option <strong>Circuit</strong> (optimisation de tournée) nécessite un code d'activation valide.
+            Veuillez saisir votre code d'activation pour en profiter immédiatement.
+          </p>
+          <div style="margin-bottom:16px;">
+            <input type="text" id="popup-circuit-token" placeholder="Code d'activation Circuit..." class="form-control" style="font-size:14px; text-transform:uppercase; padding:10px; width:100%; border-radius:8px; border:1px solid var(--border); box-sizing:border-box;">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button onclick="submitPopupCircuitCode()" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Activer</button>
+            <button onclick="closeCircuitModal()" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+          </div>
+        </div>
+      `;
+      document.querySelector('.phone-frame').appendChild(modal);
+    }
+    modal.classList.add('open');
+    setTimeout(() => {
+      const input = document.getElementById('popup-circuit-token');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }, 100);
+  }
+
+  function closeCircuitModal() {
+    const modal = document.getElementById('circuit-activation-modal');
+    if (modal) modal.classList.remove('open');
+  }
+
+  function submitPopupCircuitCode() {
+    const input = document.getElementById('popup-circuit-token');
+    const code = input ? input.value.trim().toUpperCase() : '';
+    if (!code) { showMobToast('Veuillez saisir un code.'); return; }
+    
+    const invitations = S2W.table('invitations') || [];
+    const inv = invitations.find(i => i.code.toUpperCase() === code);
+    
+    if (!inv) {
+      showMobToast('Code invalide ou inconnu.');
+      return;
+    }
+    
+    if (inv.type !== 'circuit') {
+      showMobToast('Ce code n\'est pas un code d\'activation Circuit.');
+      return;
+    }
+    
+    if (inv.status !== 'pending') {
+      showMobToast('Ce code a déjà été utilisé ou est expiré.');
+      return;
+    }
+    
+    inv.status = 'used';
+    inv.used_at = new Date().toISOString();
+    inv.used_by_user_id = 'usr_001';
+    
+    if (inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + 30);
+      inv.expires_at = expDate.toISOString();
+    }
+    
+    S2W.update('invitations', inv.id, inv);
+    
+    showMobToast('Service Circuit activé avec succès !');
+    closeCircuitModal();
+    
+    const user = S2W.find('users', 'usr_001');
+    updateNavigationUI(user);
+    
+    setTimeout(() => {
+      switchTab('circuit');
+    }, 1000);
+  }
+
   function switchTab(tab) {
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(b => {
+    document.querySelectorAll('.drawer-item').forEach(b => {
       b.classList.remove('active');
-      b.setAttribute('aria-selected','false');
     });
+    
     const page = document.getElementById(`tab-${tab}`);
-    const btn  = document.getElementById(`tab-btn-${tab}`);
+    const btn  = document.getElementById(`drawer-btn-${tab}`);
     if (page) page.classList.add('active');
-    if (btn)  { btn.classList.add('active'); btn.setAttribute('aria-selected','true'); }
+    if (btn)  btn.classList.add('active');
 
     const scroll = document.getElementById('main-scroll');
     if (scroll) scroll.scrollTop = 0;

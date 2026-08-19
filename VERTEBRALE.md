@@ -121,4 +121,21 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - *Rapports de Tournée* : Liste des feuillets d'activité journaliers avec les 4 boutons d'action complexes par ligne (Partager / Export / Supprimer / Modifier) ainsi que l'interface de génération et d'export du Rapport DREAL mensuel.
 
 
+### VERTÈBRE 14 — Refonte Navigation : Tiroir & Barre Minimaliste (App Salarié)
+- **Fichiers concernés :** `app-mobile.html`
+- **Règles :**
+  - **Tiroir de navigation (Drawer) :**
+    - Coulisse de la gauche vers la droite sur l'écran. Contrôlé par un repère discret (poignée `.drawer-handle`) centré verticalement sur le bord gauche de l'écran, réagissant au clic ou glissé.
+    - Contient 5 entrées : *Accueil*, *Feuillet*, *Historique*, *Profil*, et *Circuit*.
+  - **Option Circuit dans le Menu :**
+    - Toujours visible, mais grisée et dotée d'un cadenas `🔒` si inactive pour le salarié.
+    - Au clic (si inactive), ouvre une popup/modale invitant à saisir le Token_Circuit pour activer le service pour 30 jours (non reconductible automatiquement).
+    - Une fois déverrouillée/active, l'option affiche une icône carte `🗺️` et donne accès à la feuille de route et l'itinéraire optimisés (`tab-circuit`).
+  - **Barre Basse Minimaliste :**
+    - Remplace l'ancienne barre d'onglets et contient 3 éléments distincts :
+      - *Gauche :* Icône roue dentée `⚙️` redirigeant vers le Profil/Paramètres.
+      - *Centre :* Trait noir simulant l'indicateur d'accueil natif iPhone. Entièrement décoratif dans cette version démo. Note de développement obligatoire : *"À activer avec une vraie fonction de fermeture/minimisation native lors de la génération des builds .apk (Android) et iOS en fin de projet — actuellement décoratif uniquement."*
+      - *Droite :* Raccourci support chatbot technique `💬👤` redirigeant vers l'onglet support.
+
+
 
