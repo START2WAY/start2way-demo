@@ -1298,9 +1298,15 @@
       return;
     }
     
-    const fullName = (firstName + ' ' + lastName).toLowerCase();
+    const name1 = (lastName + ' ' + firstName).toLowerCase();
+    const name2 = (firstName + ' ' + lastName).toLowerCase();
     const users = S2W.table('users') || [];
-    const exists = users.some(u => u.role === 'salarie' && u.status === 'actif' && S2WUtils.fullName(u).toLowerCase() === fullName);
+    
+    const exists = users.some(u => {
+      const uName = S2WUtils.fullName(u).toLowerCase();
+      const uNameAlt = ((u.first_name || '') + ' ' + (u.last_name || '')).toLowerCase();
+      return u.role === 'salarie' && u.status === 'actif' && (uName === name1 || uName === name2 || uNameAlt === name1 || uNameAlt === name2);
+    });
     
     if (exists) {
       warnBox.innerHTML = `
