@@ -339,13 +339,21 @@
       .progress-nav   { padding: 10px 16px; }
       .nav-acts       { display: none; }
     }
-  </style>
+  
+    /* Logo theme adaptation rules */
+    .logo-on-light img {
+      content: url("logo-dark.png");
+    }
+    .logo-on-dark img {
+      content: url("logo.png");
+    }
+</style>
 </head>
 <body>
 
   <!-- PROGRESS NAV -->
   <nav class="progress-nav" aria-label="Navigation présentation">
-    <div class="nav-brand">
+    <div class="nav-brand logo-on-dark">
       <img src="logo.png" alt="START2WAY" style="height: 30px; display: block;">
     </div>
     <div class="nav-acts" role="list">

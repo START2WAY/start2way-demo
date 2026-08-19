@@ -450,13 +450,21 @@
       .kpi-grid { grid-template-columns: repeat(2, 1fr); }
       .form-grid-2 { grid-template-columns: 1fr; }
     }
-  </style>
+  
+    /* Logo theme adaptation rules */
+    .logo-on-light img {
+      content: url("logo-dark.png");
+    }
+    .logo-on-dark img {
+      content: url("logo.png");
+    }
+</style>
 </head>
 <body>
   <!-- SIDEBAR -->
   <aside class="sidebar" role="navigation" aria-label="Menu principal">
     <div class="sidebar-header">
-      <div class="sidebar-logo">
+      <div class="sidebar-logo logo-on-dark">
         <img src="logo.png" alt="START2WAY" style="height: 52px; display: block; margin: 0 auto;">
       </div>
       <div class="sidebar-company" id="sb-company-name">AMT Transport</div>

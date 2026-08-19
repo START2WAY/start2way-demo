@@ -578,7 +578,15 @@
       border-radius: 8px; cursor: pointer; transition: background var(--transition);
     }
     .filter-btn.active { background: var(--navy); color: white; }
-  </style>
+  
+    /* Logo theme adaptation rules */
+    .logo-on-light img {
+      content: url("logo-dark.png");
+    }
+    .logo-on-dark img {
+      content: url("logo.png");
+    }
+</style>
 </head>
 <body>
   <div class="phone-frame" role="main">
@@ -593,7 +601,7 @@
 
     <!-- APP HEADER -->
     <header class="app-header">
-      <div class="app-brand">
+      <div class="app-brand logo-on-dark">
         <img src="logo.png" alt="START2WAY" style="height: 30px; display: block;">
       </div>
       <div class="header-actions">
