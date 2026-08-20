@@ -458,6 +458,225 @@
     .logo-on-light .logo-dark-bg { display: none !important; }
     .logo-on-dark .logo-light-bg { display: none !important; }
     .logo-on-dark .logo-dark-bg { display: block !important; }
+    /* ─── RAPPORTS CIRCUIT ───────────────────────────────────────── */
+    .circuit-kpi-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .circuit-kpi-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .circuit-kpi-val {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .circuit-kpi-lbl {
+      font-size: 12px;
+      color: var(--text-sec);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .circuit-layout-split {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .circuit-card-main {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .circuit-card-title {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .circuit-driver-rank-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--paper);
+      margin-bottom: 8px;
+    }
+    .circuit-driver-rank-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .circuit-driver-rank-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .circuit-driver-rank-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .circuit-driver-rank-score {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand-green);
+    }
+    
+    .circuit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 16px;
+    }
+    .circuit-report-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 180px;
+    }
+    .circuit-report-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--navy);
+    }
+    .cr-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .cr-card-driver {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .cr-card-date {
+      font-size: 11px;
+      color: var(--text-sec);
+    }
+    .cr-card-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .cr-card-badge.high { background: var(--success-bg); color: var(--success); }
+    .cr-card-badge.mid { background: var(--warning-bg); color: var(--warning); }
+    .cr-card-badge.low { background: var(--danger-bg); color: var(--danger); }
+    
+    .cr-card-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    .cr-card-metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .cr-card-metric-lbl {
+      font-size: 10px;
+      color: var(--text-sec);
+      text-transform: uppercase;
+    }
+    
+    /* Filters Container */
+    .circuit-filters-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      align-items: center;
+    }
+    
+    /* svg map detailing */
+    .circuit-route-map {
+      background: #fbfbfb;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      height: 180px;
+      margin-bottom: 16px;
+    }
+    
+    /* Stop list inside modal details drawer */
+    .circuit-detail-stops-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .circuit-detail-stop-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    .circuit-detail-stop-badge {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--navy-light);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .circuit-detail-stop-badge.success { background: var(--success); }
+    .circuit-detail-stop-badge.failed { background: var(--danger); }
 </style>
 </head>
 <body>
@@ -493,6 +712,9 @@
       <div class="sidebar-section-label">Conformité</div>
       <button class="nav-item" data-page="rapports" onclick="switchPage('rapports')" role="listitem">
         <span class="nav-icon" aria-hidden="true">📑</span> Rapports DREAL
+      </button>
+      <button class="nav-item" data-page="circuit-reports" onclick="switchPage('circuit-reports')" role="listitem">
+        <span class="nav-icon" aria-hidden="true">📍</span> Rapports Circuit
       </button>
       <button class="nav-item" data-page="archives" onclick="switchPage('archives')" role="listitem">
         <span class="nav-icon" aria-hidden="true">🗄</span> Archives
@@ -564,11 +786,6 @@
   let _pollingInterval = null;
 
   function checkAirtableConfig() {
-    if (window.location.search && window.location.search.includes('test=')) {
-      const warningBanner = document.getElementById('airtable-warning-banner');
-      if (warningBanner) warningBanner.remove();
-      return;
-    }
     const token = localStorage.getItem('s2w_airtable_token');
     const baseId = localStorage.getItem('s2w_airtable_base_id');
     const warningBanner = document.getElementById('airtable-warning-banner');
@@ -876,7 +1093,7 @@
       dashboard:'Tableau de bord', registre:'Registre unique du personnel',
       documents:'Suivi des documents', flotte:'Gestion de la flotte',
       rapports:'Rapports DREAL', archives:'Archives', messagerie:'Messagerie Conducteurs',
-      codes:'Codes Générés'
+      codes:'Codes Générés', 'circuit-reports': 'Rapports Circuit'
     };
     document.getElementById('topbar-title').textContent = titles[page] || page;
     main.innerHTML = '';
@@ -889,7 +1106,8 @@
       rapports:  buildRapports,
       archives:  buildArchives,
       messagerie: buildMessagerie,
-      codes:     buildCodes
+      codes:     buildCodes,
+      'circuit-reports': buildCircuitReports
     };
     if (builders[page]) builders[page](main);
   }
@@ -1044,6 +1262,472 @@
         el.style.display = 'none';
       }
     }
+  }
+
+  /* ─── RAPPORTS CIRCUIT ───────────────────────────────────────────── */
+  let circuitSearchText = '';
+  let circuitFilterDate = 'all';
+  let circuitFilterPerf = 'all';
+
+  function buildCircuitReports(el) {
+    let reports = S2W.table('reports') || [];
+    reports = reports.filter(r => r.type === 'circuit');
+
+    if (reports.length === 0) {
+      const mockReports = [
+        {
+          id: 'rep_circuit_mock_1',
+          user_id: 'usr_001',
+          type: 'circuit',
+          created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+          success_rate: 100,
+          stops_count: 5,
+          total_time: 98,
+          total_distance: 14.2,
+          stops: [
+            { id: '1', address: '12 Avenue des Flandres, Roubaix', status: 'delivered', failReason: '', comment: 'Remis en main propre', photos: [], completedAt: new Date(Date.now() - 3600000 * 1.8).toISOString() },
+            { id: '2', address: '5 Rue du Grand Chemin, Roubaix', status: 'delivered', failReason: '', comment: 'Laisse sous le porche', photos: ['data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23eee"/><text x="50" y="55" font-size="8" text-anchor="middle">Photo Colis 1</text></svg>'], completedAt: new Date(Date.now() - 3600000 * 1.5).toISOString() },
+            { id: '3', address: '88 Rue de Tourcoing, Roubaix', status: 'delivered', failReason: '', comment: 'Boite aux lettres', photos: [], completedAt: new Date(Date.now() - 3600000 * 1.2).toISOString() },
+            { id: '4', address: '142 Boulevard Gambetta, Roubaix', status: 'delivered', failReason: '', comment: 'Code portail ok', photos: [], completedAt: new Date(Date.now() - 3600000 * 0.9).toISOString() },
+            { id: '5', address: '16 Rue Pellart, Roubaix', status: 'delivered', failReason: '', comment: 'Gardien', photos: [], completedAt: new Date(Date.now() - 3600000 * 0.5).toISOString() }
+          ]
+        },
+        {
+          id: 'rep_circuit_mock_2',
+          user_id: 'usr_mock_2',
+          type: 'circuit',
+          created_at: new Date(Date.now() - 86400000 * 1.2).toISOString(),
+          success_rate: 80,
+          stops_count: 5,
+          total_time: 110,
+          total_distance: 19.8,
+          stops: [
+            { id: '1', address: '10 Rue de Valois, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 1.15).toISOString() },
+            { id: '2', address: '22 Avenue de Bretagne, Lille', status: 'delivered', failReason: '', comment: 'Voisin du dessus', photos: [], completedAt: new Date(Date.now() - 86400000 * 1.1).toISOString() },
+            { id: '3', address: '14 Place du Concert, Lille', status: 'failed', failReason: 'Client absent', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 1.05).toISOString() },
+            { id: '4', address: '85 Rue Nationale, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 1.0).toISOString() },
+            { id: '5', address: '102 Rue Solférino, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 0.95).toISOString() }
+          ]
+        },
+        {
+          id: 'rep_circuit_mock_3',
+          user_id: 'usr_mock_3',
+          type: 'circuit',
+          created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+          success_rate: 60,
+          stops_count: 5,
+          total_time: 135,
+          total_distance: 22.4,
+          stops: [
+            { id: '1', address: '3 Boulevard de Belfort, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 2.95).toISOString() },
+            { id: '2', address: '17 Rue d\'Isly, Lille', status: 'failed', failReason: 'Colis endommagé', comment: 'Retour dépôt requis', photos: ['data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23FADBD8"/><text x="50" y="55" font-size="8" fill="%2378281F" text-anchor="middle">Carton dechire</text></svg>'], completedAt: new Date(Date.now() - 86400000 * 2.9).toISOString() },
+            { id: '3', address: '22 Rue Solférino, Lille', status: 'failed', failReason: 'Accès impossible', comment: 'Pas de digicode', photos: [], completedAt: new Date(Date.now() - 86400000 * 2.85).toISOString() },
+            { id: '4', address: '109 Rue du Faubourg des Postes, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 2.8).toISOString() },
+            { id: '5', address: '2 Rue Gauthier de Châtillon, Lille', status: 'delivered', failReason: '', comment: '', photos: [], completedAt: new Date(Date.now() - 86400000 * 2.75).toISOString() }
+          ]
+        }
+      ];
+      mockReports.forEach(mr => S2W.push('reports', mr));
+      reports = mockReports;
+    }
+
+    function getDriverName(userId) {
+      if (userId === 'usr_001') return 'Chauffeur Démo';
+      if (userId === 'usr_mock_2') return 'Jean Dupont';
+      if (userId === 'usr_mock_3') return 'Karim Benzema';
+      const u = S2W.find('users', userId);
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'Conducteur Inconnu';
+    }
+
+    const totalTours = reports.length;
+    let avgSuccess = 0;
+    let totalDist = 0;
+    let avgTime = 0;
+    
+    if (totalTours > 0) {
+      const sumSuccess = reports.reduce((acc, r) => acc + (r.success_rate || 0), 0);
+      avgSuccess = Math.round(sumSuccess / totalTours);
+      totalDist = reports.reduce((acc, r) => acc + (r.total_distance || 0), 0);
+      const sumTime = reports.reduce((acc, r) => acc + (r.total_time || 0), 0);
+      avgTime = Math.round(sumTime / totalTours);
+    }
+
+    const driverScores = {};
+    reports.forEach(r => {
+      const name = getDriverName(r.user_id);
+      if (!driverScores[name]) {
+        driverScores[name] = { sum: 0, count: 0 };
+      }
+      driverScores[name].sum += r.success_rate || 0;
+      driverScores[name].count += 1;
+    });
+    
+    const rankList = Object.entries(driverScores).map(([name, obj]) => ({
+      name,
+      avg: Math.round(obj.sum / obj.count)
+    })).sort((a,b) => b.avg - a.avg);
+
+    el.innerHTML = `
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Rapports de Tournées Circuit</h1>
+          <p class="page-subtitle">Suivi des livraisons et bilans d'activité après clôture par les conducteurs.</p>
+        </div>
+      </div>
+      
+      <div class="circuit-kpi-container">
+        <div class="circuit-kpi-card" style="flex-direction:row; align-items:center; gap:20px;">
+          <svg width="60" height="60" viewBox="0 0 36 36" style="transform:rotate(-90deg); flex-shrink:0;">
+            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#eee" stroke-width="3" />
+            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" 
+              stroke="${avgSuccess > 80 ? 'var(--success)' : avgSuccess > 60 ? 'var(--warning)' : 'var(--danger)'}" 
+              stroke-width="3" stroke-dasharray="${avgSuccess}, 100" />
+            <text x="18" y="21.5" font-size="8" font-weight="700" fill="var(--navy)" text-anchor="middle" style="transform:rotate(90deg); transform-origin:center;">${avgSuccess}%</text>
+          </svg>
+          <div>
+            <div class="circuit-kpi-lbl">Taux Moyen Global</div>
+            <div class="circuit-kpi-val">${avgSuccess}%</div>
+          </div>
+        </div>
+        <div class="circuit-kpi-card">
+          <div class="circuit-kpi-lbl">Tournées Clôturées</div>
+          <div class="circuit-kpi-val">${totalTours}</div>
+        </div>
+        <div class="circuit-kpi-card">
+          <div class="circuit-kpi-lbl">Distance Cumulée</div>
+          <div class="circuit-kpi-val">${totalDist.toFixed(1)} km</div>
+        </div>
+        <div class="circuit-kpi-card">
+          <div class="circuit-kpi-lbl">Temps Moyen</div>
+          <div class="circuit-kpi-val">${avgTime} min</div>
+        </div>
+      </div>
+      
+      <div class="circuit-layout-split">
+        <div class="circuit-card-main" style="padding:20px;">
+          <div class="circuit-card-title">🏆 Classement des Conducteurs (Performeurs)</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            ${rankList.map((item, idx) => `
+              <div class="circuit-driver-rank-item">
+                <div class="circuit-driver-rank-info">
+                  <span class="circuit-driver-rank-badge" style="background:${idx===0?'#C9922F':idx===1?'#8A9BA8':'#A7B6C2'}">${idx+1}</span>
+                  <span class="circuit-driver-rank-name">${item.name}</span>
+                </div>
+                <span class="circuit-driver-rank-score">${item.avg}% Réussite</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="circuit-card-main" style="padding:20px;">
+          <div class="circuit-card-title">💡 Performance Générale</div>
+          <div style="font-size:13px; color:var(--text-sec); line-height:1.6;">
+            Le taux moyen de livraison de la flotte est de <strong>${avgSuccess}%</strong>. Les retours et échecs de livraison sont tracés individuellement avec preuve d'absence ou photos à l'appui dans chaque rapport.
+          </div>
+        </div>
+      </div>
+
+      <div class="circuit-card-main" style="margin-top:20px; padding:20px;">
+        <div class="circuit-card-title">🔍 Rapports individuels</div>
+        
+        <div class="circuit-filters-bar">
+          <input type="text" id="circuit-search-input" placeholder="Rechercher par chauffeur..." 
+            style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; flex-grow:1;"
+            value="${circuitSearchText}" oninput="updateCircuitFilters()">
+            
+          <select id="circuit-date-filter" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; background:#fff;" onchange="updateCircuitFilters()">
+            <option value="all" ${circuitFilterDate==='all'?'selected':''}>Toutes les dates</option>
+            <option value="today" ${circuitFilterDate==='today'?'selected':''}>Aujourd'hui</option>
+            <option value="week" ${circuitFilterDate==='week'?'selected':''}>7 derniers jours</option>
+          </select>
+          
+          <select id="circuit-perf-filter" style="padding:8px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:13px; background:#fff;" onchange="updateCircuitFilters()">
+            <option value="all" ${circuitFilterPerf==='all'?'selected':''}>Toutes les performances</option>
+            <option value="high" ${circuitFilterPerf==='high'?'selected':''}>Excellentes (> 90%)</option>
+            <option value="low" ${circuitFilterPerf==='low'?'selected':''}>À surveiller (< 80%)</option>
+          </select>
+        </div>
+        
+        <div class="circuit-grid" id="circuit-grid-container">
+          <!-- Dynamically Rendered Cards -->
+        </div>
+      </div>
+    `;
+    
+    renderCircuitCards();
+  }
+
+  function renderCircuitCards() {
+    const container = document.getElementById('circuit-grid-container');
+    if (!container) return;
+    
+    let reports = S2W.table('reports') || [];
+    reports = reports.filter(r => r.type === 'circuit');
+    
+    function getDriverName(userId) {
+      if (userId === 'usr_001') return 'Chauffeur Démo';
+      if (userId === 'usr_mock_2') return 'Jean Dupont';
+      if (userId === 'usr_mock_3') return 'Karim Benzema';
+      const u = S2W.find('users', userId);
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'Conducteur Inconnu';
+    }
+
+    let filtered = reports.filter(r => {
+      const name = getDriverName(r.user_id).toLowerCase();
+      const matchSearch = name.includes(circuitSearchText.toLowerCase());
+      
+      let matchDate = true;
+      if (circuitFilterDate === 'today') {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        matchDate = r.created_at.slice(0, 10) === todayStr;
+      } else if (circuitFilterDate === 'week') {
+        const diff = new Date() - new Date(r.created_at);
+        matchDate = diff < 7 * 86400 * 1000;
+      }
+      
+      let matchPerf = true;
+      if (circuitFilterPerf === 'high') {
+        matchPerf = r.success_rate >= 90;
+      } else if (circuitFilterPerf === 'low') {
+        matchPerf = r.success_rate < 80;
+      }
+      
+      return matchSearch && matchDate && matchPerf;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state" style="grid-column: span 3; padding: 40px; text-align: center; color: var(--text-sec);">
+          <span style="font-size:32px;">🔍</span><br>Aucun rapport ne correspond à vos critères.
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(r => {
+      const name = getDriverName(r.user_id);
+      const formattedDate = new Date(r.created_at).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+      });
+      const badgeCls = r.success_rate >= 90 ? 'high' : r.success_rate >= 70 ? 'mid' : 'low';
+      
+      return `
+        <div class="circuit-report-card" onclick="openCircuitReportDetail('${r.id}')">
+          <div class="cr-card-header">
+            <div>
+              <div class="cr-card-driver">${name}</div>
+              <div class="cr-card-date">${formattedDate}</div>
+            </div>
+            <span class="cr-card-badge ${badgeCls}">${r.success_rate}%</span>
+          </div>
+          
+          <div class="cr-card-metrics">
+            <div>
+              <div class="cr-card-metric-val">${r.stops_count}</div>
+              <div class="cr-card-metric-lbl">Arrêts</div>
+            </div>
+            <div>
+              <div class="cr-card-metric-val">${r.total_time}m</div>
+              <div class="cr-card-metric-lbl">Durée</div>
+            </div>
+            <div>
+              <div class="cr-card-metric-val">${r.total_distance}</div>
+              <div class="cr-card-metric-lbl">km</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateCircuitFilters() {
+    circuitSearchText = document.getElementById('circuit-search-input').value;
+    circuitFilterDate = document.getElementById('circuit-date-filter').value;
+    circuitFilterPerf = document.getElementById('circuit-perf-filter').value;
+    renderCircuitCards();
+  }
+
+  function buildCircuitSVGMap(stops) {
+    let dots = '';
+    let pathPoints = '';
+    const colors = {
+      delivered: 'var(--success)',
+      failed: 'var(--danger)',
+      pending: 'var(--navy-light)'
+    };
+    
+    stops.forEach((s, idx) => {
+      const x = 50 + (idx * 60) % 300;
+      const y = 30 + (idx * 30) % 120;
+      pathPoints += `${x},${y} `;
+      
+      const pinColor = colors[s.status] || colors.pending;
+      dots += `
+        <circle cx="${x}" cy="${y}" r="6" fill="${pinColor}" stroke="#fff" stroke-width="2" />
+        <text x="${x}" y="${y - 10}" font-size="10" font-weight="700" fill="var(--navy)" text-anchor="middle">${idx + 1}</text>
+      `;
+    });
+    
+    return `
+      <svg viewBox="0 0 400 180" style="width:100%; height:100%;">
+        <polyline points="${pathPoints}" fill="none" stroke="var(--border)" stroke-width="3" stroke-dasharray="5,5" />
+        ${dots}
+      </svg>
+    `;
+  }
+
+  let activeDetailReport = null;
+
+  function openCircuitReportDetail(reportId) {
+    const all = S2W.table('reports') || [];
+    const r = all.find(item => item.id === reportId);
+    if (!r) return;
+    activeDetailReport = r;
+
+    function getDriverName(userId) {
+      if (userId === 'usr_001') return 'Chauffeur Démo';
+      if (userId === 'usr_mock_2') return 'Jean Dupont';
+      if (userId === 'usr_mock_3') return 'Karim Benzema';
+      const u = S2W.find('users', userId);
+      return u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() : 'Conducteur Inconnu';
+    }
+
+    const name = getDriverName(r.user_id);
+    const dateStr = new Date(r.created_at).toLocaleDateString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    
+    const mapSvgHtml = buildCircuitSVGMap(r.stops || []);
+
+    const box = document.getElementById('modal-box');
+    box.className = 'modal-box modal-box-lg';
+    box.innerHTML = `
+      <div class="modal-header">
+        <h2 class="modal-title">Bilan de tournée — ${name}</h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      
+      <p style="font-size:12px; color:var(--text-sec); margin-bottom:16px;">Clôturée le ${dateStr}</p>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+        <div>
+          <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px;">📍 Tracé de l'itinéraire</div>
+          <div class="circuit-route-map">
+            ${mapSvgHtml}
+          </div>
+          
+          <div class="circuit-kpi-container" style="grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:0;">
+            <div class="circuit-kpi-card" style="padding:10px;">
+              <div style="font-size:10px; color:var(--text-sec);">Taux Réussite</div>
+              <div style="font-size:18px; font-weight:700; color:var(--success);">${r.success_rate}%</div>
+            </div>
+            <div class="circuit-kpi-card" style="padding:10px;">
+              <div style="font-size:10px; color:var(--text-sec);">Distance</div>
+              <div style="font-size:18px; font-weight:700; color:var(--navy);">${r.total_distance} km</div>
+            </div>
+            <div class="circuit-kpi-card" style="padding:10px;">
+              <div style="font-size:10px; color:var(--text-sec);">Temps Total</div>
+              <div style="font-size:18px; font-weight:700; color:var(--navy);">${r.total_time} min</div>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <div style="font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px;">📋 Chronologie des arrêts (${r.stops?.length || 0})</div>
+          
+          <div class="circuit-detail-stops-list">
+            ${(r.stops || []).map((s, idx) => {
+              const cleanTime = s.completedAt ? new Date(s.completedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+              const isDelivered = s.status === 'delivered';
+              
+              let stopActionHtml = '';
+              if (s.comment || (s.photos && s.photos.length > 0)) {
+                stopActionHtml = `
+                  <button class="btn" style="padding:3px 8px; font-size:11px; font-weight:700; background:var(--navy); color:#fff; border-radius:4px; margin-top:4px;" 
+                    onclick="openEmployerStopMediaByIndex(${idx})">
+                    📦 Fiche Colis
+                  </button>
+                `;
+              }
+
+              return `
+                <div class="circuit-detail-stop-item">
+                  <div style="display:flex; align-items:start; gap:10px;">
+                    <span class="circuit-detail-stop-badge ${isDelivered?'success':'failed'}">${idx+1}</span>
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-main);">${s.address}</div>
+                      ${s.failReason ? `<div style="font-size:11px; font-weight:700; color:var(--danger);">Motif : ${s.failReason}</div>` : ''}
+                      ${stopActionHtml}
+                    </div>
+                  </div>
+                  <div style="text-align:right; flex-shrink:0;">
+                    <span style="font-size:11px; font-weight:700; color:var(--text-sec);">${cleanTime}</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+      
+      <div class="modal-footer">
+        <button class="btn btn-muted" onclick="closeModal()">Fermer</button>
+      </div>
+    `;
+    
+    openModal();
+  }
+
+  function openEmployerStopMediaByIndex(idx) {
+    if (!activeDetailReport || !activeDetailReport.stops) return;
+    const s = activeDetailReport.stops[idx];
+    if (!s) return;
+    openEmployerStopMedia(s.address, s.comment || '', (s.photos || []).join(','));
+  }
+
+  function openEmployerStopMedia(address, comment, photosCsv) {
+    const photos = photosCsv ? photosCsv.split(',') : [];
+    
+    const mediaBox = document.createElement('div');
+    mediaBox.id = 'employer-stop-media-modal';
+    mediaBox.className = 'modal-backdrop';
+    mediaBox.style = 'z-index:100000; display:flex;';
+    
+    let photosHtml = '';
+    if (photos.length > 0) {
+      photosHtml = `
+        <div style="display:flex; gap:8px; overflow-x:auto; margin-bottom:12px; padding-bottom:8px;">
+          ${photos.map(p => `<img src="${p}" style="max-height:150px; border-radius:var(--radius-sm); border:1px solid var(--border);" />`).join('')}
+        </div>
+      `;
+    } else {
+      photosHtml = `<div style="padding:16px; text-align:center; color:var(--text-sec); background:var(--paper); border-radius:var(--radius-sm); font-size:13px; margin-bottom:12px;">Aucune photo attachée</div>`;
+    }
+
+    mediaBox.innerHTML = `
+      <div class="modal-box" style="max-width:400px; padding:20px;">
+        <div class="modal-header">
+          <h3 class="modal-title" style="font-size:15px;">Détails Colis</h3>
+          <button class="modal-close" onclick="document.getElementById('employer-stop-media-modal').remove()">✕</button>
+        </div>
+        
+        <p style="font-size:12px; font-weight:700; color:var(--navy); margin-bottom:8px;">📍 ${address}</p>
+        
+        ${photosHtml}
+        
+        <div style="font-size:13px; font-weight:600; color:var(--text-main); margin-bottom:16px;">
+          <strong>Commentaire chauffeur :</strong><br>
+          <span style="color:var(--text-sec); font-style:italic;">${comment || "Aucun commentaire écrit."}</span>
+        </div>
+        
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-muted" onclick="document.getElementById('employer-stop-media-modal').remove()">Fermer</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(mediaBox);
+    mediaBox.classList.add('open');
   }
 
   function buildCodes(el) {

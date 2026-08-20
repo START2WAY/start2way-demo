@@ -3142,6 +3142,7 @@
     const stop = circuitStops.find(s => s.id === activeResolvingStopId);
     if (stop) {
       stop.status = 'delivered';
+      stop.completedAt = new Date().toISOString();
       
       // Advance clock by calculated travel duration + service duration (5 mins)
       if (stop.calculatedDuration) {
@@ -3164,6 +3165,7 @@
     if (stop) {
       stop.status = 'failed';
       stop.failReason = reason;
+      stop.completedAt = new Date().toISOString();
       
       if (stop.calculatedDuration) {
         circuitTime += stop.calculatedDuration;
@@ -3365,6 +3367,35 @@
     document.getElementById('sum-total-stops').textContent = total;
     document.getElementById('sum-total-time').textContent = `${duration} min`;
     document.getElementById('sum-total-distance').textContent = `${dist.toFixed(1)} km`;
+
+    // Save report in S2W 'reports' table
+    const reportId = 'rep_circuit_' + Date.now();
+    const newReport = {
+      id: reportId,
+      user_id: 'usr_001',
+      type: 'circuit',
+      created_at: new Date().toISOString(),
+      success_rate: pct,
+      stops_count: total,
+      total_time: duration,
+      total_distance: parseFloat(dist.toFixed(1)),
+      stops: circuitStops.map(s => ({
+        id: s.id,
+        address: s.address,
+        status: s.status,
+        failReason: s.failReason || '',
+        photos: s.photos || [],
+        comment: s.comment || '',
+        completedAt: s.completedAt || new Date().toISOString()
+      }))
+    };
+    
+    try {
+      S2W.push('reports', newReport);
+      console.log('[Circuit] Report saved:', newReport);
+    } catch (e) {
+      console.error('[Circuit] Failed to save report:', e);
+    }
   }
 
   function resetTourCircuit() {

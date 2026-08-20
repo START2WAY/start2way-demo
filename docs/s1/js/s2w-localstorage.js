@@ -301,7 +301,7 @@ const S2W = {
 
   _deserializeFields(fields) {
     const item = { ...fields };
-    const jsonKeys = ['signature_path', 'maintenance_thresholds', 'docs', 'included_dates', 'all_dates'];
+    const jsonKeys = ['signature_path', 'maintenance_thresholds', 'docs', 'included_dates', 'all_dates', 'stops'];
     for (const key of jsonKeys) {
       if (typeof item[key] === 'string' && item[key].trim().startsWith('[')) {
         try {

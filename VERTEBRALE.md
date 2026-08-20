@@ -156,3 +156,13 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
     - Un compteur de progression permanent en haut de la liste affiche les arrêts résolus (ex : "5/12 livrés").
   - **Résumé de fin de tournée :**
     - Écran final s'affichant automatiquement lorsque tous les arrêts ont été traités, présentant les statistiques de la journée (taux de réussite, arrêts traités, temps total, distance cumulée).
+
+### VERTÈBRE 16 — Rapports de Tournées Circuit (Panel Employeur)
+- **Fichiers concernés :** `app-web.html`, `docs/s1/js/s2w-localstorage.js`, `VERTEBRALE.md`
+- **Règles :**
+  - **Enregistrement Fin de Tournée :** L'application mobile enregistre automatiquement le rapport dans la table `reports` avec le type `'circuit'` dès que la tournée est clôturée par le salarié.
+  - **En-tête & KPI Dashboard :** Affiche le taux moyen global de réussite sous forme de jauge SVG circulaire colorée, le nombre de tournées complétées, le kilométrage total et la durée moyenne.
+  - **Gamification :** Présente le classement (leaderboard) des conducteurs triés par taux de réussite de livraison.
+  - **Tracé d'itinéraire SVG :** Dessine un tracé cartographique interactif avec connexions en pointillés et marqueurs d'arrêts colorés selon leur statut de livraison (vert pour Livré, rouge pour Échoué).
+  - **Fiche Colis Employeur :** Permet à l'employeur d'inspecter les commentaires et le carrousel d'images pris pour chaque arrêt de la tournée.
+
