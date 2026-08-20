@@ -166,3 +166,13 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
   - **Tracé d'itinéraire SVG :** Dessine un tracé cartographique interactif avec connexions en pointillés et marqueurs d'arrêts colorés selon leur statut de livraison (vert pour Livré, rouge pour Échoué).
   - **Fiche Colis Employeur :** Permet à l'employeur d'inspecter les commentaires et le carrousel d'images pris pour chaque arrêt de la tournée.
 
+## DETTE TECHNIQUE & LIMITES DE PRODUCTION
+
+### GÉOCODAGE ET CALCUL D'ITINÉRAIRE — SIMULATION LOCALE UNIQUEMENT (pas de production) :
+- Aucune API GPS/cartographie externe n'est utilisée actuellement (ni Google Maps, ni Mapbox, ni OpenStreetMap/OSRM).
+- Le géocodage des adresses saisies utilise un catalogue local codé en dur (ADDRESS_CATALOG) ; toute adresse absente de ce catalogue reçoit des coordonnées ALÉATOIRES près de Lille/Roubaix, sans rapport avec l'adresse réelle saisie.
+- L'optimisation de tournée et le calcul d'ETA utilisent uniquement la formule Haversine (distance à vol d'oiseau + vitesse moyenne estimée), jamais une distance routière réelle.
+- AVANT toute mise en production réelle, il faudra impérativement intégrer : une vraie API de géocodage (ex: Google Geocoding API, Nominatim/OpenStreetMap) et un vrai service de calcul d'itinéraire routier (ex: Google Routes API, OSRM) pour que l'optimisation et les ETA soient fiables en conditions réelles.
+- Cette limitation est acceptable pour la phase actuelle de démo/prototype, mais ne doit jamais être oubliée avant un vrai lancement.
+
+
