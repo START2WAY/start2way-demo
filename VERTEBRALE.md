@@ -219,3 +219,19 @@ Ce point sera affiné davantage avec le fondateur au moment de basculer de la si
 > **Motif :** Airtable rejette silencieusement les champs inconnus (pas d'erreur visible côté client si l'erreur réseau est swallowed). Le code local fonctionne parfaitement (localStorage n'a pas de schéma), masquant le problème jusqu'à un audit explicite.
 
 
+
+## Vertèbre 19 — Résolution Bugs Interface & Synchronisation Airtable
+- **Date :** 2026-08-21
+- **Fichiers concernés :** `app-mobile.html`, `app-web.html`, `docs/s1/js/s2w-localstorage.js`
+- **Corrections et ajouts appliqués :**
+  1. **Interface & Tiroir :** Suppression du doublon "Contacter l'employeur" (Page Profil) et ajout d'un accès rapide "Messagerie" dans le Menu latéral (Drawer) pour uniformité.
+  2. **Centre d'Alertes Salarié :**
+     - Le bouton "Tout marquer lu" réinitialise correctement l'état et efface le badge de notification.
+     - Correction du périmètre de confidentialité : filtrage strict des notifications pour que le salarié ne voie que **SES** alertes (basé sur `owner_id` / `user_id` lié au conducteur connecté), et non les alertes employeur ou celles des autres.
+  3. **Sélecteur de Véhicule (Mobile) :**
+     - Remplacement du panneau vide par une liste fonctionnelle liée à la table `vehicles`.
+     - Changement de véhicule mis à jour via `S2W.update('users', user.id, { current_vehicle_id: ... })`, se reflétant instantanément côté Dashboard Employeur.
+  4. **Correctif Critique - Doublons Airtable (`syncFromAirtable`) :**
+     - L'ancienne logique faisait un `POST` (insert) aveugle des données locales manquant d'`_airtable_id`, provoquant des doublons (ex: multiples "DX-847-AZ") à chaque perte/réinitialisation du cache.
+     - **Nouvelle logique (Upsert) :** Le code télécharge d'abord la base Airtable existante, construit une carte par ID métier (`r.id`), et associe simplement l'`_airtable_id` aux objets locaux s'ils existent déjà à distance. L'insertion (`POST`) n'a lieu que pour les objets strictement nouveaux.
+     - Nettoyage manuel des véhicules dupliqués dans Airtable de production effectué.
