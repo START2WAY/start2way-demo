@@ -1314,6 +1314,17 @@
       </div>
     </div>
 
+    <!-- VEHICLE SHEET -->
+    <div class="notif-sheet" id="mob-vehicle-sheet">
+      <div class="notif-sheet-header">
+        <span class="notif-sheet-title">Changer de véhicule</span>
+        <button class="notif-sheet-clear" onclick="document.getElementById('mob-vehicle-sheet').classList.remove('open')">Fermer</button>
+      </div>
+      <div class="notif-list" id="mob-vehicle-list">
+        <!-- Rendu dynamique -->
+      </div>
+    </div>
+
     <!-- SCROLL AREA -->
     <div class="scroll-area" id="main-scroll" role="region" aria-label="Contenu principal">
 
@@ -1332,11 +1343,11 @@
         <!-- VEHICULE -->
         <div class="vehicle-section">
           <div class="vehicle-pill" onclick="selectVehicle()" tabindex="0" role="button"
-            aria-label="Véhicule actif DX-847-AZ, appuyer pour changer">
+            aria-label="Véhicule actif, appuyer pour changer">
             <span aria-hidden="true">🚚</span>
             <div>
-              <div class="vehicle-plate">DX-847-AZ</div>
-              <div class="vehicle-model">Renault Master — 3.5t</div>
+              <div class="vehicle-plate" id="mob-vehicle-plate">...</div>
+              <div class="vehicle-model" id="mob-vehicle-model">...</div>
             </div>
             <span class="vehicle-pill-icon" aria-hidden="true">▼</span>
           </div>
@@ -2031,6 +2042,7 @@
 
         updateNavigationUI(user);
         initMobNotifications();
+        initVehicleUI(user);
         if (user && !user.company_id) {
           switchTab('profil');
         }
@@ -3714,8 +3726,49 @@
   }
 
   /* ─── SÉLECTION VÉHICULE ─────────────────────────────────────────────── */
+  function getCurrentVehicleId() {
+    const user = S2W.find('users', 'usr_001');
+    return (user && user.current_vehicle_id) ? user.current_vehicle_id : 'veh_001';
+  }
+
+  function initVehicleUI(user) {
+    const vid = (user && user.current_vehicle_id) ? user.current_vehicle_id : 'veh_001';
+    updateVehiclePill(vid);
+  }
+
+  function updateVehiclePill(vid) {
+    const v = S2W.find('vehicles', vid);
+    if (v) {
+      document.getElementById('mob-vehicle-plate').textContent = v.immatriculation || v.plate_number;
+      document.getElementById('mob-vehicle-model').textContent = `${v.brand_model || ''} — ${(v.max_weight_kg/1000).toFixed(1)}t`;
+    }
+  }
+
   function selectVehicle() {
-    showMobToast('Sélection du véhicule — Disponible en production');
+    const vehicles = S2W.table('vehicles') || [];
+    const listEl = document.getElementById('mob-vehicle-list');
+    const currentVid = getCurrentVehicleId();
+    
+    listEl.innerHTML = vehicles.map(v => {
+      const isCurrent = v.id === currentVid;
+      return `
+        <div class="notif-item ${isCurrent ? 'is-read' : ''}" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="confirmVehicleSelection('${v.id}')">
+          <div class="notif-content">
+            <div class="notif-title" style="font-size:16px;">${v.plate_number || v.immatriculation} ${isCurrent ? '<span style="color:#2E7D32; font-size:12px;">(Actuel)</span>' : ''}</div>
+            <div class="notif-desc">${v.brand_model || ''} — ${(v.max_weight_kg/1000).toFixed(1)}t</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+    document.getElementById('mob-vehicle-sheet').classList.add('open');
+  }
+
+  function confirmVehicleSelection(vid) {
+    S2W.update('users', 'usr_001', { current_vehicle_id: vid });
+    updateVehiclePill(vid);
+    document.getElementById('mob-vehicle-sheet').classList.remove('open');
+    showMobToast("Véhicule mis à jour");
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -3851,7 +3904,7 @@
     const localStart = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
 
     S2W.push('sessions', {
-      id: sessionId, user_id: 'usr_001', vehicle_id: 'veh_001',
+      id: sessionId, user_id: 'usr_001', vehicle_id: getCurrentVehicleId(),
       date: todayStr,
       started_at: serverStart,
       stopped_at: null, status: 'active'
@@ -4019,7 +4072,7 @@
       sessionId = S2WUtils.uid('ses');
 
       S2W.push('sessions', {
-        id: sessionId, user_id: 'usr_001', vehicle_id: 'veh_001',
+        id: sessionId, user_id: 'usr_001', vehicle_id: getCurrentVehicleId(),
         date: nowStr,
         started_at: nowStr + 'T00:00:00Z',
         stopped_at: null, status: 'active'

@@ -2815,6 +2815,10 @@
         <td class="name-cell">
           <strong>${u.last_name} ${u.first_name}</strong>
           <small>${u.email}</small>
+          ${u.current_vehicle_id ? (() => {
+            const v = S2W.find('vehicles', u.current_vehicle_id);
+            return v ? `<small style="color:var(--s2w-text-muted); display:inline-block; margin-top:2px;">🚗 ${v.plate_number || v.immatriculation} <span style="opacity:0.7">(${v.brand_model || ''})</span></small>` : '';
+          })() : ''}
         </td>
         <td><span class="badge badge-navy">${u.license_category}</span></td>
         <td>${S2WUtils.badgeUserStatus(u.status)}</td>
