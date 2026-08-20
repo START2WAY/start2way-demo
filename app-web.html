@@ -2655,7 +2655,7 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-header">
-            <span class="kpi-icon">⚠</span>
+            <span class="kpi-icon">⚠️</span>
             <span class="kpi-trend down">+${expiredDocs}</span>
           </div>
           <div class="kpi-value" style="color:var(--danger)">${expiredDocs}</div>
@@ -2679,7 +2679,7 @@
           <div class="alert-list">
             ${alerts.slice(0,5).map(a => `
             <div class="alert-entry ${a.severity}" role="alert">
-              <span class="alert-icon">${a.severity==='critical'?'🚨':'⚠'}</span>
+              <span class="alert-icon">${a.severity==='critical'?'🚨':'⚠️'}</span>
               <div style="flex:1">
                 <div class="alert-msg">${a.message}</div>
                 <div class="alert-ts">${S2WUtils.fmtDatetime(a.triggered_at)}</div>

@@ -1319,7 +1319,7 @@
 
         <!-- ALERTE BANNER -->
         <div class="alert-banner hidden" id="mob-alert-banner" role="alert">
-          <span class="alert-banner-icon">⚠</span>
+          <span class="alert-banner-icon">⚠️</span>
           <div class="alert-banner-text" id="mob-alert-text">
             Approche de 4h30 sans pause — Pause obligatoire dans 2 min
           </div>
@@ -4100,7 +4100,7 @@
       const remaining = Math.max(0, 4.5 * 3600 - segmentSeconds);
       const remainingMins = Math.ceil(remaining / 60);
       const msg = `Pause obligatoire dans ${remainingMins} min — Max. 4h30 sans pause (R3315-2)`;
-      text.textContent = `⚠ ${msg}`;
+      text.textContent = `⚠️ ${msg}`;
       banner.classList.remove('hidden');
       if (navigator.vibrate && segmentSeconds % 300 === 0) navigator.vibrate([50,50,50]);
 
@@ -4129,7 +4129,7 @@
     // Alerte service oublié (>12h)
     if (elapsedSeconds > 12 * 3600) {
       const msg = 'Service supérieur à 12h. Pensez à clôturer votre shift.';
-      text.textContent = `⚠ ${msg}`;
+      text.textContent = `⚠️ ${msg}`;
       banner.classList.remove('hidden');
 
       pushMobNotification({
@@ -4415,8 +4415,8 @@
       </div>
 
       ${!conforme ? `<div style="margin:8px 16px 0;padding:10px 14px;background:var(--danger-bg);border-radius:8px;font-size:12px;color:var(--danger);">
-        ${!checkDrive ? `<div>⚠ Conduite : ${fmt(data.A_sec)} (max 9h — R3315-1)</div>` : ''}
-        ${!check24   ? `<div>⚠ Total ≠ 24h : E+D = ${fmt(total)} (attendu 24h00)</div>` : ''}
+        ${!checkDrive ? `<div>⚠️ Conduite : ${fmt(data.A_sec)} (max 9h — R3315-1)</div>` : ''}
+        ${!check24   ? `<div>⚠️ Total ≠ 24h : E+D = ${fmt(total)} (attendu 24h00)</div>` : ''}
       </div>` : ''}
 
       ${licGridHtml}
