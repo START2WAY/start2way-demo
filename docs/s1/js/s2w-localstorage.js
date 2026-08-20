@@ -419,19 +419,36 @@ const S2W = {
     console.log('[S2W] Synchronisation depuis Airtable en cours...');
     const cache = this.get();
     
-    // 1. Uploader les enregistrements locaux non synchronisés (qui n'ont pas de _airtable_id)
+    // 1. Fetch remote data first to avoid duplicate insertions
+    const remoteData = {};
+    for (const tableName of this.TABLES_LIST) {
+      remoteData[tableName] = await this.fetchAllFromAirtable(tableName);
+    }
+    
+    // 2. Upload missing local records (insert) or link them to existing remote records
     for (const tableName of this.TABLES_LIST) {
       const localRecords = cache[tableName] || [];
+      
+      const remoteMap = {};
+      remoteData[tableName].forEach(r => {
+        if (r.fields && r.fields.id) remoteMap[r.fields.id] = r.id;
+      });
+
       for (const r of localRecords) {
-        if (!r._airtable_id) {
+        if (!r._airtable_id && remoteMap[r.id]) {
+          // Exists remotely, just associate it locally
+          r._airtable_id = remoteMap[r.id];
+        } else if (!r._airtable_id) {
+          // Truly new, post to Airtable
           await this.insertToAirtable(tableName, r);
         }
       }
     }
     
-    // 2. Télécharger les derniers enregistrements distants
-    const updatedCache = this.get(); // Re-lire le cache mis à jour avec les nouveaux _airtable_id
+    // 3. Download and merge the latest remote records
+    const updatedCache = this.get(); // Re-read cache to get any new _airtable_id
     for (const tableName of this.TABLES_LIST) {
+      // Re-fetch to include the ones we just inserted
       const records = await this.fetchAllFromAirtable(tableName);
       updatedCache[tableName] = records.map(r => {
         const item = this._deserializeFields({ ...r.fields, _airtable_id: r.id });
