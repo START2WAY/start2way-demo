@@ -1267,6 +1267,9 @@
           <button class="drawer-item locked" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
             <span class="drawer-item-icon" id="drawer-circuit-icon">🔒</span> Circuit
           </button>
+          <button class="drawer-item" id="drawer-btn-messagerie" onclick="selectDrawerTab('messagerie')">
+            <span class="drawer-item-icon">💬</span> Messagerie
+          </button>
         </div>
       </div>
     </div>
@@ -2144,6 +2147,9 @@
         <button class="drawer-item ${isCircuitActive ? '' : 'locked'}" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
           <span class="drawer-item-icon" id="drawer-circuit-icon">${isCircuitActive ? '🗺️' : '🔒'}</span> Circuit
         </button>
+        <button class="drawer-item" id="drawer-btn-messagerie" onclick="selectDrawerTab('messagerie')">
+          <span class="drawer-item-icon">💬</span> Messagerie
+        </button>
       `;
     } else {
       menuList.innerHTML = `
@@ -2158,6 +2164,9 @@
         </button>
         <button class="drawer-item ${isCircuitActive ? '' : 'locked'}" id="drawer-btn-circuit" onclick="selectDrawerTab('circuit')">
           <span class="drawer-item-icon" id="drawer-circuit-icon">${isCircuitActive ? '🗺️' : '🔒'}</span> Circuit
+        </button>
+        <button class="drawer-item" id="drawer-btn-messagerie" onclick="selectDrawerTab('messagerie')">
+          <span class="drawer-item-icon">💬</span> Messagerie
         </button>
       `;
     }
@@ -5287,9 +5296,6 @@
         </div>
       </div>
 
-      <button class="profil-contact-btn" onclick="showMobToast('Fonctionnalité disponible en production')">
-        ✉ Contacter l'employeur
-      </button>
 
       <!-- Options développeur (Simulateur) -->
       <div class="profil-section" style="background:#FFF9C4;border:1px solid #FBC02D;border-radius:12px;padding:16px;margin-top:20px;">
