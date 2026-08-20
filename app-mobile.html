@@ -3582,17 +3582,21 @@
   let mobNotifications = [];
 
   function pushMobNotification(notif) {
+    const readCache = JSON.parse(localStorage.getItem('s2w_mob_read_notifs') || '[]');
+    const notifKey = notif.type + '_' + notif.title;
+    const isAlreadyRead = readCache.includes(notifKey);
+
     const existingIdx = mobNotifications.findIndex(n => n.type === notif.type && n.title === notif.title);
     if (existingIdx !== -1) {
       if (mobNotifications[existingIdx].message !== notif.message) {
         mobNotifications[existingIdx].message = notif.message;
         mobNotifications[existingIdx].triggered_at = notif.triggered_at || new Date().toISOString();
-        mobNotifications[existingIdx].is_read = false;
+        mobNotifications[existingIdx].is_read = isAlreadyRead;
       }
     } else {
       mobNotifications.unshift({
-        id: 'notif_' + Math.random().toString(36).substr(2, 9),
-        is_read: false,
+        id: notifKey, // deterministic ID
+        is_read: isAlreadyRead,
         triggered_at: new Date().toISOString(),
         ...notif
       });
@@ -3671,6 +3675,7 @@
 
   function markAllMobNotifsAsRead() {
     mobNotifications.forEach(n => n.is_read = true);
+    localStorage.setItem('s2w_mob_read_notifs', JSON.stringify(mobNotifications.map(n => n.id)));
     updateMobNotificationsUI();
     showMobToast("Toutes les alertes ont été lues.");
   }
@@ -3680,6 +3685,13 @@
     if (!notif) return;
     
     notif.is_read = true;
+    
+    const readCache = JSON.parse(localStorage.getItem('s2w_mob_read_notifs') || '[]');
+    if (!readCache.includes(id)) {
+      readCache.push(id);
+      localStorage.setItem('s2w_mob_read_notifs', JSON.stringify(readCache));
+    }
+    
     updateMobNotificationsUI();
     
     document.getElementById('mob-notif-sheet')?.classList.remove('open');
@@ -3690,28 +3702,8 @@
   }
 
   function initMobNotifications() {
-    pushMobNotification({
-      type: 'critical',
-      title: 'Permis expiré',
-      message: 'Permis de LEFÈVRE Christine expiré.',
-      target_tab: 'profil',
-      triggered_at: new Date(Date.now() - 3600000 * 24).toISOString()
-    });
-    pushMobNotification({
-      type: 'warning',
-      title: 'Contrôle Technique échu',
-      message: 'Contrôle Technique du véhicule DX-847-AZ à renouveler.',
-      target_tab: 'profil',
-      triggered_at: new Date(Date.now() - 3600000 * 12).toISOString()
-    });
-    pushMobNotification({
-      type: 'warning',
-      title: 'Visite médicale',
-      message: 'Visite médicale expirant dans 14 jours.',
-      target_tab: 'profil',
-      triggered_at: new Date(Date.now() - 3600000 * 2).toISOString()
-    });
     checkUnsignedFeuillets();
+    // Les autres alertes dynamiques (conduite) sont générées par checkThresholds() lors de l'activité
   }
 
   function toggleAlert() {
