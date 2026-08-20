@@ -137,6 +137,22 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
       - *Gauche :* Icône roue dentée `⚙️` redirigeant vers le Profil/Paramètres.
       - *Centre :* Trait noir simulant l'indicateur d'accueil natif iPhone. Entièrement décoratif dans cette version démo. Note de développement obligatoire : *"À activer avec une vraie fonction de fermeture/minimisation native lors de la génération des builds .apk (Android) et iOS en fin de projet — actuellement décoratif uniquement."*
       - *Droite :* Raccourci support chatbot technique `🤖` redirigeant vers l'onglet support.
-
-
-
+### VERTÈBRE 15 — Reconstruction Spécifiée de l'Onglet Circuit (App Salarié)
+- **Fichiers concernés :** `app-mobile.html`, `VERTEBRALE.md`
+- **Règles :**
+  - **Moteur local de calcul d'ETA et de retard :**
+    - Les applications GPS externes n'échangeant aucune donnée bidirectionnelle en retour, START2WAY calcule lui-même l'ETA de chaque arrêt de la tournée en combinant la position géographique actuelle du chauffeur, les calculs de distances orthodromiques (Haversine) et une vitesse urbaine moyenne théorique (30 km/h) majorée d'un temps de service (5 min par arrêt).
+    - Un bandeau d'alerte rouge/orange s'affiche de manière permanente en haut de l'écran en cas de risque de dépassement des créneaux contraints par pastilles.
+  - **Saisie & Ajout d'arrêt :**
+    - Saisie manuelle avec sélection d'impératifs horaires par pastilles tactiles ("Pas de contrainte", "Avant 12h", "Entre 14h-16h", "Urgent").
+    - Scan OCR simulé avec animation laser de 1,5s auto-remplissant l'adresse.
+    - Dictée Vocale avec simulation d'ondes d'écoute de 1,8s interprétée par agent IA local.
+  - **Fiche Colis (Photos & Commentaires) :**
+    - Association de 1 à 25 photos par arrêt et/ou commentaire texte libre.
+    - Visualisation des photos associées dans une modale pop-up "Preview" (Aperçu) avec galerie fluide pour faciliter la recherche du colis dans le coffre.
+  - **Validation Tactile par Balayage (Swipe) :**
+    - Swipe vers la droite = Livré, avec coche animée verte et signature client sur Canvas tactile pour preuve.
+    - Swipe vers la gauche = Échoué, ouvrant un choix rapide du motif de l'échec (Destinataire absent, Adresse introuvable, Refusé, Colis endommagé).
+    - Un compteur de progression permanent en haut de la liste affiche les arrêts résolus (ex : "5/12 livrés").
+  - **Résumé de fin de tournée :**
+    - Écran final s'affichant automatiquement lorsque tous les arrêts ont été traités, présentant les statistiques de la journée (taux de réussite, arrêts traités, temps total, distance cumulée).

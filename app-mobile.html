@@ -460,6 +460,405 @@
       opacity: 0.8;
     }
 
+    /* ─── ONGLET CIRCUIT STYLES ──────────────────────────────────────── */
+    /* Progression Header */
+    .circuit-progression-header {
+      background: var(--navy);
+      color: var(--white);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .circuit-progression-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .circuit-progression-counter {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+    }
+    .circuit-progression-time {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .circuit-progress-bar-bg {
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      height: 6px;
+      overflow: hidden;
+      width: 100%;
+    }
+    .circuit-progress-bar-fill {
+      background: var(--brand-green-light);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    /* Warning Alert Banner */
+    .circuit-warning-banner {
+      background: #FFF3CD;
+      border-bottom: 1px solid #FFEBAA;
+      color: #856404;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      animation: alertPulse 2s infinite alternate;
+    }
+    @keyframes alertPulse {
+      0% { background: #FFF3CD; }
+      100% { background: #FFE082; }
+    }
+
+    /* Tab Page Padding and Sections */
+    .circuit-section {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    /* Stop Form Methods */
+    .stop-method-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .stop-method-tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 6px 4px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sec);
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+    .stop-method-tab.active {
+      color: var(--brand-green);
+      border-bottom-color: var(--brand-green);
+    }
+    .stop-form-panel {
+      display: none;
+    }
+    .stop-form-panel.active {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Pastilles impératifs horaires */
+    .constraint-pastilles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .constraint-pastille {
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-main);
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .constraint-pastille:hover {
+      background: #e8e6e0;
+    }
+    .constraint-pastille.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: var(--white);
+    }
+    
+    /* Address Saisie Vocale/OCR Simulations */
+    .sim-panel {
+      background: #f0f4f8;
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 120px;
+      position: relative;
+      overflow: hidden;
+      border: 1px dashed #b0c4de;
+    }
+    .laser-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--brand-green-light);
+      box-shadow: 0 0 8px var(--brand-green-light);
+      animation: laserSweep 2s linear infinite;
+      display: none;
+    }
+    @keyframes laserSweep {
+      0% { top: 0; }
+      50% { top: 100%; }
+      100% { top: 0; }
+    }
+    .voice-wave {
+      display: none;
+      align-items: center;
+      gap: 3px;
+      height: 30px;
+    }
+    .voice-bar {
+      width: 3px;
+      height: 100%;
+      background: var(--danger);
+      animation: soundWave 1.2s ease-in-out infinite alternate;
+      border-radius: 2px;
+    }
+    .voice-bar:nth-child(2) { animation-delay: 0.15s; height: 60%; }
+    .voice-bar:nth-child(3) { animation-delay: 0.3s; height: 80%; }
+    .voice-bar:nth-child(4) { animation-delay: 0.45s; height: 40%; }
+    .voice-bar:nth-child(5) { animation-delay: 0.6s; height: 90%; }
+    @keyframes soundWave {
+      0% { transform: scaleY(0.3); }
+      100% { transform: scaleY(1); }
+    }
+
+    /* Swipeable Stops List */
+    .stops-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .swipe-row {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      background: var(--white);
+      height: 72px;
+      user-select: none;
+    }
+    .swipe-background-left {
+      position: absolute;
+      left: 0; top: 0; bottom: 0; right: 50%;
+      background: var(--success);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .swipe-background-right {
+      position: absolute;
+      right: 0; top: 0; bottom: 0; left: 50%;
+      background: var(--danger);
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .swipe-foreground {
+      position: relative;
+      z-index: 2;
+      background: var(--white);
+      height: 100%;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-sizing: border-box;
+      cursor: grab;
+    }
+    .swipe-foreground:active {
+      cursor: grabbing;
+    }
+    .stop-left-part {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+    .stop-badge {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(13,34,66,0.1);
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .stop-badge.delivered {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+    .stop-badge.failed {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+    .stop-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .stop-address {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stop-meta {
+      font-size: 11px;
+      color: var(--text-sec);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stop-right-part {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .pastille-hour-indicator {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .pastille-hour-indicator.none { display: none; }
+    .pastille-hour-indicator.morning { background: #e3f2fd; color: #1e88e5; }
+    .pastille-hour-indicator.afternoon { background: #f3e5f5; color: #8e24aa; }
+    .pastille-hour-indicator.urgent { background: #ffebee; color: #e53935; animation: blinkPastille 1s infinite alternate; }
+    @keyframes blinkPastille {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+    .pastille-hour-indicator.warning-delay {
+      background: #fff3e0 !important;
+      color: #fb8c00 !important;
+      border: 1px solid #ffe0b2;
+    }
+    .stop-btn-media {
+      background: none;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      color: var(--text-sec);
+      padding: 4px;
+    }
+    .stop-btn-media:hover {
+      color: var(--navy);
+    }
+
+    /* Preview Modal Galleries */
+    .preview-photo-gallery {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+      width: 100%;
+    }
+    .preview-photo-gallery::-webkit-scrollbar {
+      height: 4px;
+    }
+    .preview-photo-gallery::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 2px;
+    }
+    .preview-photo-thumb {
+      width: 60px;
+      height: 60px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    
+    /* Preuve de livraison */
+    .proof-canvas-container {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fafafa;
+      position: relative;
+      height: 120px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    .proof-canvas {
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    /* Summary Dashboard */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .summary-card {
+      background: #f7f9fa;
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .summary-card-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 2px;
+    }
+    .summary-card-lbl {
+      font-size: 11px;
+      color: var(--text-sec);
+    }
+
     /* ─── TAB CONTENT PAGES ──────────────────────────────────────────── */
     .tab-page { display: none; padding: 0 0 16px; }
     .tab-page.active { display: block; }
@@ -960,91 +1359,279 @@
       </div>
 
       <!-- ═══════ ONGLET CIRCUIT (OPTIMISATION DE TOURNÉE) ═══════ -->
-      <!-- 
-        ÉCRAN CIRCUIT — PROTOTYPE NON SPÉCIFIÉ, construit hors-périmètre par anticipation. 
-        Données factices (Lille/Roubaix). À reprendre entièrement avec de vraies spécifications 
-        fonctionnelles avant toute mise en production — ne pas considérer comme définitif.
-      -->
-      <div class="tab-page" id="tab-circuit" role="tabpanel" aria-labelledby="drawer-btn-circuit">
-        <div class="page-header-inner">
-          <div class="page-title-inner">Circuit</div>
-          <div class="page-sub-inner">Guidage et optimisation de tournée en temps réel</div>
+      <div class="tab-page" id="tab-circuit" role="tabpanel" aria-labelledby="drawer-btn-circuit" style="position:relative;">
+        <!-- PROGRESSION HEADER -->
+        <div class="circuit-progression-header">
+          <div class="circuit-progression-top">
+            <span class="circuit-progression-counter" id="circuit-progress-text">Progression : 0/0 livré(s)</span>
+            <span class="circuit-progression-time" id="circuit-time-text">Heure : 08:00</span>
+          </div>
+          <div class="circuit-progress-bar-bg">
+            <div class="circuit-progress-bar-fill" id="circuit-progress-fill"></div>
+          </div>
         </div>
-        <div style="padding:12px;">
-          <!-- Carte Mock SVG -->
-          <div style="background:var(--white); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:12px;">
+
+        <!-- DELAY WARNING ALERT BANNER -->
+        <div class="circuit-warning-banner" id="circuit-delay-alert" role="alert">
+          <span>⚠️</span>
+          <span id="circuit-delay-alert-text">Risque de retard détecté sur un ou plusieurs arrêts.</span>
+        </div>
+
+        <!-- ÉCRAN 1 : SETUP / PRÉPARATION DE LA TOURNÉE -->
+        <div id="circuit-panel-setup" class="circuit-section" style="display:flex; flex-direction:column; gap:16px;">
+          <div style="font-family:var(--font-head); font-weight:700; font-size:16px; color:var(--navy);">
+            🛠️ Préparation de la Tournée
+          </div>
+          
+          <!-- Stop Saisie Methods Tabs -->
+          <div class="stop-method-tabs">
+            <button class="stop-method-tab active" id="stop-tab-manual" onclick="switchStopMethod('manual')">Manuel</button>
+            <button class="stop-method-tab" id="stop-tab-ocr" onclick="switchStopMethod('ocr')">📷 Scan OCR</button>
+            <button class="stop-method-tab" id="stop-tab-voice" onclick="switchStopMethod('voice')">🎙️ Dictée Vocale</button>
+          </div>
+
+          <!-- Method 1: Manual -->
+          <div class="stop-form-panel active" id="panel-method-manual">
+            <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase;">Adresse de livraison</label>
+            <input type="text" id="circuit-addr-input" placeholder="Ex: 45 Rue de Paris, Lille" class="form-control" style="font-size:13px; padding:10px; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; width:100%;">
+            
+            <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase; margin-top:6px;">Impératif horaire</label>
+            <div class="constraint-pastilles" id="manual-pastilles-container">
+              <button class="constraint-pastille active" onclick="selectPastille(this, 'none')">Pas de contrainte</button>
+              <button class="constraint-pastille" onclick="selectPastille(this, 'morning')">Avant 12h</button>
+              <button class="constraint-pastille" onclick="selectPastille(this, 'afternoon')">Entre 14h-16h</button>
+              <button class="constraint-pastille" onclick="selectPastille(this, 'urgent')">⚡ Urgent</button>
+            </div>
+
+            <button onclick="addManualStop()" class="btn-action-primary" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; margin-top:10px; cursor:pointer; width:100%;">
+              Ajouter l'arrêt
+            </button>
+          </div>
+
+          <!-- Method 2: Scan OCR -->
+          <div class="stop-form-panel" id="panel-method-ocr">
+            <div class="sim-panel" id="ocr-sim-panel">
+              <div class="laser-line" id="ocr-laser"></div>
+              <span id="ocr-sim-status" style="font-size:12px; color:var(--text-sec); text-align:center;">Positionnez l'appareil sur l'étiquette du colis</span>
+              <button onclick="startOcrScan()" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:12px; padding:8px 16px; border-radius:8px; border:none; cursor:pointer;">
+                📷 Scanner l'étiquette
+              </button>
+            </div>
+          </div>
+
+          <!-- Method 3: Voice -->
+          <div class="stop-form-panel" id="panel-method-voice">
+            <div class="sim-panel" id="voice-sim-panel">
+              <div class="voice-wave" id="voice-waves">
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+                <div class="voice-bar"></div>
+              </div>
+              <span id="voice-sim-status" style="font-size:12px; color:var(--text-sec); text-align:center;">Appuyez et dictez clairement l'adresse</span>
+              <button onclick="startVoiceDictation()" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:12px; padding:8px 16px; border-radius:8px; border:none; cursor:pointer;">
+                🎙️ Lancer la dictée
+              </button>
+            </div>
+          </div>
+
+          <!-- Pending Stops List -->
+          <div style="margin-top:10px;">
+            <div style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:4px; margin-bottom:8px;">
+              Arrêts saisis (<span id="setup-stops-count">0</span>)
+            </div>
+            <div id="setup-stops-list" style="display:flex; flex-direction:column; gap:8px;">
+              <!-- Dynamic pending stops -->
+            </div>
+          </div>
+
+          <button onclick="optimizeAndStartTour()" id="btn-start-tour" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:14px; padding:14px; border-radius:8px; border:none; cursor:pointer; width:100%; text-align:center; box-shadow:var(--shadow); display:none;">
+            🚀 Optimiser & Démarrer la Tournée
+          </button>
+        </div>
+
+        <!-- ÉCRAN 2 : ACTIVE TOURNÉE (MAP + SWIPE LIST) -->
+        <div id="circuit-panel-active" style="display:none;">
+          <!-- Carte SVG -->
+          <div class="circuit-section" style="gap:10px; margin-bottom:12px;">
             <div style="font-weight:700; font-size:14px; color:var(--navy); display:flex; align-items:center; justify-content:space-between;">
-              <span>🗺️ Carte du Circuit Optimisé</span>
-              <span class="badge badge-success" style="font-size:10px;">En cours</span>
+              <span>🗺️ Carte du Circuit</span>
+              <span class="badge badge-success" style="font-size:10px;" id="badge-tour-status">Tournée en cours</span>
             </div>
             
-            <div style="background:#e8f4fd; border-radius:8px; height:180px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border: 1px solid #d0e8fc;">
-              <!-- Beautiful SVG Roadmap mock -->
-              <svg width="100%" height="100%" viewBox="0 0 400 200" style="position:absolute; inset:0;">
-                <!-- Roads -->
-                <path d="M 50 100 Q 150 30 200 120 T 350 80" fill="none" stroke="#b0bec5" stroke-width="8" stroke-linecap="round" />
-                <path d="M 50 100 Q 150 30 200 120 T 350 80" fill="none" stroke="#2196f3" stroke-width="4" stroke-linecap="round" stroke-dasharray="8,4" />
-                
-                <!-- Pins -->
-                <!-- Start Point -->
-                <circle cx="50" cy="100" r="10" fill="#0D2242" />
-                <circle cx="50" cy="100" r="4" fill="#fff" />
-                <text x="35" y="125" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0D2242">Dépôt (Départ)</text>
-                
-                <!-- Stop 1 -->
-                <circle cx="160" cy="65" r="8" fill="#009A44" />
-                <text x="160" y="50" font-family="sans-serif" font-size="10" font-weight="bold" fill="#009A44" text-anchor="middle">Stop 1 (Lille)</text>
-                
-                <!-- Stop 2 -->
-                <circle cx="230" cy="115" r="8" fill="#ED6C02" />
-                <text x="230" y="135" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ED6C02" text-anchor="middle">Stop 2 (Roubaix)</text>
-                
-                <!-- End Point -->
-                <circle cx="350" cy="80" r="10" fill="#0D2242" />
-                <circle cx="350" cy="80" r="4" fill="#fff" />
-                <text x="315" y="105" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0D2242">Dépôt (Retour)</text>
+            <div style="background:#e8f4fd; border-radius:8px; height:160px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border: 1px solid #d0e8fc;">
+              <!-- Map SVG dynamic paths and locations -->
+              <svg width="100%" height="100%" viewBox="0 0 400 200" style="position:absolute; inset:0;" id="active-map-svg">
+                <!-- Will be dynamically rendered -->
               </svg>
             </div>
+          </div>
+
+          <!-- Mid-tour modification controls -->
+          <div class="circuit-section" style="gap:10px; margin-bottom:12px; padding:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:12px; font-weight:700; color:var(--text-sec);">Ajouter un arrêt en cours de route</span>
+              <button onclick="toggleMidTourAdd()" id="btn-toggle-midtour" class="badge badge-navy" style="border:none; cursor:pointer; font-size:10px; padding:4px 8px;">+</button>
+            </div>
+            <div id="midtour-add-panel" style="display:none; flex-direction:column; gap:8px; margin-top:4px;">
+              <input type="text" id="midtour-addr-input" placeholder="Adresse supplémentaire..." class="form-control" style="font-size:12px; padding:8px; border-radius:6px; border:1px solid var(--border);">
+              <div class="constraint-pastilles" id="midtour-pastilles-container">
+                <button class="constraint-pastille active" onclick="selectPastille(this, 'none')">Pas de contrainte</button>
+                <button class="constraint-pastille" onclick="selectPastille(this, 'morning')">Avant 12h</button>
+                <button class="constraint-pastille" onclick="selectPastille(this, 'afternoon')">Entre 14h-16h</button>
+                <button class="constraint-pastille" onclick="selectPastille(this, 'urgent')">⚡ Urgent</button>
+              </div>
+              <button onclick="addMidTourStop()" class="btn-action-primary" style="background:var(--navy); color:white; font-size:11px; font-weight:700; padding:8px; border-radius:6px; border:none; cursor:pointer; align-self:flex-end;">
+                Ajouter & Re-optimiser
+              </button>
+            </div>
+          </div>
+
+          <!-- Active stops list (Swipeable) -->
+          <div class="circuit-section" style="background:none; border:none; box-shadow:none; padding:0; margin:12px 12px 24px 12px; gap:8px;">
+            <div style="font-weight:700; font-size:12px; color:var(--text-sec); margin-bottom:4px; padding-left:4px;">
+              Défilez et glissez (swipe) pour valider :
+            </div>
             
-            <!-- Optimized Stops List -->
-            <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
-              <div style="font-weight:700; font-size:12px; color:var(--text-sec); border-bottom:1px solid #eee; padding-bottom:6px;">Feuille de route optimisée</div>
-              
-              <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="width:24px; height:24px; border-radius:50%; background:rgba(13,34,66,0.1); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">🏁</div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">Dépôt AMT Transport (Départ)</div>
-                  <div style="font-size:11px; color:var(--text-sec);">Départ prévu : 08:00 • Prise de service</div>
-                </div>
-              </div>
-              
-              <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="width:24px; height:24px; border-radius:50%; background:rgba(0,154,68,0.1); color:var(--brand-green); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">1</div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">45 Rue de Paris, Lille</div>
-                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 09:15 • 3 colis à livrer</div>
-                </div>
-              </div>
-              
-              <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="width:24px; height:24px; border-radius:50%; background:rgba(237,108,2,0.1); color:#ED6C02; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">2</div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">12 Avenue des Flandres, Roubaix</div>
-                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 10:45 • 1 colis à livrer</div>
-                </div>
-              </div>
-              
-              <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="width:24px; height:24px; border-radius:50%; background:rgba(13,34,66,0.1); color:var(--navy); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; flex-shrink:0;">🏁</div>
-                <div>
-                  <div style="font-size:12px; font-weight:700; color:var(--text-main);">Dépôt AMT Transport (Retour)</div>
-                  <div style="font-size:11px; color:var(--text-sec);">Arrivée estimée : 12:30 • Fin de tournée</div>
-                </div>
-              </div>
+            <div class="stops-container" id="active-stops-list">
+              <!-- Dynamic swipe rows -->
             </div>
           </div>
         </div>
-        <div style="height:16px"></div>
+
+        <!-- ÉCRAN 3 : RÉSUMÉ DE FIN DE TOURNÉE -->
+        <div id="circuit-panel-summary" class="circuit-section" style="display:none; flex-direction:column; gap:16px; text-align:center;">
+          <div style="font-size:42px;">🏆</div>
+          <div>
+            <h3 style="font-family:var(--font-head); font-weight:700; font-size:18px; color:var(--navy); margin-bottom:4px;">Tournée Terminée !</h3>
+            <p style="font-size:12px; color:var(--text-sec);">Tous les colis de votre tournée ont été traités.</p>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-card-val" id="sum-delivered-rate">0%</div>
+              <div class="summary-card-lbl">Taux de réussite</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-val" id="sum-total-stops">0</div>
+              <div class="summary-card-lbl">Arrêts traités</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-val" id="sum-total-time">0 min</div>
+              <div class="summary-card-lbl">Temps total</div>
+            </div>
+            <div class="summary-card">
+              <div class="summary-card-val" id="sum-total-distance">0.0 km</div>
+              <div class="summary-card-lbl">Distance parcourue</div>
+            </div>
+          </div>
+
+          <button onclick="resetTourCircuit()" class="btn-action-primary" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; cursor:pointer; width:100%; margin-top:10px;">
+            Préparer une nouvelle tournée
+          </button>
+        </div>
+
+        <!-- MODAL : AJOUT PHOTO & COMMENTAIRE -->
+        <div class="modal-overlay" id="circuit-media-modal">
+          <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+            <h3 style="margin-top:0; color:var(--navy); font-size:15px; display:flex; align-items:center; gap:8px;">
+              <span>📦</span> Détails du Colis
+            </h3>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:10px; text-align:left;">
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase;">Photos (1 à 25)</label>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <button onclick="simulateAddPhoto()" class="btn-action-secondary" style="background:#e3f2fd; color:#1565c0; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                  📷 Prendre une photo
+                </button>
+                <span id="media-photo-count" style="font-size:12px; color:var(--text-sec);">0 photo(s) ajoutée(s)</span>
+              </div>
+              <div class="preview-photo-gallery" id="media-photo-gallery"></div>
+              
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase; margin-top:6px;">Commentaire indicatif</label>
+              <textarea id="media-comment-input" placeholder="Ex: sac bleu, sous le siège passager" style="width:100%; height:60px; font-size:13px; padding:10px; border-radius:8px; border:1px solid var(--border); box-sizing:border-box; font-family:var(--font-body); resize:none;"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+              <button onclick="saveMediaDetails()" class="btn-action-primary" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Enregistrer</button>
+              <button onclick="closeMediaModal()" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL : PREVIEW APERÇU (VISUALISATION PHOTOS + COMMENTAIRE) -->
+        <div class="modal-overlay" id="circuit-preview-modal">
+          <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+            <h3 style="margin-top:0; color:var(--navy); font-size:15px; display:flex; align-items:center; gap:8px;">
+              <span>👁️</span> Aperçu de l'arrêt
+            </h3>
+            <div style="margin-top:12px; text-align:left; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; font-weight:700; color:var(--text-main);" id="preview-stop-address">-</div>
+              
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase;">Photos du colis</label>
+              <div class="preview-photo-gallery" id="preview-gallery-container">
+                <!-- Gallery items -->
+              </div>
+              
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase; margin-top:6px;">Commentaire chauffeur</label>
+              <div id="preview-comment-text" style="font-size:13px; color:var(--text-main); background:#fafafa; border:1px solid var(--border); padding:10px; border-radius:8px; min-height:40px;">-</div>
+            </div>
+            <button onclick="closePreviewModal()" class="btn-action-primary" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; width:100%; margin-top:20px; cursor:pointer;">
+              Fermer
+            </button>
+          </div>
+        </div>
+
+        <!-- MODAL : MOTIF D'ÉCHEC -->
+        <div class="modal-overlay" id="circuit-fail-modal">
+          <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+            <h3 style="margin-top:0; color:var(--danger); font-size:15px; display:flex; align-items:center; gap:8px;">
+              <span>⚠️</span> Échec de livraison
+            </h3>
+            <p style="font-size:12px; color:var(--text-sec); text-align:left; margin-bottom:12px;">Sélectionnez le motif pour lequel la livraison a échoué :</p>
+            <div style="display:flex; flex-direction:column; gap:8px; text-align:left;">
+              <button onclick="confirmStopFailure('Destinataire absent')" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white);">👤 Destinataire absent</button>
+              <button onclick="confirmStopFailure('Adresse introuvable')" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white);">📍 Adresse introuvable / Erreur</button>
+              <button onclick="confirmStopFailure('Refus de colis')" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white);">🚫 Colis refusé par le client</button>
+              <button onclick="confirmStopFailure('Colis endommagé')" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white);">📦 Colis endommagé</button>
+            </div>
+            <button onclick="cancelStopResolution()" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; width:100%; margin-top:16px; cursor:pointer;">
+              Annuler
+            </button>
+          </div>
+        </div>
+
+        <!-- MODAL : PREUVE DE LIVRAISON (SIGNATURE / PHOTO PROUVE) -->
+        <div class="modal-overlay" id="circuit-proof-modal">
+          <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+            <h3 style="margin-top:0; color:var(--success); font-size:15px; display:flex; align-items:center; gap:8px;">
+              <span>✍️</span> Preuve de livraison
+            </h3>
+            <div style="margin-top:12px; text-align:left; display:flex; flex-direction:column; gap:10px;">
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase;">Photo de preuve (optionnel)</label>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <button onclick="simulateAddProofPhoto()" class="btn-action-secondary" style="background:#e8f5e9; color:#2e7d32; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;">
+                  📷 Photo de preuve
+                </button>
+                <span id="proof-photo-status" style="font-size:12px; color:var(--text-sec);">Aucune photo</span>
+              </div>
+              
+              <label style="font-size:11px; font-weight:700; color:var(--text-sec); text-transform:uppercase; margin-top:6px;">Signature du destinataire</label>
+              <div class="proof-canvas-container">
+                <canvas id="signature-canvas" class="proof-canvas" width="350" height="120"></canvas>
+              </div>
+              <button onclick="clearSignatureCanvas()" style="background:none; border:none; color:var(--text-sec); font-size:11px; cursor:pointer; align-self:flex-end; font-weight:600; text-decoration:underline;">
+                Effacer la signature
+              </button>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+              <button onclick="confirmStopSuccess()" class="btn-action-primary" style="background:var(--success); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Confirmer la livraison</button>
+              <button onclick="cancelStopResolution()" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:24px;"></div>
       </div>
 
       <!-- ═══════ SECTION ARCHIVES (HORS BARRE BASSE) ═══════ -->
@@ -1740,6 +2327,936 @@
     }, 1000);
   }
 
+  /* ════════════════════════════════════════════════════════════════════════ */
+  /* ─── ONGLET CIRCUIT — VARIABLES ET MOTEUR LOCAL ───────────────────────── */
+  /* ════════════════════════════════════════════════════════════════════════ */
+  
+  let circuitStops = [];       // Tableau d'arrêts (Stops)
+  let circuitTime = 480;       // Horloge simulée en minutes depuis minuit (08h00 = 480)
+  let circuitLoc = { lat: 50.62925, lng: 3.057256 }; // Dépôt Ronchin
+  let isTourActive = false;    // La tournée a-t-elle démarré ?
+  let stopAddMethod = 'manual'; // 'manual' | 'ocr' | 'voice'
+  let currentConstraint = 'none'; // 'none' | 'morning' | 'afternoon' | 'urgent'
+  let activeResolvingStopId = null; // Arrêt en cours de validation (succès ou échec)
+  let activeMediaStopId = null;     // Arrêt en cours d'édition média
+  let currentSimPhotos = [];        // Photos temporaires pour le colis en cours d'édition
+
+  // Catalogue d'adresses Lille pour géocodage simulé
+  const ADDRESS_CATALOG = {
+    "DEPOT": { lat: 50.62925, lng: 3.057256, address: "Dépôt AMT Transport, Ronchin" },
+    "45 RUE DE PARIS, LILLE": { lat: 50.63725, lng: 3.06225, address: "45 Rue de Paris, Lille" },
+    "12 AVENUE DES FLANDRES, ROUBAIX": { lat: 50.69125, lng: 3.17525, address: "12 Avenue des Flandres, Roubaix" },
+    "75 RUE NATIONALE, LILLE": { lat: 50.63351, lng: 3.05432, address: "75 Rue Nationale, Lille" },
+    "10 RUE DES POSTES, LILLE": { lat: 50.62412, lng: 3.05102, address: "10 Rue des Postes, Lille" },
+    "12 RUE DE LA LIBERTÉ, MARCQ-EN-BAROEUL": { lat: 50.66981, lng: 3.09012, address: "12 Rue de la Liberté, Marcq-en-Baroeul" },
+    "8 RUE CHATILLON, TOURCOING": { lat: 50.72251, lng: 3.16102, address: "8 Rue Chatillon, Tourcoing" },
+    "3 RUE DU SÉMINAIRE, VILLENEUVE-D'ASCQ": { lat: 50.61812, lng: 3.12512, address: "3 Rue du Séminaire, Villeneuve-d'Ascq" }
+  };
+
+  const MOCK_PACKAGE_IMAGES = [
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23ECEFF1'/><path d='M30 15 L45 22.5 L45 37.5 L30 45 L15 37.5 L15 22.5 Z' fill='none' stroke='%2337474F' stroke-width='2'/><path d='M30 15 L30 45 M15 22.5 L30 30 L45 22.5' fill='none' stroke='%2337474F' stroke-width='1.5'/></svg>",
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23FFE0B2'/><path d='M30 15 L45 22.5 L45 37.5 L30 45 L15 37.5 L15 22.5 Z' fill='none' stroke='%23ED6C02' stroke-width='2'/><path d='M30 15 L30 45 M15 22.5 L30 30 L45 22.5' fill='none' stroke='%23ED6C02' stroke-width='1.5'/></svg>",
+    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'><rect width='60' height='60' fill='%23C8E6C9'/><path d='M30 15 L45 22.5 L45 37.5 L30 45 L15 37.5 L15 22.5 Z' fill='none' stroke='%232E7D32' stroke-width='2'/><path d='M30 15 L30 45 M15 22.5 L30 30 L45 22.5' fill='none' stroke='%232E7D32' stroke-width='1.5'/></svg>"
+  ];
+
+  function loadDefaultCircuitStops() {
+    circuitStops = [
+      {
+        id: 'stop_001',
+        address: '45 Rue de Paris, Lille',
+        lat: 50.63725,
+        lng: 3.06225,
+        status: 'pending',
+        constraint: 'none',
+        photos: [MOCK_PACKAGE_IMAGES[0]],
+        comment: 'Dans le coffre, sac bleu'
+      },
+      {
+        id: 'stop_002',
+        address: '12 Avenue des Flandres, Roubaix',
+        lat: 50.69125,
+        lng: 3.17525,
+        status: 'pending',
+        constraint: 'morning', // Avant 12h
+        photos: [MOCK_PACKAGE_IMAGES[1]],
+        comment: 'Vis-à-vis, sonner à l\'interphone'
+      }
+    ];
+    circuitTime = 480; // 08:00
+    circuitLoc = { lat: 50.62925, lng: 3.057256 }; // Dépôt Ronchin
+    isTourActive = false;
+    renderCircuitSetup();
+  }
+
+  function initCircuitTab() {
+    if (circuitStops.length === 0 && !isTourActive) {
+      loadDefaultCircuitStops();
+    }
+    
+    // Rendre l'écran approprié
+    if (isTourActive) {
+      document.getElementById('circuit-panel-setup').style.display = 'none';
+      document.getElementById('circuit-panel-active').style.display = 'block';
+      document.getElementById('circuit-panel-summary').style.display = 'none';
+      document.querySelector('.circuit-progression-header').style.display = 'flex';
+      renderActiveTour();
+    } else {
+      document.getElementById('circuit-panel-setup').style.display = 'flex';
+      document.getElementById('circuit-panel-active').style.display = 'none';
+      document.getElementById('circuit-panel-summary').style.display = 'none';
+      document.querySelector('.circuit-progression-header').style.display = 'none';
+      renderCircuitSetup();
+    }
+    initSignatureCanvas();
+  }
+
+  /* ─── ÉCRAN 1 : SETUP ─── */
+  function switchStopMethod(method) {
+    stopAddMethod = method;
+    document.querySelectorAll('.stop-method-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.stop-form-panel').forEach(p => p.classList.remove('active'));
+    
+    if (method === 'manual') {
+      document.getElementById('stop-tab-manual').classList.add('active');
+      document.getElementById('panel-method-manual').classList.add('active');
+    } else if (method === 'ocr') {
+      document.getElementById('stop-tab-ocr').classList.add('active');
+      document.getElementById('panel-method-ocr').classList.add('active');
+      document.getElementById('ocr-laser').style.display = 'none';
+      document.getElementById('ocr-sim-status').textContent = "Positionnez l'appareil sur l'étiquette du colis";
+    } else if (method === 'voice') {
+      document.getElementById('stop-tab-voice').classList.add('active');
+      document.getElementById('panel-method-voice').classList.add('active');
+      document.getElementById('voice-waves').style.display = 'none';
+      document.getElementById('voice-sim-status').textContent = "Appuyez et dictez clairement l'adresse";
+    }
+  }
+
+  function selectPastille(btn, constraint) {
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.constraint-pastille').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentConstraint = constraint;
+  }
+
+  function addManualStop() {
+    const input = document.getElementById('circuit-addr-input');
+    const address = input ? input.value.trim() : '';
+    if (!address) { showMobToast('Veuillez saisir une adresse.'); return; }
+    
+    // Trouver les coordonnées correspondantes ou générer
+    const key = address.toUpperCase();
+    let lat = 50.62925 + (Math.random() - 0.5) * 0.1;
+    let lng = 3.057256 + (Math.random() - 0.5) * 0.1;
+    let finalAddress = address;
+    
+    if (ADDRESS_CATALOG[key]) {
+      lat = ADDRESS_CATALOG[key].lat;
+      lng = ADDRESS_CATALOG[key].lng;
+      finalAddress = ADDRESS_CATALOG[key].address;
+    }
+    
+    const newStop = {
+      id: 'stop_' + Date.now(),
+      address: finalAddress,
+      lat: lat,
+      lng: lng,
+      status: 'pending',
+      constraint: currentConstraint,
+      photos: [],
+      comment: ''
+    };
+    
+    circuitStops.push(newStop);
+    input.value = '';
+    showMobToast('Arrêt ajouté avec succès !');
+    renderCircuitSetup();
+  }
+
+  function startOcrScan() {
+    const laser = document.getElementById('ocr-laser');
+    const status = document.getElementById('ocr-sim-status');
+    if (laser && status) {
+      laser.style.display = 'block';
+      status.textContent = '📸 Lecture OCR de l\'étiquette en cours...';
+      
+      setTimeout(() => {
+        laser.style.display = 'none';
+        
+        // Choisir une adresse non ajoutée du catalogue
+        const candidates = ["75 Rue Nationale, Lille", "10 Rue des Postes, Lille", "8 Rue Chatillon, Tourcoing"];
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        
+        status.textContent = `Adresse détectée : ${chosen}`;
+        
+        const key = chosen.toUpperCase();
+        const coords = ADDRESS_CATALOG[key] || { lat: 50.63, lng: 3.05 };
+        
+        const newStop = {
+          id: 'stop_' + Date.now(),
+          address: chosen,
+          lat: coords.lat,
+          lng: coords.lng,
+          status: 'pending',
+          constraint: 'none',
+          photos: [],
+          comment: ''
+        };
+        
+        circuitStops.push(newStop);
+        showMobToast(`✓ OCR: Adresse détectée et ajoutée !`);
+        renderCircuitSetup();
+        
+        setTimeout(() => {
+          switchStopMethod('manual');
+        }, 1000);
+      }, 1500);
+    }
+  }
+
+  function startVoiceDictation() {
+    const waves = document.getElementById('voice-waves');
+    const status = document.getElementById('voice-sim-status');
+    if (waves && status) {
+      waves.style.display = 'flex';
+      status.textContent = '🎙️ Traitement par l\'agent vocal IA...';
+      
+      setTimeout(() => {
+        waves.style.display = 'none';
+        
+        const candidates = [
+          "12 Rue de la Liberté, Marcq-en-Baroeul", 
+          "3 Rue du Séminaire, Villeneuve-d'Ascq",
+          "8 Rue Chatillon, Tourcoing"
+        ];
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        
+        status.textContent = `Traduit par l'IA : "${chosen}"`;
+        
+        const key = chosen.toUpperCase();
+        const coords = ADDRESS_CATALOG[key] || { lat: 50.63, lng: 3.05 };
+        
+        const newStop = {
+          id: 'stop_' + Date.now(),
+          address: chosen,
+          lat: coords.lat,
+          lng: coords.lng,
+          status: 'pending',
+          constraint: 'none',
+          photos: [],
+          comment: ''
+        };
+        
+        circuitStops.push(newStop);
+        showMobToast(`🎙️ IA: Adresse analysée et insérée !`);
+        renderCircuitSetup();
+        
+        setTimeout(() => {
+          switchStopMethod('manual');
+        }, 1000);
+      }, 1800);
+    }
+  }
+
+  function deletePendingStop(id) {
+    circuitStops = circuitStops.filter(s => s.id !== id);
+    showMobToast('Arrêt retiré.');
+    renderCircuitSetup();
+  }
+
+  function renderCircuitSetup() {
+    const stopsCount = document.getElementById('setup-stops-count');
+    const listContainer = document.getElementById('setup-stops-list');
+    const startBtn = document.getElementById('btn-start-tour');
+    if (!listContainer) return;
+    
+    stopsCount.textContent = circuitStops.length;
+    listContainer.innerHTML = '';
+    
+    if (circuitStops.length === 0) {
+      listContainer.innerHTML = `
+        <div style="font-size:12px; color:var(--text-sec); text-align:center; padding:16px; border:1px dashed var(--border); border-radius:8px;">
+          Aucun arrêt dans la tournée. Saisissez une adresse ci-dessus.
+        </div>
+      `;
+      startBtn.style.display = 'none';
+      return;
+    }
+    
+    circuitStops.forEach((stop, index) => {
+      const constraintLabels = {
+        'none': 'Sans contrainte',
+        'morning': 'Avant 12h',
+        'afternoon': '14h-16h',
+        'urgent': '⚡ Urgent'
+      };
+      
+      const item = document.createElement('div');
+      item.style = 'background:#fafafa; border:1px solid var(--border); border-radius:8px; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; gap:10px;';
+      item.innerHTML = `
+        <div style="min-width:0; flex:1; text-align:left;">
+          <div style="font-size:12px; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${index + 1}. ${stop.address}
+          </div>
+          <div style="font-size:10px; color:var(--text-sec); display:flex; align-items:center; gap:6px; margin-top:2px;">
+            <span class="badge badge-navy" style="font-size:8px; padding:1px 4px;">${constraintLabels[stop.constraint]}</span>
+            ${stop.comment ? '💬 Fiche chargée' : '📷 Pas de fiche'}
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button onclick="openMediaModal('${stop.id}')" style="background:none; border:none; font-size:15px; cursor:pointer;" title="Photos et Commentaires">📦</button>
+          <button onclick="deletePendingStop('${stop.id}')" style="background:none; border:none; font-size:14px; color:var(--danger); cursor:pointer;">✕</button>
+        </div>
+      `;
+      listContainer.appendChild(item);
+    });
+    
+    startBtn.style.display = 'block';
+  }
+
+  function optimizeStops() {
+    const getWeight = (c) => {
+      if (c === 'urgent') return 1;
+      if (c === 'morning') return 2;
+      if (c === 'none') return 3;
+      if (c === 'afternoon') return 4;
+      return 3;
+    };
+    
+    let currentTempLoc = { ...circuitLoc };
+    let sorted = [];
+    let remaining = [...circuitStops];
+    
+    while (remaining.length > 0) {
+      remaining.sort((a, b) => {
+        const wa = getWeight(a.constraint);
+        const wb = getWeight(b.constraint);
+        if (wa !== wb) return wa - wb;
+        
+        const distA = getDistanceKm(currentTempLoc, a);
+        const distB = getDistanceKm(currentTempLoc, b);
+        return distA - distB;
+      });
+      
+      const nextStop = remaining.shift();
+      sorted.push(nextStop);
+      currentTempLoc = { lat: nextStop.lat, lng: nextStop.lng };
+    }
+    circuitStops = sorted;
+  }
+
+  function getDistanceKm(loc1, loc2) {
+    const R = 6371; 
+    const dLat = (loc2.lat - loc1.lat) * Math.PI / 180;
+    const dLng = (loc2.lng - loc1.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(loc1.lat * Math.PI / 180) * Math.cos(loc2.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function optimizeAndStartTour() {
+    optimizeStops();
+    isTourActive = true;
+    circuitTime = 480; // 08:00
+    circuitLoc = { lat: 50.62925, lng: 3.057256 }; // Dépôt Ronchin
+    showMobToast('Tournée optimisée et démarrée !');
+    initCircuitTab();
+  }
+
+  /* ─── ÉCRAN 2 : ACTIVE TOUR ─── */
+  function updateCircuitProgressHeader() {
+    const treated = circuitStops.filter(s => s.status !== 'pending').length;
+    const total = circuitStops.length;
+    
+    const pct = total > 0 ? Math.round((treated / total) * 100) : 0;
+    
+    const progressText = document.getElementById('circuit-progress-text');
+    const timeText = document.getElementById('circuit-time-text');
+    const fill = document.getElementById('circuit-progress-fill');
+    
+    if (progressText) progressText.textContent = `Progression : ${treated}/${total} livré(s)`;
+    if (timeText) timeText.textContent = `Heure : ${formatMinutesToTime(circuitTime)}`;
+    if (fill) fill.style.width = `${pct}%`;
+  }
+
+  function formatMinutesToTime(mins) {
+    const hours = Math.floor(mins / 60) % 24;
+    const minutes = mins % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
+
+  function updateCircuitETA() {
+    let tempTime = circuitTime; 
+    let tempLoc = { ...circuitLoc };
+    let hasAlert = false;
+    let alertMsg = "";
+    
+    circuitStops.forEach((stop, index) => {
+      if (stop.status !== 'pending') {
+        return;
+      }
+      
+      const distance = getDistanceKm(tempLoc, stop);
+      const duration = Math.round((distance / 30) * 60) + 3;
+      tempTime += duration;
+      
+      stop.calculatedETA = tempTime;
+      stop.calculatedDistance = distance;
+      stop.calculatedDuration = duration;
+      
+      let isDelayed = false;
+      if (stop.constraint === 'morning') {
+        if (tempTime > 720) { // 12h00
+          isDelayed = true;
+          if (!hasAlert) {
+            hasAlert = true;
+            alertMsg = `⚠️ Risque de retard sur l'arrêt ${index + 1}. ETA estimé : ${formatMinutesToTime(tempTime)} (Limite : 12h)`;
+          }
+        }
+      } else if (stop.constraint === 'afternoon') {
+        if (tempTime > 960) { // 16h00
+          isDelayed = true;
+          if (!hasAlert) {
+            hasAlert = true;
+            alertMsg = `⚠️ Risque de retard sur l'arrêt ${index + 1}. ETA estimé : ${formatMinutesToTime(tempTime)} (Limite : 16h)`;
+          }
+        }
+      } else if (stop.constraint === 'urgent') {
+        if (tempTime > circuitTime + 30) {
+          isDelayed = true;
+          if (!hasAlert) {
+            hasAlert = true;
+            alertMsg = `⚠️ Risque de retard sur l'arrêt Urgent ${index + 1}. ETA : ${formatMinutesToTime(tempTime)}`;
+          }
+        }
+      }
+      
+      stop.isDelayed = isDelayed;
+      tempLoc = { lat: stop.lat, lng: stop.lng };
+      tempTime += 5; // 5 min delivery time
+    });
+    
+    const banner = document.getElementById('circuit-delay-alert');
+    const bannerText = document.getElementById('circuit-delay-alert-text');
+    if (banner && bannerText) {
+      if (hasAlert) {
+        bannerText.textContent = alertMsg;
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+  }
+
+  function renderActiveTour() {
+    updateCircuitProgressHeader();
+    updateCircuitETA();
+    renderActiveMapSVG();
+    
+    const listContainer = document.getElementById('active-stops-list');
+    if (!listContainer) return;
+    
+    listContainer.innerHTML = '';
+    
+    const pendingStops = circuitStops.filter(s => s.status === 'pending');
+    if (pendingStops.length === 0) {
+      // Tour completed!
+      showTourSummary();
+      return;
+    }
+    
+    circuitStops.forEach((stop, index) => {
+      // Render all stops, show checks for completed
+      const row = document.createElement('div');
+      row.className = 'swipe-row';
+      row.id = `swipe-row-${stop.id}`;
+      
+      let badgeContent = String(index + 1);
+      let badgeClass = 'stop-badge';
+      let metaText = `Prévu : --`;
+      
+      if (stop.status === 'delivered') {
+        badgeContent = '✓';
+        badgeClass = 'stop-badge delivered';
+        metaText = `Livré`;
+      } else if (stop.status === 'failed') {
+        badgeContent = '✕';
+        badgeClass = 'stop-badge failed';
+        metaText = `Échoué : ${stop.failReason}`;
+      } else {
+        const eta = stop.calculatedETA ? formatMinutesToTime(stop.calculatedETA) : '--';
+        const dist = stop.calculatedDistance ? stop.calculatedDistance.toFixed(1) : '0.0';
+        metaText = `ETA : ${eta} • ${dist} km`;
+      }
+      
+      const constraintBadgeLabels = {
+        'none': '',
+        'morning': '12h',
+        'afternoon': '14h-16h',
+        'urgent': '⚡ Urgent'
+      };
+      
+      let constraintClass = `pastille-hour-indicator ${stop.constraint}`;
+      if (stop.isDelayed) {
+        constraintClass += ' warning-delay';
+      }
+      
+      row.innerHTML = `
+        <div class="swipe-background-left">✓ LIVRÉ</div>
+        <div class="swipe-background-right">❌ ÉCHEC</div>
+        <div class="swipe-foreground">
+          <div class="stop-left-part">
+            <div class="${badgeClass}">${badgeContent}</div>
+            <div class="stop-info">
+              <div class="stop-address">${stop.address}</div>
+              <div class="stop-meta">${metaText}</div>
+            </div>
+          </div>
+          <div class="stop-right-part">
+            ${constraintBadgeLabels[stop.constraint] ? `<span class="${constraintClass}">${constraintBadgeLabels[stop.constraint]}</span>` : ''}
+            <button onclick="launchExternalGPS('${stop.address}')" class="stop-btn-media" title="Naviguer avec GPS">🧭</button>
+            <button onclick="openStopPreview('${stop.id}')" class="stop-btn-media" title="Voir la fiche Preview">👁️</button>
+            <button onclick="openMediaModal('${stop.id}')" class="stop-btn-media" title="Ajouter photo/commentaire">📷+</button>
+          </div>
+        </div>
+      `;
+      
+      listContainer.appendChild(row);
+      
+      // Bind swipe listeners only for pending stops
+      if (stop.status === 'pending') {
+        initSwipeRow(row, stop.id);
+      }
+    });
+  }
+
+  function launchExternalGPS(address) {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    window.open(url, '_blank');
+    showMobToast('GPS lancé (envoi à sens unique de la destination).');
+  }
+
+  function renderActiveMapSVG() {
+    const svg = document.getElementById('active-map-svg');
+    if (!svg) return;
+    
+    // Draw depot, current location, road, and stops
+    let html = `
+      <!-- Roads -->
+      <path d="M 40 100 Q 150 40 200 110 T 360 90" fill="none" stroke="#cfd8dc" stroke-width="8" stroke-linecap="round" id="road-path-1" />
+      <path d="M 40 100 Q 150 40 200 110 T 360 90" fill="none" stroke="#2196f3" stroke-width="4" stroke-linecap="round" stroke-dasharray="6,4" id="road-path-2" />
+      
+      <!-- Start Dépôt -->
+      <circle cx="40" cy="100" r="10" fill="#0D2242" />
+      <circle cx="40" cy="100" r="4" fill="#fff" />
+      <text x="40" y="125" font-family="Lexend, sans-serif" font-size="9" font-weight="bold" fill="#0D2242" text-anchor="middle">Dépôt</text>
+    `;
+    
+    // Add dynamic markers
+    circuitStops.forEach((stop, index) => {
+      // Map coordinates to SVG pixels
+      // Ronchin depot: lat 50.62925, lng 3.057256
+      const px = 180 + (stop.lng - 3.057256) * 1500;
+      const py = 100 - (stop.lat - 50.62925) * 1500;
+      
+      let color = "#1e88e5"; // Pending
+      if (stop.status === 'delivered') color = "#009A44";
+      if (stop.status === 'failed') color = "#D32F2F";
+      
+      html += `
+        <circle cx="${px}" cy="${py}" r="9" fill="${color}" stroke="#fff" stroke-width="1.5" />
+        <text x="${px}" y="${py + 3}" font-family="Lexend, sans-serif" font-size="8" font-weight="bold" fill="#fff" text-anchor="middle">${index + 1}</text>
+      `;
+    });
+    
+    // Chauffeur current position indicator
+    const curPx = 180 + (circuitLoc.lng - 3.057256) * 1500;
+    const curPy = 100 - (circuitLoc.lat - 50.62925) * 1500;
+    html += `
+      <circle cx="${curPx}" cy="${curPy}" r="7" fill="#ffb300" stroke="#0D2242" stroke-width="2" />
+      <circle cx="${curPx}" cy="${curPy}" r="2" fill="#fff" />
+    `;
+    
+    svg.innerHTML = html;
+  }
+
+  function toggleMidTourAdd() {
+    const panel = document.getElementById('midtour-add-panel');
+    const btn = document.getElementById('btn-toggle-midtour');
+    if (panel) {
+      if (panel.style.display === 'none') {
+        panel.style.display = 'flex';
+        btn.textContent = '-';
+      } else {
+        panel.style.display = 'none';
+        btn.textContent = '+';
+      }
+    }
+  }
+
+  function addMidTourStop() {
+    const input = document.getElementById('midtour-addr-input');
+    const address = input ? input.value.trim() : '';
+    if (!address) { showMobToast('Saisissez une adresse.'); return; }
+    
+    const key = address.toUpperCase();
+    let lat = 50.62925 + (Math.random() - 0.5) * 0.1;
+    let lng = 3.057256 + (Math.random() - 0.5) * 0.1;
+    let finalAddress = address;
+    
+    if (ADDRESS_CATALOG[key]) {
+      lat = ADDRESS_CATALOG[key].lat;
+      lng = ADDRESS_CATALOG[key].lng;
+      finalAddress = ADDRESS_CATALOG[key].address;
+    }
+    
+    // Read pastille selected inside midtour container
+    const activePastille = document.querySelector('#midtour-add-panel .constraint-pastille.active');
+    const constraint = activePastille ? activePastille.textContent.includes('Urgent') ? 'urgent' : activePastille.textContent.includes('12h') ? 'morning' : activePastille.textContent.includes('14') ? 'afternoon' : 'none' : 'none';
+    
+    const newStop = {
+      id: 'stop_' + Date.now(),
+      address: finalAddress,
+      lat: lat,
+      lng: lng,
+      status: 'pending',
+      constraint: constraint,
+      photos: [],
+      comment: ''
+    };
+    
+    circuitStops.push(newStop);
+    optimizeStops();
+    
+    input.value = '';
+    toggleMidTourAdd();
+    showMobToast('Arrêt inséré & tournée ré-optimisée !');
+    renderActiveTour();
+  }
+
+  /* ─── SWIPE EVENT HANDLERS ─── */
+  function initSwipeRow(rowEl, stopId) {
+    let startX = 0;
+    let isDragging = false;
+    const bgLeft = rowEl.querySelector('.swipe-background-left');
+    const bgRight = rowEl.querySelector('.swipe-background-right');
+    const fg = rowEl.querySelector('.swipe-foreground');
+    
+    const onPointerDown = (e) => {
+      fg.setPointerCapture(e.pointerId);
+      startX = e.clientX;
+      isDragging = true;
+      fg.style.transition = 'none';
+      if (bgLeft) bgLeft.style.opacity = '0.3';
+      if (bgRight) bgRight.style.opacity = '0.3';
+    };
+    
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startX;
+      
+      // Limit travel for visual feedback
+      let dragAmount = deltaX;
+      if (dragAmount > 120) dragAmount = 120 + (dragAmount - 120) * 0.2;
+      if (dragAmount < -120) dragAmount = -120 + (dragAmount + 120) * 0.2;
+      
+      fg.style.transform = `translateX(${dragAmount}px)`;
+      
+      // Highlight side background
+      if (dragAmount > 20) {
+        if (bgLeft) bgLeft.style.opacity = '1';
+        if (bgRight) bgRight.style.opacity = '0';
+      } else if (dragAmount < -20) {
+        if (bgLeft) bgLeft.style.opacity = '0';
+        if (bgRight) bgRight.style.opacity = '1';
+      } else {
+        if (bgLeft) bgLeft.style.opacity = '0.3';
+        if (bgRight) bgRight.style.opacity = '0.3';
+      }
+    };
+    
+    const onPointerUp = (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      fg.releasePointerCapture(e.pointerId);
+      const deltaX = e.clientX - startX;
+      fg.style.transition = 'transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1)';
+      
+      if (deltaX > 80) {
+        // Swiped right -> Livré
+        fg.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          triggerStopSuccess(stopId);
+        }, 200);
+      } else if (deltaX < -80) {
+        // Swiped left -> Échoué
+        fg.style.transform = 'translateX(-100%)';
+        setTimeout(() => {
+          triggerStopFailure(stopId);
+        }, 200);
+      } else {
+        // Return to center
+        fg.style.transform = 'translateX(0)';
+        if (bgLeft) bgLeft.style.opacity = '0';
+        if (bgRight) bgRight.style.opacity = '0';
+      }
+    };
+    
+    fg.addEventListener('pointerdown', onPointerDown);
+    fg.addEventListener('pointermove', onPointerMove);
+    fg.addEventListener('pointerup', onPointerUp);
+    fg.addEventListener('pointercancel', onPointerUp);
+  }
+
+  function triggerStopSuccess(stopId) {
+    activeResolvingStopId = stopId;
+    clearSignatureCanvas();
+    const modal = document.getElementById('circuit-proof-modal');
+    if (modal) modal.classList.add('open');
+  }
+
+  function triggerStopFailure(stopId) {
+    activeResolvingStopId = stopId;
+    const modal = document.getElementById('circuit-fail-modal');
+    if (modal) modal.classList.add('open');
+  }
+
+  function confirmStopSuccess() {
+    const stop = circuitStops.find(s => s.id === activeResolvingStopId);
+    if (stop) {
+      stop.status = 'delivered';
+      
+      // Advance clock by calculated travel duration + service duration (5 mins)
+      if (stop.calculatedDuration) {
+        circuitTime += stop.calculatedDuration;
+      }
+      circuitTime += 5; 
+      
+      // Update driver position to this stop
+      circuitLoc = { lat: stop.lat, lng: stop.lng };
+      
+      showMobToast('✓ Livraison validée !');
+    }
+    
+    closeResolutionModals();
+    renderActiveTour();
+  }
+
+  function confirmStopFailure(reason) {
+    const stop = circuitStops.find(s => s.id === activeResolvingStopId);
+    if (stop) {
+      stop.status = 'failed';
+      stop.failReason = reason;
+      
+      if (stop.calculatedDuration) {
+        circuitTime += stop.calculatedDuration;
+      }
+      circuitTime += 5;
+      circuitLoc = { lat: stop.lat, lng: stop.lng };
+      
+      showMobToast(`❌ Échec enregistré : ${reason}`);
+    }
+    closeResolutionModals();
+    renderActiveTour();
+  }
+
+  function cancelStopResolution() {
+    closeResolutionModals();
+    renderActiveTour();
+  }
+
+  function closeResolutionModals() {
+    document.getElementById('circuit-proof-modal').classList.remove('open');
+    document.getElementById('circuit-fail-modal').classList.remove('open');
+    activeResolvingStopId = null;
+  }
+
+  /* ─── SIGNATURE CANVAS ─── */
+  function initSignatureCanvas() {
+    const canvas = document.getElementById('signature-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0D2242';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    
+    let drawing = false;
+    
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+    };
+    
+    canvas.addEventListener('pointerdown', (e) => {
+      drawing = true;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+    
+    canvas.addEventListener('pointermove', (e) => {
+      if (!drawing) return;
+      const pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+    
+    canvas.addEventListener('pointerup', () => { drawing = false; });
+    canvas.addEventListener('pointercancel', () => { drawing = false; });
+  }
+
+  function clearSignatureCanvas() {
+    const canvas = document.getElementById('signature-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    const status = document.getElementById('proof-photo-status');
+    if (status) status.textContent = "Aucune photo";
+  }
+
+  function simulateAddProofPhoto() {
+    const status = document.getElementById('proof-photo-status');
+    if (status) {
+      status.textContent = "✓ Photo de preuve chargée";
+      showMobToast('Photo de preuve associée.');
+    }
+  }
+
+  /* ─── MODAL MEDIA DETAILS ─── */
+  function openMediaModal(stopId) {
+    activeMediaStopId = stopId;
+    currentSimPhotos = [];
+    
+    const stop = circuitStops.find(s => s.id === stopId);
+    const commentInput = document.getElementById('media-comment-input');
+    
+    if (stop) {
+      if (commentInput) commentInput.value = stop.comment || '';
+      if (stop.photos) currentSimPhotos = [...stop.photos];
+    }
+    
+    updateMediaModalPhotosUI();
+    document.getElementById('circuit-media-modal').classList.add('open');
+  }
+
+  function closeMediaModal() {
+    document.getElementById('circuit-media-modal').classList.remove('open');
+    activeMediaStopId = null;
+  }
+
+  function simulateAddPhoto() {
+    if (currentSimPhotos.length >= 25) {
+      showMobToast('Limite de 25 photos atteinte.');
+      return;
+    }
+    const nextImg = MOCK_PACKAGE_IMAGES[currentSimPhotos.length % MOCK_PACKAGE_IMAGES.length];
+    currentSimPhotos.push(nextImg);
+    updateMediaModalPhotosUI();
+    showMobToast('Photo de colis simulée ajoutée.');
+  }
+
+  function updateMediaModalPhotosUI() {
+    const countText = document.getElementById('media-photo-count');
+    const gallery = document.getElementById('media-photo-gallery');
+    
+    if (countText) countText.textContent = `${currentSimPhotos.length}/25 photo(s) ajoutée(s)`;
+    if (gallery) {
+      gallery.innerHTML = '';
+      currentSimPhotos.forEach(src => {
+        const img = document.createElement('img');
+        img.className = 'preview-photo-thumb';
+        img.src = src;
+        gallery.appendChild(img);
+      });
+    }
+  }
+
+  function saveMediaDetails() {
+    const stop = circuitStops.find(s => s.id === activeMediaStopId);
+    const commentInput = document.getElementById('media-comment-input');
+    
+    if (stop) {
+      stop.comment = commentInput ? commentInput.value.trim() : '';
+      stop.photos = [...currentSimPhotos];
+      showMobToast('Fiche colis enregistrée !');
+    }
+    closeMediaModal();
+    if (isTourActive) {
+      renderActiveTour();
+    } else {
+      renderCircuitSetup();
+    }
+  }
+
+  /* ─── MODAL PREVIEW APERÇU ─── */
+  function openStopPreview(stopId) {
+    const stop = circuitStops.find(s => s.id === stopId);
+    if (!stop) return;
+    
+    const addr = document.getElementById('preview-stop-address');
+    const comment = document.getElementById('preview-comment-text');
+    const gallery = document.getElementById('preview-gallery-container');
+    
+    if (addr) addr.textContent = stop.address;
+    if (comment) comment.textContent = stop.comment || "Aucun commentaire chauffeur renseigné pour cet arrêt.";
+    if (gallery) {
+      gallery.innerHTML = '';
+      if (stop.photos && stop.photos.length > 0) {
+        stop.photos.forEach(src => {
+          const img = document.createElement('img');
+          img.className = 'preview-photo-thumb';
+          img.style.width = '70px';
+          img.style.height = '70px';
+          img.src = src;
+          gallery.appendChild(img);
+        });
+      } else {
+        gallery.innerHTML = '<span style="font-size:11px; color:var(--text-sec);">Aucune photo associée à cet arrêt.</span>';
+      }
+    }
+    
+    document.getElementById('circuit-preview-modal').classList.add('open');
+  }
+
+  function closePreviewModal() {
+    document.getElementById('circuit-preview-modal').classList.remove('open');
+  }
+
+  /* ─── ÉCRAN 3 : SUMMARY ─── */
+  function showTourSummary() {
+    document.getElementById('circuit-panel-setup').style.display = 'none';
+    document.getElementById('circuit-panel-active').style.display = 'none';
+    document.getElementById('circuit-panel-summary').style.display = 'flex';
+    document.querySelector('.circuit-progression-header').style.display = 'none';
+    document.getElementById('circuit-delay-alert').style.display = 'none';
+    
+    const total = circuitStops.length;
+    const delivered = circuitStops.filter(s => s.status === 'delivered').length;
+    const pct = total > 0 ? Math.round((delivered / total) * 100) : 0;
+    const duration = circuitTime - 480;
+    
+    let dist = 0;
+    circuitStops.forEach(s => {
+      if (s.calculatedDistance) dist += s.calculatedDistance;
+    });
+    
+    document.getElementById('sum-delivered-rate').textContent = `${pct}%`;
+    document.getElementById('sum-total-stops').textContent = total;
+    document.getElementById('sum-total-time').textContent = `${duration} min`;
+    document.getElementById('sum-total-distance').textContent = `${dist.toFixed(1)} km`;
+  }
+
+  function resetTourCircuit() {
+    loadDefaultCircuitStops();
+    initCircuitTab();
+  }
+
   function switchTab(tab) {
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.drawer-item').forEach(b => {
@@ -1762,6 +3279,7 @@
     if (tab === 'archives')   switchArchSubTab(_archSubTab);
     if (tab === 'profil')     renderProfil();
     if (tab === 'messagerie') renderDriverChat();
+    if (tab === 'circuit')    initCircuitTab();
   }
 
   /* ─── TOAST ──────────────────────────────────────────────────────────── */
