@@ -3502,7 +3502,7 @@
     const reportId = 'rep_circuit_' + Date.now();
     const newReport = {
       id: reportId,
-      user_id: 'usr_001',
+      driver_id: 'usr_001',
       type: 'circuit',
       created_at: new Date().toISOString(),
       success_rate: pct,
@@ -5203,7 +5203,13 @@
       <div class="profil-hero">
         <div class="profil-avatar" aria-hidden="true">${S2WUtils.initials(user)}</div>
         <div class="profil-name">${S2WUtils.fullName(user)}</div>
-        <div class="profil-role">${user?.company_id ? ((isVL ? 'Conducteur VL' : 'Conducteur Poids Lourd') + ' — ' + (company?.trade_name || 'AMT')) : 'Conducteur — En attente d\'activation'}</div>
+        <div class="profil-role">${(() => {
+          if (!user?.company_id) return 'Conducteur — En attente d\'activation';
+          const role = (isVL ? 'Conducteur VL' : 'Conducteur Poids Lourd') + ' — ' + (company?.trade_name || 'AMT');
+          if (!activeCircuit) return role;
+          if (isCircuitActive) return role + ' · <span style="color:#2E7D32">🟢 Circuit actif</span>';
+          return role + ' · <span style="color:#C62828">🔴 Circuit expiré <em>(à réactiver)</em></span>';
+        })()}</div>
       </div>
 
       <div style="padding:0 16px; margin: 16px 0 8px;">

@@ -193,5 +193,29 @@ Retour d'utilisation client précisé : après chaque usage de la navigation GPS
 
 Ce point sera affiné davantage avec le fondateur au moment de basculer de la simulation vers la version fonctionnelle réelle — ne pas improviser l'implémentation avant cette clarification.
 
+---
+
+## Vertèbre 18 — Synchronisation schéma Airtable & règle méthodologique
+
+- **Date :** 2026-08-20
+- **Fichiers concernés :** `app-mobile.html` (showTourSummary), `docs/s1/js/s2w-localstorage.js`, tables Airtable `reports`, `invitations`
+- **Corrections appliquées :**
+  1. **Table `reports`** : ajout des colonnes `type` (singleLineText), `stops` (multilineText), `success_rate`, `stops_count`, `total_time`, `total_distance` (number) via l'API Metadata Airtable.
+  2. **Table `invitations`** : ajout des colonnes `driver_name` et `target_user_id` (singleLineText).
+  3. **Bug `user_id` → `driver_id`** : le code de `showTourSummary()` dans `app-mobile.html` utilisait `user_id` pour le rapport Circuit, mais la table Airtable `reports` utilise `driver_id`. Airtable rejetait silencieusement le champ. Corrigé.
+- **Vérification E2E :** script Python automatisé (create → read-back → compare → cleanup) confirmant que les deux tables acceptent et restituent tous les champs correctement. Résultat : ✅ PASS sur les deux tables.
+
+### ⚠️ RÈGLE MÉTHODOLOGIQUE OBLIGATOIRE — Vérification schéma Airtable
+
+> **Toute nouvelle vertèbre impliquant une table Airtable DOIT inclure la vérification RÉELLE (pas supposée) que le schéma Airtable accepte tous les champs utilisés par le code, AVANT de considérer la tâche terminée.**
+>
+> Checklist obligatoire :
+> 1. Lister les champs que le code envoie à Airtable via `S2W.push()` ou `S2W.update()`.
+> 2. Comparer avec les colonnes réelles de la table Airtable (via API Metadata ou interface web).
+> 3. Créer les colonnes manquantes si nécessaire.
+> 4. Exécuter un test d'écriture/relecture réel (pas juste vérifier le schéma — écrire un enregistrement et le relire).
+> 5. Vérifier que `_serializeFields()` sérialise correctement les types complexes (arrays → JSON string pour multilineText).
+>
+> **Motif :** Airtable rejette silencieusement les champs inconnus (pas d'erreur visible côté client si l'erreur réseau est swallowed). Le code local fonctionne parfaitement (localStorage n'a pas de schéma), masquant le problème jusqu'à un audit explicite.
 
 
