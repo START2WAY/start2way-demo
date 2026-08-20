@@ -173,6 +173,9 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
   - **Panneau déroulant :** Le clic sur la cloche ouvre un volet ou panneau déroulant (sans recharger la page ni ouvrir une nouvelle page) listant les alertes de la plus récente à la plus ancienne.
   - **Action au clic :** Cliquer sur une notification la marque comme lue, ferme le panneau et redirige directement l'utilisateur vers l'onglet ou la section concernée (ex: *Profil*, *Feuillet*, *Circuit* sur mobile ; *Messagerie*, *Documents* sur web).
   - **Déclencheurs unifiés :** Centralise les documents expirés, les dépassements et seuils réglementaires (4h30, 9h, 12h, feuillets non signés, risques de retards) côté salarié ; et les dérives d'horloge (drift > 300s), alertes de documents de la flotte/conducteurs et nouveaux messages non lus côté employeur.
+  - **Distinction "Lu" vs "Résolu" (Cohérence des badges) :**
+    - **Marquer comme lu** (clic cloche/item) : fait disparaître la notification du badge numérique de la cloche 🔔 (qui ne compte que les notifications non lues par le gérant), mais le problème sous-jacent (ex: document expiré) reste affiché sur le Dashboard.
+    - **Résoudre** (action métier sur le Dashboard ou Documents) : le fait de résoudre le problème (ex: cliquer sur `✓ Lu` pour la dérive horaire, ou renouveler/valider un document expiré) met à jour la base de données locale, fait disparaître l'alerte du Dashboard **et** marque automatiquement la notification cloche associée comme lue en arrière-plan.
 
 ## DETTE TECHNIQUE & LIMITES DE PRODUCTION
 
