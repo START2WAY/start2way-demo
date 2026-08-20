@@ -175,4 +175,12 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
 - AVANT toute mise en production réelle, il faudra impérativement intégrer : une vraie API de géocodage (ex: Google Geocoding API, Nominatim/OpenStreetMap) et un vrai service de calcul d'itinéraire routier (ex: Google Routes API, OSRM) pour que l'optimisation et les ETA soient fiables en conditions réelles.
 - Cette limitation est acceptable pour la phase actuelle de démo/prototype, mais ne doit jamais être oubliée avant un vrai lancement.
 
+### BOUCLE DE 2 API GPS — Bêta V1 réelle (à traiter au moment de la vraie implémentation fonctionnelle, pas en simulation) :
+Pour le parcours d'optimisation Circuit en version réelle/fonctionnelle (première bêta V1, pas la maquette actuelle), le fondateur souhaite une boucle utilisant 2 API GPS (gratuites ou payantes, à déterminer selon le meilleur rapport coût/fiabilité pour une bêta à petite échelle), en plus de ce qui est déjà prévu dans le parcours d'optimisation actuel. Objectif : redondance et/ou comparaison entre les deux API.
+
+Retour d'utilisation client précisé : après chaque usage de la navigation GPS pendant une tournée, le chauffeur pourra donner un retour sur l'API GPS utilisée à ce moment-là — sous forme de commentaire libre et/ou de notation par étoiles (système à définir précisément, ex: 1 à 5 étoiles). Objectif : comparer dans le temps la fiabilité/qualité perçue des 2 API GPS intégrées, sur la base des retours réels des chauffeurs en conditions de terrain pendant la phase de test de 2 mois.
+
+Ce point sera affiné davantage avec le fondateur au moment de basculer de la simulation vers la version fonctionnelle réelle — ne pas improviser l'implémentation avant cette clarification.
+
+
 
