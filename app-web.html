@@ -950,6 +950,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     updateClock();
     setInterval(updateClock, 10000);
+    checkAllEmployerAlerts();
     switchPage('dashboard');
 
     checkAirtableConfig();
@@ -2412,12 +2413,13 @@
   let webNotifications = [];
 
   function pushWebNotification(notif) {
-    const existingIdx = webNotifications.findIndex(n => n.type === notif.type && n.title === notif.title && n.message === notif.message);
+    const id = notif.id || 'notif_' + Math.random().toString(36).substr(2, 9);
+    const existingIdx = webNotifications.findIndex(n => n.id === id);
     if (existingIdx !== -1) {
       return;
     }
     webNotifications.unshift({
-      id: 'notif_' + Math.random().toString(36).substr(2, 9),
+      id: id,
       is_read: false,
       triggered_at: new Date().toISOString(),
       ...notif
@@ -2533,12 +2535,16 @@
         const hoursSkew = (ev.device_clock_diff / 3600).toFixed(1);
         
         pushWebNotification({
+          id: 'notif_skew_' + ev.id,
           type: 'critical',
           title: "Falsification d'horloge",
           message: `Le conducteur ${uName} a démarré son shift avec un décalage de +${hoursSkew}h.`,
           target_page: 'dashboard',
           triggered_at: ev.server_timestamp || ev.local_timestamp
         });
+      } else {
+        const notif = webNotifications.find(n => n.id === 'notif_skew_' + ev.id);
+        if (notif) notif.is_read = true;
       }
     });
 
@@ -2560,12 +2566,16 @@
         const label = docTypes[d.type] || d.type;
 
         pushWebNotification({
+          id: 'notif_doc_' + d.id,
           type: 'warning',
           title: 'Document expiré',
           message: `Le document ${label} pour ${name} est expiré.`,
           target_page: 'documents',
           triggered_at: d.created_at || new Date().toISOString()
         });
+      } else {
+        const notif = webNotifications.find(n => n.id === 'notif_doc_' + d.id);
+        if (notif) notif.is_read = true;
       }
     });
 
@@ -2577,14 +2587,20 @@
         const name = u ? S2WUtils.fullName(u) : 'Conducteur';
         
         pushWebNotification({
+          id: 'notif_msg_' + m.id,
           type: 'message',
           title: 'Nouveau message',
           message: `Nouveau message de ${name} : "${m.text.substring(0, 30)}${m.text.length > 30 ? '...' : ''}"`,
           target_page: 'messagerie',
           triggered_at: m.created_at || new Date().toISOString()
         });
+      } else {
+        const notif = webNotifications.find(n => n.id === 'notif_msg_' + m.id);
+        if (notif) notif.is_read = true;
       }
     });
+
+    updateWebNotificationsUI();
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -2705,10 +2721,16 @@
       if (ev) {
         ev.device_clock_diff = 0;
         S2W.update('event_logs', id, ev);
+        
+        const notif = webNotifications.find(n => n.id === 'notif_skew_' + id);
+        if (notif) notif.is_read = true;
       }
     } else {
       S2W.update('alerts', id, { acknowledged: true, resolved_at: new Date().toISOString() });
+      const notif = webNotifications.find(n => n.id === 'notif_alert_' + id);
+      if (notif) notif.is_read = true;
     }
+    updateWebNotificationsUI();
     showToast('Alerte marquée comme lue', 'success');
     switchPage('dashboard');
   }
@@ -2913,7 +2935,24 @@
   }
 
   function validateDocUser(userId) {
-    showToast('Documents validés pour ce conducteur', 'success');
+    const docs = S2W.table('documents') || [];
+    docs.forEach(d => {
+      if (d.owner_id === userId && d.owner_type === 'user') {
+        const diff = (new Date(d.expires_at) - new Date()) / 86400000;
+        if (diff < 0) {
+          const newExpiry = new Date();
+          newExpiry.setFullYear(newExpiry.getFullYear() + 1);
+          d.expires_at = newExpiry.toISOString().split('T')[0];
+          S2W.update('documents', d.id, d);
+          
+          const notif = webNotifications.find(n => n.id === 'notif_doc_' + d.id);
+          if (notif) notif.is_read = true;
+        }
+      }
+    });
+    updateWebNotificationsUI();
+    showToast('Documents validés et renouvelés pour ce conducteur', 'success');
+    renderDocTab(_docTab);
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
