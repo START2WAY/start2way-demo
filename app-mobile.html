@@ -1631,6 +1631,43 @@
           </div>
         </div>
 
+        <!-- MODAL : CONFIRMATION ET CHOIX DU GPS -->
+        <div class="modal-overlay" id="circuit-gps-modal">
+          <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+            <h3 style="margin-top:0; color:var(--navy); font-size:15px; display:flex; align-items:center; gap:8px;">
+              <span>🧭</span> Choix de navigation
+            </h3>
+            <p style="font-size:12px; color:var(--text-sec); text-align:left; margin-bottom:12px;" id="gps-modal-address-text">
+              Ouvrir une application de navigation externe pour vous rendre à cet arrêt ?
+            </p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px; text-align:left;">
+              <button onclick="selectGpsOption('google')" id="gps-opt-google" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:2px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white); display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <span>🚗 Google Maps</span>
+                <span id="gps-check-google" style="display:none; color:var(--brand-green); font-weight:700;">✓</span>
+              </button>
+              <button onclick="selectGpsOption('waze')" id="gps-opt-waze" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:2px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white); display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <span>🚙 Waze</span>
+                <span id="gps-check-waze" style="display:none; color:var(--brand-green); font-weight:700;">✓</span>
+              </button>
+              <button onclick="selectGpsOption('apple')" id="gps-opt-apple" class="btn-action-secondary" style="text-align:left; padding:12px; border-radius:8px; border:2px solid var(--border); font-size:13px; font-weight:600; cursor:pointer; background:var(--white); display:flex; align-items:center; justify-content:space-between; width:100%;">
+                <span>🍎 Apple Plans</span>
+                <span id="gps-check-apple" style="display:none; color:var(--brand-green); font-weight:700;">✓</span>
+              </button>
+            </div>
+            
+            <div style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:12px; color:var(--text-main); text-align:left;">
+              <input type="checkbox" id="gps-set-default-chk" style="width:16px; height:16px; cursor:pointer;">
+              <label for="gps-set-default-chk" style="cursor:pointer; font-weight:600;">Définir comme choix par défaut</label>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-top:20px;">
+              <button onclick="confirmGpsLaunch()" class="btn-action-primary" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Confirmer</button>
+              <button onclick="closeGpsModal()" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+            </div>
+          </div>
+        </div>
+
         <div style="height:24px;"></div>
       </div>
 
@@ -2832,11 +2869,89 @@
     });
   }
 
+  let activeGpsAddress = "";
+  let selectedGpsApp = "google";
+
   function launchExternalGPS(address) {
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    window.open(url, '_blank');
-    showMobToast('GPS lancé (envoi à sens unique de la destination).');
+    activeGpsAddress = address;
+    const modal = document.getElementById('circuit-gps-modal');
+    const label = document.getElementById('gps-modal-address-text');
+    
+    if (label) {
+      label.textContent = `Ouvrir une application de navigation externe pour vous rendre à : ${address} ?`;
+    }
+    
+    // Read default GPS from localStorage
+    const savedDefault = localStorage.getItem('s2w_default_gps_app') || 'google';
+    selectGpsOption(savedDefault);
+    
+    const chk = document.getElementById('gps-set-default-chk');
+    if (chk) {
+      chk.checked = localStorage.getItem('s2w_default_gps_app') !== null;
+    }
+    
+    if (modal) modal.classList.add('open');
   }
+
+  function selectGpsOption(app) {
+    selectedGpsApp = app;
+    const options = ['google', 'waze', 'apple'];
+    
+    options.forEach(opt => {
+      const btn = document.getElementById(`gps-opt-${opt}`);
+      const chk = document.getElementById(`gps-check-${opt}`);
+      if (btn) {
+        if (opt === app) {
+          btn.style.borderColor = 'var(--navy)';
+          btn.style.background = '#f0f4f8';
+        } else {
+          btn.style.borderColor = 'var(--border)';
+          btn.style.background = 'var(--white)';
+        }
+      }
+      if (chk) {
+        chk.style.display = opt === app ? 'inline' : 'none';
+      }
+    });
+  }
+
+  function confirmGpsLaunch() {
+    const chk = document.getElementById('gps-set-default-chk');
+    if (chk && chk.checked) {
+      localStorage.setItem('s2w_default_gps_app', selectedGpsApp);
+    } else {
+      localStorage.removeItem('s2w_default_gps_app');
+    }
+    
+    let url = "";
+    const encoded = encodeURIComponent(activeGpsAddress);
+    
+    if (selectedGpsApp === 'google') {
+      url = `https://www.google.com/maps/search/?api=1&query=${encoded}`;
+    } else if (selectedGpsApp === 'waze') {
+      url = `https://waze.com/ul?q=${encoded}&navigate=yes`;
+    } else if (selectedGpsApp === 'apple') {
+      url = `http://maps.apple.com/?q=${encoded}`;
+    }
+    
+    window.open(url, '_blank');
+    closeGpsModal();
+    showMobToast('GPS externe lancé.');
+  }
+
+  function closeGpsModal() {
+    const modal = document.getElementById('circuit-gps-modal');
+    if (modal) modal.classList.remove('open');
+  }
+
+  // Recalculate ETA and route state upon returning to focus
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isTourActive) {
+      updateCircuitETA();
+      renderActiveTour();
+      showMobToast('Données de tournée rafraîchies.');
+    }
+  });
 
   function renderActiveMapSVG() {
     const svg = document.getElementById('active-map-svg');
