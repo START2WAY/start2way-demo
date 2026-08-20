@@ -166,6 +166,14 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
   - **Tracé d'itinéraire SVG :** Dessine un tracé cartographique interactif avec connexions en pointillés et marqueurs d'arrêts colorés selon leur statut de livraison (vert pour Livré, rouge pour Échoué).
   - **Fiche Colis Employeur :** Permet à l'employeur d'inspecter les commentaires et le carrousel d'images pris pour chaque arrêt de la tournée.
 
+### VERTÈBRE 17 — Centre de notifications unifié (Cloche 🔔)
+- **Fichiers concernés :** `app-mobile.html`, `app-web.html`, tables `event_logs`, `documents`, `messages`
+- **Règles :**
+  - **Badge numérique :** La cloche affiche un badge numérique rouge (`.notif-badge`) contenant le décompte exact des notifications non lues (et non pas un simple point statique).
+  - **Panneau déroulant :** Le clic sur la cloche ouvre un volet ou panneau déroulant (sans recharger la page ni ouvrir une nouvelle page) listant les alertes de la plus récente à la plus ancienne.
+  - **Action au clic :** Cliquer sur une notification la marque comme lue, ferme le panneau et redirige directement l'utilisateur vers l'onglet ou la section concernée (ex: *Profil*, *Feuillet*, *Circuit* sur mobile ; *Messagerie*, *Documents* sur web).
+  - **Déclencheurs unifiés :** Centralise les documents expirés, les dépassements et seuils réglementaires (4h30, 9h, 12h, feuillets non signés, risques de retards) côté salarié ; et les dérives d'horloge (drift > 300s), alertes de documents de la flotte/conducteurs et nouveaux messages non lus côté employeur.
+
 ## DETTE TECHNIQUE & LIMITES DE PRODUCTION
 
 ### GÉOCODAGE ET CALCUL D'ITINÉRAIRE — SIMULATION LOCALE UNIQUEMENT (pas de production) :

@@ -117,6 +117,119 @@
       position: absolute; top: 6px; right: 6px;
       border: 2px solid var(--navy);
     }
+    .notif-badge {
+      background: var(--brand-green);
+      color: var(--navy);
+      font-size: 8px;
+      font-weight: 900;
+      border-radius: 10px;
+      padding: 1px 4px;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      border: 1px solid var(--navy);
+      min-width: 12px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .notif-sheet {
+      position: absolute;
+      top: 50px;
+      right: 16px;
+      width: 320px;
+      max-height: 400px;
+      background: var(--navy);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      transform: translateY(-10px);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .notif-sheet.open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+    .notif-sheet-header {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .notif-sheet-title {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      font-family: var(--font-head);
+    }
+    .notif-sheet-clear {
+      font-size: 10px;
+      color: var(--brand-green);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .notif-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 350px;
+    }
+    .notif-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .notif-item:hover {
+      background: rgba(255,255,255,0.03);
+    }
+    .notif-item.unread {
+      background: rgba(19,141,117,0.08);
+    }
+    .notif-item-icon {
+      font-size: 16px;
+      margin-top: 2px;
+    }
+    .notif-item-content {
+      flex: 1;
+    }
+    .notif-item-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .notif-item-msg {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.3;
+    }
+    .notif-item-time {
+      font-size: 9px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+    .notif-item.unread::after {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--brand-green);
+      border-radius: 50%;
+      align-self: center;
+    }
 
     /* ─── SCROLL AREA ──────────────────────────────────────────────────── */
     .scroll-area {
@@ -1180,12 +1293,23 @@
         </button>
         <button class="icon-btn" aria-label="Mon profil" onclick="switchTab('profil')">👤</button>
         <button class="icon-btn" aria-label="Messagerie" onclick="switchTab('messagerie')">💬</button>
-        <button class="icon-btn" id="notif-btn" aria-label="Notifications (3 alertes)" onclick="toggleAlert()">
+        <button class="icon-btn" id="notif-btn" aria-label="Notifications" onclick="toggleNotifPanel()">
           🔔
-          <span class="notif-dot" aria-hidden="true"></span>
+          <span class="notif-dot" id="mob-notif-dot" style="display:none;"></span>
         </button>
       </div>
     </header>
+
+    <!-- NOTIFICATION SHEET -->
+    <div class="notif-sheet" id="mob-notif-sheet">
+      <div class="notif-sheet-header">
+        <span class="notif-sheet-title">Centre d'alertes</span>
+        <button class="notif-sheet-clear" onclick="markAllMobNotifsAsRead()">Tout marquer lu</button>
+      </div>
+      <div class="notif-list" id="mob-notif-list">
+        <!-- Rendu dynamique -->
+      </div>
+    </div>
 
     <!-- SCROLL AREA -->
     <div class="scroll-area" id="main-scroll" role="region" aria-label="Contenu principal">
@@ -1903,10 +2027,9 @@
         }
 
         updateNavigationUI(user);
+        initMobNotifications();
         if (user && !user.company_id) {
           switchTab('profil');
-        } else {
-          checkUnsignedFeuillets();
         }
 
         // Démarrer le polling 15s
@@ -2781,6 +2904,13 @@
       if (hasAlert) {
         bannerText.textContent = alertMsg;
         banner.style.display = 'flex';
+
+        pushMobNotification({
+          type: 'warning',
+          title: 'Retard de livraison',
+          message: alertMsg.replace(/⚠️\s*/, ''),
+          target_tab: 'circuit'
+        });
       } else {
         banner.style.display = 'none';
       }
@@ -3439,15 +3569,144 @@
   }
 
   /* ─── ALERTES ────────────────────────────────────────────────────────── */
-  function toggleAlert() {
-    const banner = document.getElementById('mob-alert-banner');
-    if (banner) {
-      banner.classList.toggle('hidden');
-      if (!banner.classList.contains('hidden')) {
-        document.getElementById('mob-alert-text').textContent =
-          'DUPONT Martin : 3 alertes actives — Permis LEFÈVRE Christine expiré, CT DX-847-AZ à renouveler.';
+  /* ─── CENTRE DE NOTIFICATIONS UNIFIÉ (Mobile) ─── */
+  let mobNotifications = [];
+
+  function pushMobNotification(notif) {
+    const existingIdx = mobNotifications.findIndex(n => n.type === notif.type && n.title === notif.title);
+    if (existingIdx !== -1) {
+      if (mobNotifications[existingIdx].message !== notif.message) {
+        mobNotifications[existingIdx].message = notif.message;
+        mobNotifications[existingIdx].triggered_at = notif.triggered_at || new Date().toISOString();
+        mobNotifications[existingIdx].is_read = false;
+      }
+    } else {
+      mobNotifications.unshift({
+        id: 'notif_' + Math.random().toString(36).substr(2, 9),
+        is_read: false,
+        triggered_at: new Date().toISOString(),
+        ...notif
+      });
+    }
+    updateMobNotificationsUI();
+  }
+
+  function updateMobNotificationsUI() {
+    const listEl = document.getElementById('mob-notif-list');
+    const dotEl = document.getElementById('mob-notif-dot');
+    const notifBtn = document.getElementById('notif-btn');
+    
+    if (!listEl) return;
+
+    const unreadCount = mobNotifications.filter(n => !n.is_read).length;
+    
+    if (dotEl) {
+      if (unreadCount > 0) {
+        dotEl.textContent = unreadCount;
+        dotEl.style.display = 'flex';
+        dotEl.className = 'notif-badge';
+      } else {
+        dotEl.style.display = 'none';
       }
     }
+    if (notifBtn) {
+      notifBtn.setAttribute('aria-label', `Notifications (${unreadCount} non lues)`);
+    }
+
+    if (mobNotifications.length === 0) {
+      listEl.innerHTML = `
+        <div style="padding: 20px; text-align: center; color: rgba(255,255,255,0.4); font-size: 11px;">
+          🔔 Aucune alerte active
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = mobNotifications.map(n => {
+      let icon = '✍️';
+      if (n.type === 'warning') icon = '⚠️';
+      if (n.type === 'critical') icon = '🚨';
+      if (n.type === 'message') icon = '💬';
+
+      const relativeTime = getRelativeTimeStr(n.triggered_at);
+
+      return `
+        <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="handleMobNotifClick('${n.id}')">
+          <span class="notif-item-icon">${icon}</span>
+          <div class="notif-item-content">
+            <div class="notif-item-title">${n.title}</div>
+            <div class="notif-item-msg">${n.message}</div>
+            <div class="notif-item-time">${relativeTime}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getRelativeTimeStr(isoString) {
+    const diffMs = new Date() - new Date(isoString);
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "à l'instant";
+    if (diffMins < 60) return `il y a ${diffMins} min`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `il y a ${diffHours} h`;
+    return new Date(isoString).toLocaleDateString('fr-FR');
+  }
+
+  function toggleNotifPanel() {
+    const sheet = document.getElementById('mob-notif-sheet');
+    if (sheet) {
+      sheet.classList.toggle('open');
+    }
+  }
+
+  function markAllMobNotifsAsRead() {
+    mobNotifications.forEach(n => n.is_read = true);
+    updateMobNotificationsUI();
+    showMobToast("Toutes les alertes ont été lues.");
+  }
+
+  function handleMobNotifClick(id) {
+    const notif = mobNotifications.find(n => n.id === id);
+    if (!notif) return;
+    
+    notif.is_read = true;
+    updateMobNotificationsUI();
+    
+    document.getElementById('mob-notif-sheet')?.classList.remove('open');
+    
+    if (notif.target_tab) {
+      switchTab(notif.target_tab);
+    }
+  }
+
+  function initMobNotifications() {
+    pushMobNotification({
+      type: 'critical',
+      title: 'Permis expiré',
+      message: 'Permis de LEFÈVRE Christine expiré.',
+      target_tab: 'profil',
+      triggered_at: new Date(Date.now() - 3600000 * 24).toISOString()
+    });
+    pushMobNotification({
+      type: 'warning',
+      title: 'Contrôle Technique échu',
+      message: 'Contrôle Technique du véhicule DX-847-AZ à renouveler.',
+      target_tab: 'profil',
+      triggered_at: new Date(Date.now() - 3600000 * 12).toISOString()
+    });
+    pushMobNotification({
+      type: 'warning',
+      title: 'Visite médicale',
+      message: 'Visite médicale expirant dans 14 jours.',
+      target_tab: 'profil',
+      triggered_at: new Date(Date.now() - 3600000 * 2).toISOString()
+    });
+    checkUnsignedFeuillets();
+  }
+
+  function toggleAlert() {
+    toggleNotifPanel();
   }
   function dismissMobAlert() {
     document.getElementById('mob-alert-banner')?.classList.add('hidden');
@@ -3839,21 +4098,46 @@
     // Alerte proche 4h30 sans pause
     if (currentCategory === 'A' && S2WUtils.nearPauseLimit(segmentSeconds)) {
       const remaining = Math.max(0, 4.5 * 3600 - segmentSeconds);
-      text.textContent = `⚠ Pause obligatoire dans ${S2WUtils.fmtDuration(remaining)} — Max. 4h30 sans pause (R3315-2)`;
+      const remainingMins = Math.ceil(remaining / 60);
+      const msg = `Pause obligatoire dans ${remainingMins} min — Max. 4h30 sans pause (R3315-2)`;
+      text.textContent = `⚠ ${msg}`;
       banner.classList.remove('hidden');
       if (navigator.vibrate && segmentSeconds % 300 === 0) navigator.vibrate([50,50,50]);
+
+      pushMobNotification({
+        type: 'warning',
+        title: 'Limite de conduite proche',
+        message: msg,
+        target_tab: 'accueil'
+      });
     }
 
     // Alerte dépassement 9h conduite
     if (catTotals.A > 9 * 3600) {
-      text.textContent = '🚨 Dépassement des 9h de conduite — Arrêtez votre session (R3315-1)';
+      const msg = 'Dépassement des 9h de conduite — Arrêtez votre session (R3315-1)';
+      text.textContent = `🚨 ${msg}`;
       banner.classList.remove('hidden');
+
+      pushMobNotification({
+        type: 'critical',
+        title: 'Dépassement Conduite',
+        message: msg,
+        target_tab: 'accueil'
+      });
     }
 
     // Alerte service oublié (>12h)
     if (elapsedSeconds > 12 * 3600) {
-      text.textContent = '⚠ Service supérieur à 12h. Pensez à clôturer votre shift.';
+      const msg = 'Service supérieur à 12h. Pensez à clôturer votre shift.';
+      text.textContent = `⚠ ${msg}`;
       banner.classList.remove('hidden');
+
+      pushMobNotification({
+        type: 'warning',
+        title: 'Durée de service',
+        message: msg,
+        target_tab: 'accueil'
+      });
     }
   }
 
@@ -3866,9 +4150,17 @@
     const banner = document.getElementById('mob-alert-banner');
     const text   = document.getElementById('mob-alert-text');
     
-    if (unsigned.length > 0 && banner && text) {
-      text.innerHTML = `✍ Vous avez <strong>${unsigned.length} feuillet(s) non signé(s)</strong>. <span onclick="switchTab('feuillet')" style="text-decoration:underline;cursor:pointer">Signer maintenant →</span>`;
-      banner.classList.remove('hidden');
+    if (unsigned.length > 0) {
+      pushMobNotification({
+        type: 'info',
+        title: 'Feuillets non signés',
+        message: `Vous avez ${unsigned.length} feuillet(s) d'activité non signé(s).`,
+        target_tab: 'feuillet'
+      });
+      if (banner && text) {
+        text.innerHTML = `✍ Vous avez <strong>${unsigned.length} feuillet(s) non signé(s)</strong>. <span onclick="switchTab('feuillet')" style="text-decoration:underline;cursor:pointer">Signer maintenant →</span>`;
+        banner.classList.remove('hidden');
+      }
     }
   }
 
