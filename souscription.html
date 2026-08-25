@@ -322,13 +322,34 @@
       },
       onFinish: () => {
         const companyData = {
-          legal_name: document.getElementById('f-lname').value,
           legal_form: document.getElementById('f-lform').value,
+          legal_name: document.getElementById('f-lname').value,
+          trade_name: document.getElementById('f-tname').value,
           siren: document.getElementById('f-siren').value,
           siret: document.getElementById('f-siret').value,
+          tva_number: document.getElementById('f-tva').value,
+          naf_code: document.getElementById('f-naf').value,
           address: document.getElementById('f-addr').value,
+          address_comp: document.getElementById('f-comp').value,
+          postal: document.getElementById('f-postal').value,
+          city: document.getElementById('f-city').value,
+          country: document.getElementById('f-country').value,
+          rep_first: document.getElementById('f-rfirst').value,
+          rep_last: document.getElementById('f-rlast').value,
+          rep_role: document.getElementById('f-rrole').value,
+          rep_email: document.getElementById('f-remail').value,
+          rep_phone: document.getElementById('f-rphone').value,
+          legal_rep: document.getElementById('f-rfirst').value + ' ' + document.getElementById('f-rlast').value,
+          phone: document.getElementById('f-phone').value,
+          email: document.getElementById('f-cemail').value,
+          website: document.getElementById('f-site').value,
+          holder: document.getElementById('f-holder').value,
           iban: document.getElementById('f-iban').value,
-          bic: document.getElementById('f-bic').value
+          bic: document.getElementById('f-bic').value,
+          login_email: document.getElementById('f-loginemail').value,
+          password: document.getElementById('f-pwd').value,
+          cgu_accepted: document.getElementById('f-cgu').checked,
+          priv_accepted: document.getElementById('f-priv').checked
         };
         sessionStorage.setItem('temp_company_signup', JSON.stringify(companyData));
         window.location.href = 'paiement.html';
