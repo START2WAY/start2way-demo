@@ -235,3 +235,8 @@ Ce point sera affiné davantage avec le fondateur au moment de basculer de la si
      - L'ancienne logique faisait un `POST` (insert) aveugle des données locales manquant d'`_airtable_id`, provoquant des doublons (ex: multiples "DX-847-AZ") à chaque perte/réinitialisation du cache.
      - **Nouvelle logique (Upsert) :** Le code télécharge d'abord la base Airtable existante, construit une carte par ID métier (`r.id`), et associe simplement l'`_airtable_id` aux objets locaux s'ils existent déjà à distance. L'insertion (`POST`) n'a lieu que pour les objets strictement nouveaux.
      - Nettoyage manuel des véhicules dupliqués dans Airtable de production effectué.
+
+### [Vertèbre 20] Formulaire Entreprise Multi-étapes
+- **Fichiers concernés :** `souscription.html`, `app-web.html`
+- **Logique partagée :** `docs/s1/js/s2w-utils.js` (classe `S2WStepper`)
+- **Règle :** Le formulaire Entreprise est structuré en 7 sections logiques (Identité, Adresse, Représentant, Coordonnées, Bancaire, Sécurité, Légal). `souscription.html` implémente les 7 étapes, tandis que `app-web.html` (Mon Entreprise) n'implémente que les 5 premières étapes pour éviter la modification des identifiants et l'écrasement des CGU. L'enregistrement partiel dans `app-web.html` (Patch) est obligatoire pour protéger les champs omis.

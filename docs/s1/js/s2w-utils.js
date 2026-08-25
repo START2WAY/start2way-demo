@@ -183,3 +183,99 @@ const S2WUtils = {
 
 /* ─── EXPORT GLOBAL ─────────────────────────────────────────────────────── */
 window.S2WUtils = S2WUtils;
+
+/* ─── CONTROLEUR DE STEPPER (MULTI-ETAPES) ──────────────────────────────── */
+class S2WStepper {
+  constructor(config) {
+    this.formId = config.formId;
+    this.maxSteps = config.maxSteps;
+    this.currentStep = 1;
+    this.onFinish = config.onFinish;
+    this.onStepChange = config.onStepChange;
+    this.labels = config.labels || [];
+  }
+
+  init() {
+    this.goTo(1, true);
+    for (let i = 1; i <= this.maxSteps; i++) {
+      const dot = document.getElementById(`sdot-${i}`);
+      if (dot) {
+        dot.addEventListener('click', () => {
+          if (dot.classList.contains('done')) this.goTo(i, true);
+        });
+      }
+    }
+  }
+
+  validateStep(n) {
+    const section = document.getElementById(`emp-s${n}`);
+    if (!section) return true;
+    let ok = true;
+    section.querySelectorAll('[required]').forEach(inp => {
+      inp.classList.remove('input-error');
+      const empty = inp.type === 'checkbox' ? !inp.checked : !inp.value.trim();
+      if (empty) { inp.classList.add('input-error'); ok = false; }
+    });
+    if (!ok && window.S2WUtils && S2WUtils.showToast) {
+      S2WUtils.showToast('Veuillez remplir tous les champs obligatoires (*)', 'error');
+    } else if (!ok) {
+      alert('Veuillez remplir tous les champs obligatoires (*)');
+    }
+    return ok;
+  }
+
+  next() {
+    if (!this.validateStep(this.currentStep)) return;
+    if (this.currentStep === this.maxSteps) {
+      if (this.onFinish) this.onFinish();
+      return;
+    }
+    const currentDot = document.getElementById(`sdot-${this.currentStep}`);
+    if (currentDot) {
+      currentDot.classList.add('done');
+      currentDot.style.cursor = 'pointer';
+    }
+    this.goTo(this.currentStep + 1, true);
+  }
+
+  prev() {
+    if (this.currentStep > 1) {
+      this.goTo(this.currentStep - 1, true);
+    }
+  }
+
+  goTo(n, skipValidation = false) {
+    if (!skipValidation && n > this.currentStep && !this.validateStep(this.currentStep)) return;
+    
+    for (let i = 1; i <= this.maxSteps; i++) {
+      const section = document.getElementById(`emp-s${i}`);
+      if (section) section.classList.remove('active');
+      
+      const dot = document.getElementById(`sdot-${i}`);
+      if (dot) {
+        dot.classList.remove('active');
+        if (i < n) {
+          dot.classList.add('done');
+          dot.style.cursor = 'pointer';
+        }
+      }
+      const line = document.getElementById(`sline-${i}`);
+      if (line) line.style.background = i < n ? 'var(--navy)' : 'var(--border)';
+    }
+
+    this.currentStep = n;
+    
+    const currentSection = document.getElementById(`emp-s${n}`);
+    if (currentSection) currentSection.classList.add('active');
+    const currentDot = document.getElementById(`sdot-${n}`);
+    if (currentDot) currentDot.classList.add('active');
+
+    const labelEl = document.getElementById('stepper-label');
+    if (labelEl && this.labels[n-1]) {
+      labelEl.textContent = `Étape ${n}/${this.maxSteps} : ${this.labels[n-1]}`;
+    }
+
+    if (this.onStepChange) this.onStepChange(this.currentStep);
+  }
+}
+window.S2WStepper = S2WStepper;

@@ -3552,263 +3552,6 @@
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
-     FORMULAIRE EMPLOYEUR (6 sections)
-     ═══════════════════════════════════════════════════════════════════════ */
-  let _empSection = 1;
-  const EMP_SECTIONS = 6;
-
-  function showEmployeurForm() {
-    const box = document.getElementById('modal-box');
-    box.className = 'modal-box modal-box-lg';
-    box.innerHTML = `
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-title-id">Inscription Employeur</h2>
-        <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
-      </div>
-      <div class="stepper" role="navigation" aria-label="Progression">
-        ${[1,2,3,4,5,6].map((i,idx) => `
-          ${idx>0 ? '<div class="step-line"></div>' : ''}
-          <div class="step-dot ${i===1?'active':''}" id="sdot-${i}" aria-label="Section ${i}">${i}</div>
-        `).join('')}
-      </div>
-      <form id="emp-form" novalidate>
-
-        <div class="form-section active" id="emp-s1">
-          <h3 class="section-title">Section 1 — Identification</h3>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="f-lname">Dénomination sociale *</label>
-              <input type="text" id="f-lname" class="form-control" required placeholder="Ex: AMT Transport" autocomplete="organization">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-tname">Enseigne commerciale</label>
-              <input type="text" id="f-tname" class="form-control" placeholder="Optionnel">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-lform">Forme juridique *</label>
-              <select id="f-lform" class="form-control" required>
-                <option value="">Choisir…</option>
-                ${['EI','EURL','SARL','SAS','SASU','SA','SCA','SNC','SCI','SELARL','SELAS','SC','Autre'].map(f=>`<option>${f}</option>`).join('')}
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-capital">Capital social (€)</label>
-              <input type="number" id="f-capital" class="form-control" placeholder="Optionnel" min="0">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" id="emp-s2">
-          <h3 class="section-title">Section 2 — Immatriculation</h3>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="f-siren">SIREN *</label>
-              <input type="text" id="f-siren" class="form-control" required maxlength="9" placeholder="9 chiffres" inputmode="numeric">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-siret">SIRET *</label>
-              <input type="text" id="f-siret" class="form-control" required maxlength="14" placeholder="14 chiffres" inputmode="numeric">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-naf">Code NAF/APE</label>
-              <input type="text" id="f-naf" class="form-control" value="49.41A" placeholder="Ex: 49.41A">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-vat">TVA intracommunautaire</label>
-              <input type="text" id="f-vat" class="form-control" placeholder="FR + 11 caractères">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-rcs">Ville du RCS/RNE</label>
-              <input type="text" id="f-rcs" class="form-control" placeholder="Ex: Bobigny">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" id="emp-s3">
-          <h3 class="section-title">Section 3 — Coordonnées</h3>
-          <div class="form-grid-2">
-            <div class="form-group" style="grid-column:1/-1">
-              <label class="form-label" for="f-addr">Adresse *</label>
-              <input type="text" id="f-addr" class="form-control" required placeholder="Numéro et rue" autocomplete="street-address">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-postal">Code postal *</label>
-              <input type="text" id="f-postal" class="form-control" required maxlength="5" placeholder="75000" inputmode="numeric" autocomplete="postal-code">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-city">Ville *</label>
-              <input type="text" id="f-city" class="form-control" required placeholder="Paris" autocomplete="address-level2">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-phone">Téléphone *</label>
-              <input type="tel" id="f-phone" class="form-control" required placeholder="01 XX XX XX XX" autocomplete="tel">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-cemail">Email professionnel *</label>
-              <input type="email" id="f-cemail" class="form-control" required placeholder="contact@entreprise.fr" autocomplete="email">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" id="emp-s4">
-          <h3 class="section-title">Section 4 — Représentant légal</h3>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="f-rfirst">Prénom *</label>
-              <input type="text" id="f-rfirst" class="form-control" required placeholder="Jean" autocomplete="given-name">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-rlast">Nom *</label>
-              <input type="text" id="f-rlast" class="form-control" required placeholder="Dupont" autocomplete="family-name">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-rrole">Fonction *</label>
-              <input type="text" id="f-rrole" class="form-control" required placeholder="Gérant / Directeur général…">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" id="emp-s5">
-          <h3 class="section-title">Section 5 — Coordonnées bancaires</h3>
-          <div class="security-notice">
-            🔒 Vos coordonnées bancaires sont chiffrées localement (Base64). Aucune donnée bancaire n'est stockée en clair. L'affichage masque l'IBAN.
-          </div>
-          <div class="form-grid-2">
-            <div class="form-group" style="grid-column:1/-1">
-              <label class="form-label" for="f-holder">Titulaire du compte *</label>
-              <input type="text" id="f-holder" class="form-control" required placeholder="Nom du titulaire" autocomplete="name">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-iban">IBAN *</label>
-              <input type="text" id="f-iban" class="form-control" required maxlength="34"
-                placeholder="FR76 XXXX XXXX XXXX XXXX XXXX XXX"
-                oninput="formatIbanInput(this)" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-bic">BIC/SWIFT *</label>
-              <input type="text" id="f-bic" class="form-control" required placeholder="BNPAFRPP" maxlength="11">
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section" id="emp-s6">
-          <h3 class="section-title">Section 6 — Identifiants de connexion</h3>
-          <div class="form-grid-2">
-            <div class="form-group" style="grid-column:1/-1">
-              <label class="form-label" for="f-lemail">Email de connexion *</label>
-              <input type="email" id="f-lemail" class="form-control" required placeholder="votre@email.com" autocomplete="username email">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-pwd">Mot de passe *</label>
-              <input type="password" id="f-pwd" class="form-control" required minlength="8"
-                placeholder="Minimum 8 caractères" autocomplete="new-password"
-                oninput="updatePwdStrength(this.value)">
-              <div id="pwd-strength-wrap" class="strength-wrap">
-                <div class="strength-bar"><div class="strength-fill" id="pwd-fill" style="width:0%"></div></div>
-                <span class="strength-label" id="pwd-label"></span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-pwd2">Confirmation *</label>
-              <input type="password" id="f-pwd2" class="form-control" required placeholder="Répéter le mot de passe" autocomplete="new-password">
-            </div>
-          </div>
-          <div style="margin-top:16px">
-            <div class="checkbox-row">
-              <input type="checkbox" id="f-cgu" required>
-              <label for="f-cgu">J'accepte les <a href="#" onclick="return false">Conditions Générales d'Utilisation</a> de START2WAY *</label>
-            </div>
-            <div class="checkbox-row">
-              <input type="checkbox" id="f-geo" required>
-              <label for="f-geo">Je reconnais que START2WAY collecte ma géolocalisation de manière ponctuelle (prise/cessation de service uniquement), conformément à la CNIL *</label>
-            </div>
-          </div>
-        </div>
-      </form>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="btn-emp-prev" onclick="empPrev()" style="display:none">← Précédent</button>
-        <button class="btn btn-brand-green" id="btn-emp-next" onclick="empNext()">Suivant →</button>
-      </div>`;
-    _empSection = 1;
-    openModal();
-  }
-
-  function empNext() {
-    if (!validateEmpSection(_empSection)) return;
-    if (_empSection === EMP_SECTIONS) { submitEmployerForm(); return; }
-    empGoTo(_empSection + 1);
-  }
-  function empPrev() {
-    if (_empSection > 1) empGoTo(_empSection - 1);
-  }
-  function empGoTo(n) {
-    document.getElementById(`emp-s${_empSection}`)?.classList.remove('active');
-    const dot = document.getElementById(`sdot-${_empSection}`);
-    if (dot) { dot.classList.remove('active'); dot.classList.add('done'); dot.textContent = '✓'; }
-    _empSection = n;
-    document.getElementById(`emp-s${n}`)?.classList.add('active');
-    const newDot = document.getElementById(`sdot-${n}`);
-    if (newDot) newDot.classList.add('active');
-    document.getElementById('btn-emp-prev').style.display = n > 1 ? '' : 'none';
-    document.getElementById('btn-emp-next').textContent = n === EMP_SECTIONS ? 'Créer le compte →' : 'Suivant →';
-  }
-  function validateEmpSection(n) {
-    const section = document.getElementById(`emp-s${n}`);
-    let ok = true;
-    section?.querySelectorAll('[required]').forEach(inp => {
-      inp.classList.remove('input-error');
-      const empty = inp.type === 'checkbox' ? !inp.checked : !inp.value.trim();
-      if (empty) { inp.classList.add('input-error'); ok = false; }
-    });
-    if (!ok) showToast('Veuillez remplir tous les champs obligatoires (*)', 'error');
-    return ok;
-  }
-  function formatIbanInput(input) {
-    let v = input.value.replace(/\s/g,'').toUpperCase();
-    v = v.replace(/(.{4})/g,'$1 ').trim();
-    input.value = v;
-  }
-  function updatePwdStrength(pwd) {
-    const s = S2WUtils.passwordStrength(pwd);
-    const fill  = document.getElementById('pwd-fill');
-    const label = document.getElementById('pwd-label');
-    const colors = ['', '#D32F2F','#ED6C02','#2E7D32','#1B5E20'];
-    if (fill)  { fill.style.width = (s.score*25)+'%'; fill.style.background = colors[s.score] || ''; }
-    if (label) { label.textContent = s.label; label.style.color = colors[s.score] || ''; }
-  }
-  function submitEmployerForm() {
-    const pwd = document.getElementById('f-pwd')?.value;
-    const pwd2 = document.getElementById('f-pwd2')?.value;
-    if (pwd !== pwd2) { showToast('Les mots de passe ne correspondent pas', 'error'); return; }
-    const ibanRaw = document.getElementById('f-iban')?.value.replace(/\s/g,'');
-    const company = {
-      id: S2WUtils.uid('cmp'),
-      legal_name: document.getElementById('f-lname')?.value,
-      legal_form: document.getElementById('f-lform')?.value,
-      siren: document.getElementById('f-siren')?.value,
-      siret: document.getElementById('f-siret')?.value,
-      naf_ape: document.getElementById('f-naf')?.value,
-      email: document.getElementById('f-cemail')?.value,
-      phone: document.getElementById('f-phone')?.value,
-      address_street: document.getElementById('f-addr')?.value,
-      address_postal_code: document.getElementById('f-postal')?.value,
-      address_city: document.getElementById('f-city')?.value,
-      address_country: 'France',
-      rep_first_name: document.getElementById('f-rfirst')?.value,
-      rep_last_name: document.getElementById('f-rlast')?.value,
-      rep_function: document.getElementById('f-rrole')?.value,
-      account_holder: document.getElementById('f-holder')?.value,
-      iban_encoded: S2W.encodeIban(ibanRaw),
-      iban_masked: S2W.maskIban(ibanRaw),
-      bic_swift: document.getElementById('f-bic')?.value,
-      status: 'active', created_at: new Date().toISOString()
-    };
-    S2W.push('companies', company);
-    closeModal();
-    showToast(`Compte créé pour ${company.legal_name} — Bienvenue sur START2WAY !`, 'success');
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════════
      FORMULAIRE SALARIÉ (2 étapes)
      ═══════════════════════════════════════════════════════════════════════ */
   function genNewCode() {
@@ -4016,86 +3759,139 @@
     const comp = companies[0] || {
       id: 'cmp_001', legal_name: 'AMT Transport', trade_name: 'AMT', legal_form: 'SAS',
       siren: '105185496', siret: '10518549600012', naf_code: '49.41A', tva_number: 'FR105185496',
-      rcs: 'Bobigny', address: '122 avenue de la Résistance, 93340 Le Raincy, France',
-      phone: '01 49 39 00 46', email: 'contact@amttransport.fr', legal_rep: 'Jean Dupont (Gérant)',
-      iban: 'FR7630006000011234567890123', bic: 'SOGEFRPP'
+      rcs: 'Bobigny', address: '122 avenue de la Résistance', postal: '93340', city: 'Le Raincy', country: 'France',
+      phone: '01 49 39 00 46', email: 'contact@amttransport.fr',
+      rep_first: 'Jean', rep_last: 'Dupont', rep_role: 'Gérant', rep_email: 'jean@entreprise.com', rep_phone: '06 12 34 56 78',
+      holder: 'AMT Transport', iban: 'FR7630006000011234567890123', bic: 'SOGEFRPP'
     };
     const box = document.getElementById('modal-box');
     box.className = 'modal-box modal-box-lg';
     let rawIban = comp.iban || '';
-    if (rawIban.startsWith('{')) {
-      rawIban = S2W.decodeIban(comp.iban_encoded) || 'FR7630006000011234567890123';
-    }
-    const maskedIban = rawIban.length > 10 
-      ? rawIban.substring(0, 4) + ' ●●●● ●●●● ●●●● ●●●● ' + rawIban.slice(-3)
-      : rawIban;
+    if (rawIban.startsWith('{')) rawIban = S2W.decodeIban(comp.iban_encoded) || 'FR7630006000011234567890123';
+    const maskedIban = rawIban.length > 10 ? rawIban.substring(0, 4) + ' ●●●● ●●●● ●●●● ●●●● ' + rawIban.slice(-3) : rawIban;
+
     box.innerHTML = `
       <div class="modal-header">
         <h2 class="modal-title" id="modal-title-id">Fiche Entreprise</h2>
         <button class="modal-close" onclick="closeModal()" aria-label="Fermer">✕</button>
       </div>
+      
+      <!-- STEPPER -->
+      <div class="stepper-container" style="text-align:center; margin-bottom:20px;">
+        <div class="stepper" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:12px;">
+          <div class="step-dot" id="sdot-1" style="width:28px;height:28px;border-radius:50%;background:var(--paper);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--text-sec);transition:all 0.2s;">1</div><div class="step-line" id="sline-1" style="height:2px;width:30px;background:var(--border);transition:all 0.2s;"></div>
+          <div class="step-dot" id="sdot-2" style="width:28px;height:28px;border-radius:50%;background:var(--paper);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--text-sec);transition:all 0.2s;">2</div><div class="step-line" id="sline-2" style="height:2px;width:30px;background:var(--border);transition:all 0.2s;"></div>
+          <div class="step-dot" id="sdot-3" style="width:28px;height:28px;border-radius:50%;background:var(--paper);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--text-sec);transition:all 0.2s;">3</div><div class="step-line" id="sline-3" style="height:2px;width:30px;background:var(--border);transition:all 0.2s;"></div>
+          <div class="step-dot" id="sdot-4" style="width:28px;height:28px;border-radius:50%;background:var(--paper);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--text-sec);transition:all 0.2s;">4</div><div class="step-line" id="sline-4" style="height:2px;width:30px;background:var(--border);transition:all 0.2s;"></div>
+          <div class="step-dot" id="sdot-5" style="width:28px;height:28px;border-radius:50%;background:var(--paper);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;color:var(--text-sec);transition:all 0.2s;">5</div>
+        </div>
+        <div class="stepper-label" id="stepper-label" style="font-family:var(--font-head);font-size:14px;color:var(--navy);font-weight:500;">Étape 1/5 : Identité de l'entreprise</div>
+      </div>
+
       <form id="mon-entreprise-form" onsubmit="saveMonEntreprise(event)">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-          <div class="form-group">
-            <label class="form-label" for="me-legal-name">Dénomination sociale</label>
-            <input type="text" id="me-legal-name" class="form-control" value="${comp.legal_name || ''}" required>
+        <!-- S1 : Identité -->
+        <div class="form-section active" id="emp-s1">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="form-group"><label class="form-label" for="me-lform">Forme juridique *</label><input type="text" id="me-lform" class="form-control" value="${comp.legal_form || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-lname">Dénomination sociale *</label><input type="text" id="me-lname" class="form-control" value="${comp.legal_name || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-tname">Nom commercial</label><input type="text" id="me-tname" class="form-control" value="${comp.trade_name || ''}"></div>
+            <div class="form-group"><label class="form-label" for="me-siren">SIREN *</label><input type="text" id="me-siren" class="form-control" value="${comp.siren || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-siret">SIRET *</label><input type="text" id="me-siret" class="form-control" value="${comp.siret || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-tva">N° TVA *</label><input type="text" id="me-tva" class="form-control" value="${comp.tva_number || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-naf">Code NAF/APE *</label><input type="text" id="me-naf" class="form-control" value="${comp.naf_code || ''}" required></div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="me-trade-name">Enseigne commerciale</label>
-            <input type="text" id="me-trade-name" class="form-control" value="${comp.trade_name || ''}">
+        </div>
+
+        <!-- S2 : Adresse -->
+        <div class="form-section" id="emp-s2" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-addr">Adresse *</label><input type="text" id="me-addr" class="form-control" value="${comp.address || ''}" required></div>
+            <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-comp">Complément</label><input type="text" id="me-comp" class="form-control" value="${comp.address_comp || ''}"></div>
+            <div class="form-group"><label class="form-label" for="me-postal">Code postal *</label><input type="text" id="me-postal" class="form-control" value="${comp.postal || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-city">Ville *</label><input type="text" id="me-city" class="form-control" value="${comp.city || ''}" required></div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="me-legal-form">Forme juridique</label>
-            <input type="text" id="me-legal-form" class="form-control" value="${comp.legal_form || ''}" required>
+        </div>
+
+        <!-- S3 : Représentant -->
+        <div class="form-section" id="emp-s3" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="form-group"><label class="form-label" for="me-rfirst">Prénom *</label><input type="text" id="me-rfirst" class="form-control" value="${comp.rep_first || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-rlast">Nom *</label><input type="text" id="me-rlast" class="form-control" value="${comp.rep_last || ''}" required></div>
+            <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-rrole">Fonction *</label><input type="text" id="me-rrole" class="form-control" value="${comp.rep_role || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-remail">Email pro *</label><input type="email" id="me-remail" class="form-control" value="${comp.rep_email || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-rphone">Téléphone pro *</label><input type="tel" id="me-rphone" class="form-control" value="${comp.rep_phone || ''}" required></div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="me-siret">N° SIRET</label>
-            <input type="text" id="me-siret" class="form-control" value="${comp.siret || ''}" required>
+        </div>
+
+        <!-- S4 : Coordonnées -->
+        <div class="form-section" id="emp-s4" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div class="form-group"><label class="form-label" for="me-phone">Téléphone principal *</label><input type="tel" id="me-phone" class="form-control" value="${comp.phone || ''}" required></div>
+            <div class="form-group"><label class="form-label" for="me-cemail">Email contact *</label><input type="email" id="me-cemail" class="form-control" value="${comp.email || ''}" required></div>
+            <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-site">Site internet</label><input type="url" id="me-site" class="form-control" value="${comp.website || ''}"></div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="me-naf">Code NAF / APE</label>
-            <input type="text" id="me-naf" class="form-control" value="${comp.naf_code || ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="me-tva">N° TVA Intracommunautaire</label>
-            <input type="text" id="me-tva" class="form-control" value="${comp.tva_number || ''}">
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label class="form-label" for="me-address">Adresse</label>
-            <input type="text" id="me-address" class="form-control" value="${comp.address || ''}" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="me-phone">Téléphone</label>
-            <input type="tel" id="me-phone" class="form-control" value="${comp.phone || ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="me-email">Email contact</label>
-            <input type="email" id="me-email" class="form-control" value="${comp.email || ''}" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="me-rep">Représentant légal</label>
-            <input type="text" id="me-rep" class="form-control" value="${comp.legal_rep || ''}">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="me-bic">BIC</label>
-            <input type="text" id="me-bic" class="form-control" value="${comp.bic || ''}" style="text-transform:uppercase;">
-          </div>
-          <div class="form-group" style="grid-column: span 2;">
-            <label class="form-label" for="me-iban">IBAN (Chiffré en base de données)</label>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input type="text" id="me-iban" class="form-control" value="${maskedIban}" disabled style="background:#f4f1eb;flex:1;">
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-reveal-iban" onclick="revealIban()" style="height:38px;padding:0 12px;font-size:16px;">👁️</button>
+        </div>
+
+        <!-- S5 : Bancaire -->
+        <div class="form-section" id="emp-s5" style="display:none;">
+          <div style="background:#f4f7f6; padding:16px; border-radius:8px; border:1px solid #c8e1d6; margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:12px;"><label class="form-label" for="me-holder">Titulaire du compte *</label><input type="text" id="me-holder" class="form-control" value="${comp.holder || comp.legal_name || ''}" required></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div class="form-group"><label class="form-label" for="me-iban">IBAN *</label>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="text" id="me-iban" class="form-control" value="${maskedIban}" disabled style="background:#f4f1eb;flex:1;">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-reveal-iban" onclick="revealIban()" style="height:38px;padding:0 12px;font-size:16px;">👁️</button>
+                </div>
+              </div>
+              <div class="form-group"><label class="form-label" for="me-bic">BIC *</label><input type="text" id="me-bic" class="form-control" value="${comp.bic || ''}" required></div>
             </div>
             <small style="color:var(--text-sec);font-size:11px;display:block;margin-top:4px;" id="iban-sec-label">🔒 Donnée bancaire chiffrée par clé d'enveloppe (AES-GCM).</small>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border);padding-top:12px;">
-          <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-          <button type="submit" class="btn btn-brand-green">Enregistrer les modifications</button>
+
+        <div style="display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding-top:12px;">
+          <div>
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn btn-secondary" id="me-btn-prev" onclick="if(window.meStepper) window.meStepper.prev()" style="display:none;">← Précédent</button>
+            <button type="button" class="btn btn-primary" id="me-btn-next" onclick="if(window.meStepper) window.meStepper.next()">Suivant →</button>
+          </div>
         </div>
       </form>
     `;
+
     openModal();
+
+    // Initialize Stepper
+    const meStepperConfig = {
+      formId: 'mon-entreprise-form',
+      maxSteps: 5,
+      labels: [
+        "Identité de l'entreprise",
+        "Adresse du siège social",
+        "Représentant de l'entreprise",
+        "Coordonnées de l'entreprise",
+        "Coordonnées bancaires"
+      ],
+      onStepChange: (step) => {
+        document.getElementById('me-btn-prev').style.display = step > 1 ? 'block' : 'none';
+        const nextBtn = document.getElementById('me-btn-next');
+        if (step === 5) {
+          nextBtn.textContent = 'Enregistrer les modifications';
+          nextBtn.type = 'button';
+          nextBtn.onclick = (e) => {
+            if(window.meStepper.validateStep(5)) saveMonEntreprise(e);
+          };
+        } else {
+          nextBtn.textContent = 'Suivant →';
+          nextBtn.type = 'button';
+          nextBtn.onclick = () => window.meStepper.next();
+        }
+      }
+    };
+    window.meStepper = new S2WStepper(meStepperConfig);
+    window.meStepper.init();
   }
 
   async function revealIban() {
@@ -4116,7 +3912,6 @@
         label.textContent = '🔑 Validation du jeton IAM et déchiffrement de la KEK...';
         
         setTimeout(async () => {
-          // SIMULATION DÉMO — déchiffrement réel à faire côté serveur en prod (la clé KEK ne doit jamais être exposée côté client)
           const decrypted = await S2W.decryptIbanEnvelope(comp.iban);
           btn.disabled = false;
           btn.textContent = '🙈';
@@ -4138,30 +3933,52 @@
   }
 
   function saveMonEntreprise(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
     const companies = S2W.table('companies');
-    const comp = companies[0] || { id: 'cmp_001' };
-    comp.legal_name = document.getElementById('me-legal-name').value;
-    comp.trade_name = document.getElementById('me-trade-name').value;
-    comp.legal_form = document.getElementById('me-legal-form').value;
+    const comp = companies[0] || { id: 'cmp_001' }; // Keep existing company object
+    
+    // PATCH only the fields available in the 5 steps
+    comp.legal_form = document.getElementById('me-lform').value;
+    comp.legal_name = document.getElementById('me-lname').value;
+    comp.trade_name = document.getElementById('me-tname').value;
+    comp.siren      = document.getElementById('me-siren').value;
     comp.siret      = document.getElementById('me-siret').value;
-    comp.naf_code   = document.getElementById('me-naf').value;
     comp.tva_number = document.getElementById('me-tva').value;
-    comp.address    = document.getElementById('me-address').value;
+    comp.naf_code   = document.getElementById('me-naf').value;
+    
+    comp.address    = document.getElementById('me-addr').value;
+    comp.address_comp = document.getElementById('me-comp').value;
+    comp.postal     = document.getElementById('me-postal').value;
+    comp.city       = document.getElementById('me-city').value;
+    // country is read-only usually, omitted
+    
+    comp.rep_first  = document.getElementById('me-rfirst').value;
+    comp.rep_last   = document.getElementById('me-rlast').value;
+    comp.rep_role   = document.getElementById('me-rrole').value;
+    comp.rep_email  = document.getElementById('me-remail').value;
+    comp.rep_phone  = document.getElementById('me-rphone').value;
+    comp.legal_rep  = comp.rep_first + ' ' + comp.rep_last; // backward compat
+
     comp.phone      = document.getElementById('me-phone').value;
-    comp.email      = document.getElementById('me-email').value;
-    comp.legal_rep  = document.getElementById('me-rep').value;
+    comp.email      = document.getElementById('me-cemail').value;
+    comp.website    = document.getElementById('me-site').value;
+
+    comp.holder     = document.getElementById('me-holder').value;
+    // We do NOT update IBAN if it's masked (disabled field), so we only save if it was modified (not supported in this simple edit)
     comp.bic        = document.getElementById('me-bic').value.toUpperCase();
+
+    // WARNING: 'email' (login) and 'password' and 'cgu' are intentionally NOT updated here. They are preserved.
+
     if (comp.id) {
       S2W.update('companies', comp.id, comp);
     } else {
       S2W.push('companies', comp);
     }
-    showToast('Fiche entreprise mise à jour avec succès.', 'success');
+    
+    showToast('Fiche entreprise mise à jour avec succès (Patch partiel).', 'success');
     closeModal();
     updateCompanyUI();
   }
-
   function updateCompanyUI() {
     const company = S2W.table('companies')[0] || { legal_name: 'AMT Transport', trade_name: 'AMT' };
     const name = company.trade_name || company.legal_name || 'AMT Transport';

@@ -33,196 +33,67 @@
       color: var(--text-main);
       line-height: 1.6;
     }
-    h1, h2, h3 {
-      font-family: var(--font-head);
-      color: var(--navy);
-      font-weight: 600;
-    }
+    h1, h2, h3 { font-family: var(--font-head); color: var(--navy); font-weight: 600; }
 
     /* HEADER */
-    .header {
-      background-color: var(--white);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-    .logo-badge {
-      background: var(--navy);
-      color: var(--brand-green);
-      font-family: var(--font-head);
-      font-weight: 800;
-      font-size: 18px;
-      padding: 6px 12px;
-      border-radius: 6px;
-      letter-spacing: 1px;
-    }
-    .logo-text {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--navy);
-      letter-spacing: -0.5px;
-    }
-    .btn-text {
-      color: var(--text-sec);
-      text-decoration: none;
-      font-family: var(--font-head);
-      font-weight: 500;
-      font-size: 14px;
-    }
+    .header { background-color: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .header-container { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .logo-container { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .btn-text { color: var(--text-sec); text-decoration: none; font-family: var(--font-head); font-weight: 500; font-size: 14px; }
     .btn-text:hover { color: var(--navy); }
 
     /* LAYOUT */
-    .signup-container {
-      max-width: 800px;
-      margin: 60px auto;
-      padding: 0 24px;
-    }
-    .signup-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      padding: 40px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    }
-    .signup-title {
-      font-size: 28px;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-    .signup-subtitle {
-      color: var(--text-sec);
-      font-size: 15px;
-      margin-bottom: 32px;
-      text-align: center;
-    }
+    .signup-container { max-width: 800px; margin: 40px auto; padding: 0 24px; }
+    .signup-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); }
+    .signup-title { font-size: 28px; margin-bottom: 8px; text-align: center; }
+    .signup-subtitle { color: var(--text-sec); font-size: 15px; margin-bottom: 32px; text-align: center; }
 
     /* STEPPER */
-    .stepper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 40px;
-    }
+    .stepper-container { margin-bottom: 30px; text-align: center; }
+    .stepper { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px; }
     .step-dot {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--paper);
-      border: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-head);
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--text-sec);
+      width: 28px; height: 28px; border-radius: 50%; background: var(--paper); border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-family: var(--font-head);
+      font-weight: 600; font-size: 12px; color: var(--text-sec); transition: all 0.2s;
     }
-    .step-dot.active {
-      background: var(--navy);
-      color: var(--white);
-      border-color: var(--navy);
-    }
-    .step-line {
-      height: 2px;
-      width: 40px;
-      background: var(--border);
-    }
+    .step-dot.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+    .step-dot.done { border-color: var(--navy); color: var(--navy); }
+    .step-line { height: 2px; width: 30px; background: var(--border); transition: all 0.2s; }
+    .stepper-label { font-family: var(--font-head); font-size: 14px; color: var(--navy); font-weight: 500; }
 
     /* FORM ELEMENTS */
-    .form-section {
-      display: none;
-    }
-    .form-section.active {
-      display: block;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .form-label {
-      display: block;
-      font-family: var(--font-head);
-      font-weight: 500;
-      font-size: 13px;
-      color: var(--navy);
-      margin-bottom: 6px;
-    }
+    .form-section { display: none; }
+    .form-section.active { display: block; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-family: var(--font-head); font-weight: 500; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
     .form-control {
-      width: 100%;
-      padding: 12px 14px;
-      border-radius: var(--radius-sm);
-      border: 1.5px solid var(--border);
-      font-family: var(--font-body);
-      font-size: 14px;
-      color: var(--text-main);
-      background-color: var(--white);
-      transition: all 0.2s;
+      width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+      font-family: var(--font-body); font-size: 14px; color: var(--text-main); background-color: var(--white); transition: all 0.2s;
     }
-    .form-control:focus {
-      outline: none;
-      border-color: var(--navy);
-    }
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    @media (max-width: 600px) {
-      .form-grid-2 { grid-template-columns: 1fr; gap: 0; }
-    }
+    .form-control:focus { outline: none; border-color: var(--navy); }
+    .input-error { border-color: #D32F2F !important; background: #FFEBEE !important; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; gap: 0; } }
 
-    .form-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 32px;
-      border-top: 1px solid var(--border);
-      padding-top: 24px;
-    }
-    .btn {
-      font-family: var(--font-head);
-      font-weight: 600;
-      font-size: 14px;
-      padding: 12px 24px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
-    }
-    .btn-secondary {
-      background: var(--paper);
-      color: var(--text-sec);
-      border: 1px solid var(--border);
-    }
+    .form-actions { display: flex; justify-content: space-between; margin-top: 32px; border-top: 1px solid var(--border); padding-top: 24px; }
+    .btn { font-family: var(--font-head); font-weight: 600; font-size: 14px; padding: 12px 24px; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-secondary { background: var(--paper); color: var(--text-sec); border: 1px solid var(--border); }
     .btn-secondary:hover { background: rgba(0,0,0,0.05); }
-    .btn-primary {
-      background: var(--navy);
-      color: var(--white);
-    }
+    .btn-primary { background: var(--navy); color: var(--white); }
     .btn-primary:hover { background: var(--navy-light); }
   
-    /* Logo theme adaptation rules */
+    /* Logo theme */
     .logo-light-bg { display: none; }
     .logo-dark-bg { display: block; }
     .logo-on-light .logo-light-bg { display: block !important; }
     .logo-on-light .logo-dark-bg { display: none !important; }
     .logo-on-dark .logo-light-bg { display: none !important; }
     .logo-on-dark .logo-dark-bg { display: block !important; }
-</style>
+
+    /* AES Notice */
+    .aes-notice { font-size: 11px; color: var(--text-sec); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  </style>
+  <script src="docs/s1/js/s2w-utils.js"></script>
 </head>
 <body>
 
@@ -243,159 +114,229 @@
       <p class="signup-subtitle">Abonnement de base 14,99 €/mois HT (17,99 € TTC) — Inclut 2 salariés</p>
 
       <!-- STEPPER -->
-      <div class="stepper">
-        <div class="step-dot active" id="dot-1">1</div>
-        <div class="step-line" id="line-1"></div>
-        <div class="step-dot" id="dot-2">2</div>
-        <div class="step-line" id="line-2"></div>
-        <div class="step-dot" id="dot-3">3</div>
+      <div class="stepper-container">
+        <div class="stepper">
+          <div class="step-dot" id="sdot-1">1</div><div class="step-line" id="sline-1"></div>
+          <div class="step-dot" id="sdot-2">2</div><div class="step-line" id="sline-2"></div>
+          <div class="step-dot" id="sdot-3">3</div><div class="step-line" id="sline-3"></div>
+          <div class="step-dot" id="sdot-4">4</div><div class="step-line" id="sline-4"></div>
+          <div class="step-dot" id="sdot-5">5</div><div class="step-line" id="sline-5"></div>
+          <div class="step-dot" id="sdot-6">6</div><div class="step-line" id="sline-6"></div>
+          <div class="step-dot" id="sdot-7">7</div>
+        </div>
+        <div class="stepper-label" id="stepper-label">Étape 1/7 : Identité de l'entreprise</div>
       </div>
 
-      <form id="signup-form" onsubmit="handleSubmit(event)">
-        <!-- STEP 1: COMPTE GERANT -->
-        <div class="form-section active" id="sec-1">
-          <h2 style="font-size:18px; margin-bottom: 20px; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Étape 1 — Informations Administrateur</h2>
+      <form id="signup-form">
+        <!-- S1 : Identité -->
+        <div class="form-section" id="emp-s1">
           <div class="form-grid-2">
             <div class="form-group">
-              <label class="form-label" for="l-name">Nom *</label>
-              <input type="text" id="l-name" class="form-control" placeholder="Dupont" required autocomplete="family-name">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="f-name">Prénom *</label>
-              <input type="text" id="f-name" class="form-control" placeholder="Jean" required autocomplete="given-name">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="email">Adresse Email professionnelle *</label>
-            <input type="email" id="email" class="form-control" placeholder="jean.dupont@entreprise.com" required autocomplete="email">
-          </div>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="phone">Téléphone portable *</label>
-              <input type="tel" id="phone" class="form-control" placeholder="06 12 34 56 78" required autocomplete="tel">
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="password">Mot de passe *</label>
-              <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="new-password">
-            </div>
-          </div>
-          <div class="form-actions" style="justify-content: flex-end;">
-            <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continuer →</button>
-          </div>
-        </div>
-
-        <!-- STEP 2: ENTREPRISE -->
-        <div class="form-section" id="sec-2">
-          <h2 style="font-size:18px; margin-bottom: 20px; border-bottom: 1.5px solid var(--border); padding-bottom: 8px;">Étape 2 — Informations Entreprise</h2>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="c-legal-name">Dénomination sociale *</label>
-              <input type="text" id="c-legal-name" class="form-control" placeholder="Ex: AMT Transport" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="c-trade-name">Enseigne commerciale</label>
-              <input type="text" id="c-trade-name" class="form-control" placeholder="Optionnel">
-            </div>
-          </div>
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="c-legal-form">Forme juridique *</label>
-              <select id="c-legal-form" class="form-control" required>
+              <label class="form-label" for="f-lform">Forme juridique *</label>
+              <select id="f-lform" class="form-control" required>
                 <option value="">Choisir…</option>
-                <option>EI</option>
-                <option>SARL</option>
-                <option selected>SAS</option>
-                <option>SASU</option>
-                <option>SA</option>
-                <option>Autre</option>
+                <option>Micro-entrepreneur/EI</option><option>EURL</option><option>SARL</option>
+                <option>SAS</option><option>SASU</option><option>SA</option><option>SNC</option><option>Autre</option>
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label" for="c-siret">N° SIRET *</label>
-              <input type="text" id="c-siret" class="form-control" placeholder="14 chiffres" required>
+              <label class="form-label" for="f-lname">Dénomination sociale *</label>
+              <input type="text" id="f-lname" class="form-control" placeholder="AMT Transport" required>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="c-address">Adresse du siège social *</label>
-            <input type="text" id="c-address" class="form-control" placeholder="Ex: 122 avenue de la Résistance, 93340 Le Raincy" required>
+            <label class="form-label" for="f-tname">Nom commercial (facultatif)</label>
+            <input type="text" id="f-tname" class="form-control" placeholder="AMT">
           </div>
           <div class="form-grid-2">
             <div class="form-group">
-              <label class="form-label" for="c-iban">RIB / IBAN *</label>
-              <input type="text" id="c-iban" class="form-control" placeholder="FR76..." required>
+              <label class="form-label" for="f-siren">SIREN *</label>
+              <input type="text" id="f-siren" class="form-control" placeholder="9 chiffres" required>
             </div>
             <div class="form-group">
-              <label class="form-label" for="c-bic">Code BIC / SWIFT *</label>
-              <input type="text" id="c-bic" class="form-control" placeholder="8 ou 11 caractères" required style="text-transform:uppercase;">
+              <label class="form-label" for="f-siret">SIRET *</label>
+              <input type="text" id="f-siret" class="form-control" placeholder="14 chiffres" required>
             </div>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="nextStep(1)">← Précédent</button>
-            <button type="submit" class="btn btn-primary">Accéder au paiement sécurisé →</button>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-tva">N° TVA intracommunautaire *</label>
+              <input type="text" id="f-tva" class="form-control" placeholder="FR..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-naf">Code NAF/APE *</label>
+              <input type="text" id="f-naf" class="form-control" placeholder="Ex: 49.41A" required>
+            </div>
           </div>
+        </div>
+
+        <!-- S2 : Adresse -->
+        <div class="form-section" id="emp-s2">
+          <div class="form-group">
+            <label class="form-label" for="f-addr">Adresse *</label>
+            <input type="text" id="f-addr" class="form-control" placeholder="122 avenue de la Résistance" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-comp">Complément (facultatif)</label>
+            <input type="text" id="f-comp" class="form-control" placeholder="Bâtiment, étage...">
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-postal">Code postal *</label>
+              <input type="text" id="f-postal" class="form-control" placeholder="93340" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-city">Ville *</label>
+              <input type="text" id="f-city" class="form-control" placeholder="Le Raincy" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-country">Pays</label>
+            <input type="text" id="f-country" class="form-control" value="France" readonly style="background:#eee;">
+          </div>
+        </div>
+
+        <!-- S3 : Représentant -->
+        <div class="form-section" id="emp-s3">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-rfirst">Prénom *</label>
+              <input type="text" id="f-rfirst" class="form-control" placeholder="Jean" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-rlast">Nom *</label>
+              <input type="text" id="f-rlast" class="form-control" placeholder="Dupont" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-rrole">Fonction *</label>
+            <select id="f-rrole" class="form-control" required>
+              <option value="">Choisir…</option>
+              <option>Gérant</option><option>Président</option><option>Directeur général</option><option>Associé</option><option>Autre</option>
+            </select>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-remail">Email pro *</label>
+              <input type="email" id="f-remail" class="form-control" placeholder="jean@entreprise.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-rphone">Téléphone pro *</label>
+              <input type="tel" id="f-rphone" class="form-control" placeholder="06..." required>
+            </div>
+          </div>
+        </div>
+
+        <!-- S4 : Coordonnées -->
+        <div class="form-section" id="emp-s4">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-phone">Téléphone principal *</label>
+              <input type="tel" id="f-phone" class="form-control" placeholder="01..." required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-cemail">Email de contact général *</label>
+              <input type="email" id="f-cemail" class="form-control" placeholder="contact@entreprise.com" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-site">Site internet (facultatif)</label>
+            <input type="url" id="f-site" class="form-control" placeholder="https://www.entreprise.com">
+          </div>
+        </div>
+
+        <!-- S5 : Bancaire -->
+        <div class="form-section" id="emp-s5">
+          <div style="background:#f4f7f6; padding:20px; border-radius:8px; border:1px solid #c8e1d6;">
+            <div class="form-group">
+              <label class="form-label" for="f-holder">Titulaire du compte *</label>
+              <input type="text" id="f-holder" class="form-control" placeholder="AMT Transport" required>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" for="f-iban">IBAN *</label>
+                <input type="text" id="f-iban" class="form-control" placeholder="FR76..." required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="f-bic">BIC *</label>
+                <input type="text" id="f-bic" class="form-control" placeholder="SOGE..." required>
+              </div>
+            </div>
+            <div class="aes-notice">🔒 Données bancaires chiffrées par clé d'enveloppe (AES-GCM).</div>
+          </div>
+        </div>
+
+        <!-- S6 : Sécurité -->
+        <div class="form-section" id="emp-s6">
+          <div class="form-group">
+            <label class="form-label" for="f-loginemail">Email de connexion (Identifiant) *</label>
+            <input type="email" id="f-loginemail" class="form-control" placeholder="Email pour vous connecter" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-pwd">Mot de passe *</label>
+            <input type="password" id="f-pwd" class="form-control" placeholder="8 caractères minimum" required>
+          </div>
+        </div>
+
+        <!-- S7 : Légal -->
+        <div class="form-section" id="emp-s7">
+          <div class="form-group" style="display:flex; gap:12px; align-items:flex-start;">
+            <input type="checkbox" id="f-cgu" required style="margin-top:4px;">
+            <label for="f-cgu" style="font-size:13px; color:var(--text-sec); line-height:1.4;">J'accepte les <a href="#">Conditions Générales d'Utilisation (CGU)</a> et je reconnais avoir pris connaissance de mes obligations en tant qu'employeur utilisateur de la plateforme.*</label>
+          </div>
+          <div class="form-group" style="display:flex; gap:12px; align-items:flex-start;">
+            <input type="checkbox" id="f-priv" required style="margin-top:4px;">
+            <label for="f-priv" style="font-size:13px; color:var(--text-sec); line-height:1.4;">J'accepte la <a href="#">Politique de confidentialité</a> concernant le traitement des données personnelles.*</label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="btn-prev" onclick="stepper.prev()" style="display:none;">← Précédent</button>
+          <button type="button" class="btn btn-primary" id="btn-next" onclick="stepper.next()">Suivant →</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    let currentStep = 1;
-
-    function nextStep(step) {
-      // Validation simple
-      if (step === 2) {
-        const lname = document.getElementById('l-name').value;
-        const fname = document.getElementById('f-name').value;
-        const email = document.getElementById('email').value;
-        const phone = document.getElementById('phone').value;
-        const pwd = document.getElementById('password').value;
-        if (!lname || !fname || !email || !phone || !pwd) {
-          alert('Veuillez remplir tous les champs obligatoires.');
-          return;
+    const stepperConfig = {
+      formId: 'signup-form',
+      maxSteps: 7,
+      labels: [
+        "Identité de l'entreprise",
+        "Adresse du siège social",
+        "Représentant de l'entreprise",
+        "Coordonnées de l'entreprise",
+        "Coordonnées bancaires",
+        "Sécurité du compte",
+        "Informations légales"
+      ],
+      onStepChange: (step) => {
+        document.getElementById('btn-prev').style.display = step > 1 ? 'block' : 'none';
+        const nextBtn = document.getElementById('btn-next');
+        if (step === 7) {
+          nextBtn.textContent = 'Créer mon compte →';
+        } else {
+          nextBtn.textContent = 'Suivant →';
         }
+      },
+      onFinish: () => {
+        const companyData = {
+          legal_name: document.getElementById('f-lname').value,
+          legal_form: document.getElementById('f-lform').value,
+          siren: document.getElementById('f-siren').value,
+          siret: document.getElementById('f-siret').value,
+          address: document.getElementById('f-addr').value,
+          iban: document.getElementById('f-iban').value,
+          bic: document.getElementById('f-bic').value
+        };
+        sessionStorage.setItem('temp_company_signup', JSON.stringify(companyData));
+        window.location.href = 'paiement.html';
       }
+    };
 
-      document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-      document.getElementById(`sec-${step}`).classList.add('active');
-
-      document.getElementById('dot-1').className = 'step-dot' + (step >= 1 ? ' active' : '');
-      document.getElementById('dot-2').className = 'step-dot' + (step >= 2 ? ' active' : '');
-      document.getElementById('dot-3').className = 'step-dot' + (step >= 3 ? ' active' : '');
-
-      document.getElementById('line-1').style.background = step >= 2 ? 'var(--navy)' : 'var(--border)';
-      document.getElementById('line-2').style.background = step >= 3 ? 'var(--navy)' : 'var(--border)';
-
-      currentStep = step;
-    }
-
-    function handleSubmit(e) {
-      e.preventDefault();
-      
-      // Récupérer les données saisies
-      const legalName = document.getElementById('c-legal-name').value;
-      const tradeName = document.getElementById('c-trade-name').value || legalName;
-      const legalForm = document.getElementById('c-legal-form').value;
-      const siret = document.getElementById('c-siret').value;
-      const address = document.getElementById('c-address').value;
-      const iban = document.getElementById('c-iban').value;
-      const bic = document.getElementById('c-bic').value;
-
-      const companyData = {
-        legal_name: legalName,
-        trade_name: tradeName,
-        legal_form: legalForm,
-        siret: siret,
-        address: address,
-        iban: iban,
-        bic: bic
-      };
-
-      // Sauvegarder temporairement dans sessionStorage pour la page de paiement
-      sessionStorage.setItem('temp_company_signup', JSON.stringify(companyData));
-
-      // Aller à la page de paiement
-      window.location.href = 'paiement.html';
-    }
+    const stepper = new S2WStepper(stepperConfig);
+    stepper.init();
   </script>
 </body>
 </html>
