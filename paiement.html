@@ -412,13 +412,13 @@
           }
           
           cache.companies.push(newCompany);
+          S2W.set(cache);
+          await S2W.insertToAirtable('companies', newCompany);
 
           // --- GÉNÉRATION DES TOKENS DE LANCEMENT ---
-          if (!cache.invitations) cache.invitations = [];
-
           // 2 Token_Invitation de lancement
           for (let i = 1; i <= 2; i++) {
-            cache.invitations.push({
+            const inv = {
               id: 'inv_lanc_' + i + '_' + Math.random().toString(36).slice(2, 6).toUpperCase(),
               code: 'INV-AMT-LANC' + i,
               company_id: 'cmp_001',
@@ -427,12 +427,15 @@
               expires_at: null,
               used_at: null,
               status: 'pending'
-            });
+            };
+            cache.invitations.push(inv);
+            S2W.set(cache);
+            await S2W.insertToAirtable('invitations', inv);
           }
 
           // 2 Token_Circuit de lancement
           for (let i = 1; i <= 2; i++) {
-            cache.invitations.push({
+            const circ = {
               id: 'cir_lanc_' + i + '_' + Math.random().toString(36).slice(2, 6).toUpperCase(),
               code: 'CIR-AMT-LANC' + i,
               company_id: 'cmp_001',
@@ -441,10 +444,11 @@
               expires_at: null,
               used_at: null,
               status: 'pending'
-            });
+            };
+            cache.invitations.push(circ);
+            S2W.set(cache);
+            await S2W.insertToAirtable('invitations', circ);
           }
-
-          S2W.set(cache);
         }
 
         // Nettoyer sessionStorage
