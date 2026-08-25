@@ -245,3 +245,21 @@ Ce point sera affiné davantage avec le fondateur au moment de basculer de la si
   - **Synchronisation Airtable :** Mise à jour du schéma réel de la base Airtable via l'API pour ajouter les 21 champs manquants de la table `companies` (dont les checkboxes configurées spécifiquement avec `color: "greenBright"`).
   - **Fiabilisation `paiement.html` :** Ajout de `await` explicite sur `S2W.insertToAirtable('companies', newCompany)` avant la redirection `window.location.href` pour empêcher le navigateur d'annuler la requête réseau asynchrone (Race condition résolue).
 - **Règle associée :** Toute modification de formulaire ajoutant/modifiant des champs DOIT être suivie d'une vérification et mise à jour du schéma réel dans Airtable via l'API REST pour éviter les rejets silencieux de données.
+
+### VERTÈBRE 21 — Factorisation Logique Activation Circuit
+- **Date :** 2026-08-26
+- **Fichiers concernés :** `app-mobile.html`, `docs/s1/js/s2w-utils.js`
+- **Résumé :** Centralisation et mutualisation de la logique d'activation des jetons Circuit pour supprimer la duplication de code entre la modale d'activation (onglet Circuit) et la page Profil.
+- **Détails Techniques :**
+  - Création de la méthode statique `S2WUtils.validateCircuitToken(code, userId)` qui vérifie la validité du code, met à jour son statut (`used`), associe l'utilisateur, calcule la date d'expiration (+30 jours, sauf si code de LANCement) et met à jour Airtable et le cache local.
+  - Refactorisation de `submitPopupCircuitCode()` et `activateCircuitFromProfile()` dans `app-mobile.html` pour qu'elles n'agissent plus que comme de simples wrappers (gestion des Toasts et de l'interface) autour de `validateCircuitToken()`.
+
+
+### CORRECTIF GLOBAL — Visibilité des Toasts (Z-Index Supremacy)
+- **Date :** 2026-08-26
+- **Fichiers concernés :** `app-mobile.html`, `app-web.html`
+- **Résumé :** Correction globale d'un bug d'UI critique empêchant la visibilité des Toasts sous les modales.
+- **Détails Techniques :**
+  - Un audit complet des valeurs `z-index` a révélé que certaines modales, bannières et visualisateurs (ex: `mediaBox`) utilisaient des valeurs allant de `9999` jusqu'à `100000`.
+  - Les conteneurs de Toasts (`.mob-toast` et `#toast-container`) possédaient des `z-index` inférieurs (`200` et `9999` respectivement), ce qui les rendait invisibles (techniquement affichés mais masqués physiquement) lorsqu'une erreur survenait au-dessus d'une de ces interfaces ouvertes (ex: la modale d'activation Circuit, avec un `z-index` de `1100`).
+  - Passage formel des deux conteneurs de toasts (mobile et web) à `z-index: 999999;` pour garantir leur suprématie absolue et leur visibilité au-dessus de tout autre élément d'interface, sans exception.
