@@ -263,3 +263,14 @@ Ce point sera affiné davantage avec le fondateur au moment de basculer de la si
   - Un audit complet des valeurs `z-index` a révélé que certaines modales, bannières et visualisateurs (ex: `mediaBox`) utilisaient des valeurs allant de `9999` jusqu'à `100000`.
   - Les conteneurs de Toasts (`.mob-toast` et `#toast-container`) possédaient des `z-index` inférieurs (`200` et `9999` respectivement), ce qui les rendait invisibles (techniquement affichés mais masqués physiquement) lorsqu'une erreur survenait au-dessus d'une de ces interfaces ouvertes (ex: la modale d'activation Circuit, avec un `z-index` de `1100`).
   - Passage formel des deux conteneurs de toasts (mobile et web) à `z-index: 999999;` pour garantir leur suprématie absolue et leur visibilité au-dessus de tout autre élément d'interface, sans exception.
+
+### VERTÈBRE 22 — Remplacement des Prompts par Modales Asynchrones (Chantier 3)
+- **Date :** 2026-08-26
+- **Fichier concerné :** `app-mobile.html`
+- **Résumé :** Suppression des appels natifs bloquants `prompt()` et `confirm()` au profit de modales DOM stylisées, asynchrones, et conformes à la charte graphique de l'application.
+- **Détails Techniques :**
+  - **Saisie du Code Reprise** : Remplacement de `promptRepriseCode` par une modale asynchrone `#reprise-code-modal` et scission de la logique métier (validation du code) dans la fonction `submitRepriseCode(feuilletId)`.
+  - **Réouverture de Journée** : Remplacement du duo consécutif `confirm()` + `prompt()` dans la fonction `startTimer()` par une seule modale unifiée `#reopen-session-modal` offrant une meilleure ergonomie. 
+  - Refonte du flux : Si la réouverture est annulée, aucune nouvelle session n'est démarrée par erreur. Si validée, la logique est déportée dans `submitReopenSession(closedToday)`.
+  - **Sécurité et Validation** : Le code PIN est soumis à une validation stricte (`!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)`) avant tout traitement.
+  - Test en situation de la **Z-Index Supremacy** (mise en place au Chantier 2) : Les Toasts d'erreur s'affichent correctement et bien au-dessus des nouvelles modales (qui possèdent un `z-index` de 1100).
