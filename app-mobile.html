@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="docs/s1/js/s2w-localstorage.js"></script>
-  <script src="docs/s1/js/s2w-utils.js"></script>
+  <script src="docs/s1/js/s2w-utils.js?v=23"></script>
   <style>
     /* ─── TOKENS ──────────────────────────────────────────────────────── */
     :root {
@@ -216,6 +216,13 @@
       font-size: 11px;
       color: rgba(255,255,255,0.7);
       line-height: 1.3;
+    }
+    .notif-sheet .notif-title, .notif-sheet .notif-desc {
+      color: var(--white);
+    }
+    .notif-sheet .notif-desc {
+      opacity: 0.8;
+      font-size: 13px;
     }
     .notif-item-time {
       font-size: 9px;
@@ -1210,7 +1217,7 @@
       background: rgba(13,34,66,0.92); color: var(--white);
       padding: 10px 20px; border-radius: 24px;
       font-size: 13px; font-family: var(--font-body);
-      white-space: nowrap; z-index: 200;
+      white-space: nowrap; z-index: 999999;
       opacity: 0; transition: opacity 0.25s, transform 0.25s;
       pointer-events: none;
     }
@@ -1241,7 +1248,157 @@
 <body>
   <div class="phone-frame" role="main">
 
-    <!-- TIROIR DE NAVIGATION (DRAWER) -->
+    
+    <!-- ==================== WELCOME SCREEN ==================== -->
+    <div id="welcome-screen" style="display:none; flex-direction:column; align-items:center; justify-content:center; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--navy); z-index:9999; padding:20px; text-align:center;">
+      <div style="width:64px; height:64px; background:var(--brand-green); border-radius:16px; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; font-weight:bold; margin-bottom:24px;">S2W</div>
+      <h1 style="color:white; font-family:var(--font-head); font-size:24px; margin-bottom:12px;">Bienvenue sur START2WAY</h1>
+      <p style="color:var(--text-sec); font-size:15px; margin-bottom:40px;">Application de suivi d'activité pour conducteurs routiers</p>
+      
+      <button class="btn-primary" onclick="showSignupModal()" style="width:100%; margin-bottom:16px;">Créer mon compte</button>
+      <button class="btn-secondary" onclick="showLoginModal()" style="width:100%; background:transparent; color:white; border-color:rgba(255,255,255,0.2);">J'ai déjà un compte</button>
+    </div>
+
+    <!-- ==================== SIGNUP MODAL & STEPPER ==================== -->
+    <div class="modal-overlay" id="signup-modal">
+      <div class="modal-content" style="max-height:85vh; overflow-y:auto; display:flex; flex-direction:column;">
+        <button class="modal-close" onclick="closeSignupModal()">×</button>
+        <h3 class="modal-title">Créer mon compte</h3>
+        <p class="modal-desc">Configurez votre profil conducteur en 4 étapes.</p>
+
+        <!-- Container for S2WStepper -->
+        <div id="signup-form">
+          <!-- Step 1: Infos perso -->
+          <div id="emp-s1" class="s2w-step-content" style="display:block;">
+            <div class="form-group">
+              <label class="form-label">Nom *</label>
+              <input type="text" id="su-nom" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prénom *</label>
+              <input type="text" id="su-prenom" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" id="su-email" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone *</label>
+              <input type="tel" id="su-tel" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date de naissance *</label>
+              <input type="date" id="su-dob" class="input-field" required>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-end;">
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Infos professionnelles -->
+          <div id="emp-s2" class="s2w-step-content" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Catégorie de permis *</label>
+              <select id="su-permis-type" class="input-field" required onchange="togglePLFields()">
+                <option value="">Sélectionnez...</option>
+                <option value="VL">VL (Véhicule Léger)</option>
+                <option value="PL">PL (Poids Lourd)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Numéro de permis *</label>
+              <input type="text" id="su-permis-num" class="input-field" required>
+            </div>
+            <div id="pl-fields" style="display:none; flex-direction:column;">
+              <div class="form-group">
+                <label class="form-label">Expiration FCO *</label>
+                <input type="date" id="su-fco" class="input-field">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Expiration Visite Médicale *</label>
+                <input type="date" id="su-visite" class="input-field">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact d'urgence (Optionnel)</label>
+              <input type="text" id="su-urgence" class="input-field" placeholder="Nom et numéro">
+            </div>
+            <div class="modal-actions" style="justify-content:space-between;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Sécurité -->
+          <div id="emp-s3" class="s2w-step-content" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Mot de passe *</label>
+              <input type="password" id="su-mdp" class="input-field" required onkeyup="checkMobilePwdStrength()">
+              <div id="su-mdp-strength" style="font-size:12px; margin-top:4px;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirmer le mot de passe *</label>
+              <input type="password" id="su-mdp-conf" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Code PIN (4 chiffres) *</label>
+              <p style="font-size:12px; color:var(--text-sec); margin-bottom:8px;">Ce code vous sera demandé pour déverrouiller l'accès lors de vos prises de service.</p>
+              <input type="password" id="su-pin" class="input-field" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirmer le Code PIN *</label>
+              <input type="password" id="su-pin-conf" class="input-field" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
+            </div>
+            <div class="modal-actions" style="justify-content:space-between;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- Step 4: Activation -->
+          <div id="emp-s4" class="s2w-step-content" style="display:none;">
+            <div class="alert alert-info" style="margin-bottom:16px;">
+              <strong>Rejoindre votre entreprise</strong><br>
+              Demandez un Code Invitation à votre gérant pour relier votre compte au Dashboard de l'entreprise.
+            </div>
+            <div class="form-group">
+              <label class="form-label">Code Invitation (ex: INV-1234-ABCD)</label>
+              <input type="text" id="su-inv-code" class="input-field" placeholder="Laissez vide si vous n'avez pas de code" style="text-transform:uppercase;">
+            </div>
+            <div class="modal-actions" style="justify-content:space-between;">
+              <button class="btn-secondary" onclick="skipActivation()">Plus tard (Accès Limité)</button>
+              <button class="btn-primary" onclick="submitSignup()">Activer et Terminer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== LOGIN MODAL ==================== -->
+    <div class="modal-overlay" id="login-modal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeLoginModal()">×</button>
+        <h3 class="modal-title">Connexion</h3>
+        <p class="modal-desc">Connectez-vous à votre compte START2WAY.</p>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="login-email" class="input-field">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" id="login-password" class="input-field">
+        </div>
+        <button class="btn-primary" style="width:100%; margin-top:16px;" onclick="submitLogin()">Se connecter</button>
+      </div>
+    </div>
+
+    <div id="app-container" style="display:none; height:100%; flex-direction:column; overflow:hidden;">
+      
+      <!-- LIMITED MODE BANNER -->
+      <div id="limited-mode-banner" style="display:none; background:var(--danger); color:white; padding:8px 12px; font-size:13px; text-align:center; flex-shrink:0;">
+        ⚠️ <strong>Compte non activé.</strong> Saisissez un Code Invitation dans votre profil pour débloquer l'application.
+      </div>
+<!-- TIROIR DE NAVIGATION (DRAWER) -->
     <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()">
       <div class="nav-drawer" onclick="event.stopPropagation()">
         <div class="drawer-header">
@@ -2024,27 +2181,22 @@
         const banner = document.getElementById('airtable-warning-banner');
         if (banner) banner.remove();
 
-        // S'assurer que le profil chauffeur de démo (usr_001) existe dans la base vide
-        let user = S2W.find('users', 'usr_001');
-        if (!user) {
-          user = {
-            id: 'usr_001',
-            email: 'chauffeur@start2way.com',
-            first_name: 'Chauffeur',
-            last_name: 'Démo',
-            license_category: 'PL',
-            phone: '06 00 00 00 00',
-            status: 'actif',
-            created_at: new Date().toISOString()
-          };
-          S2W.push('users', user);
-        }
-
-        updateNavigationUI(user);
-        initMobNotifications();
-        initVehicleUI(user);
-        if (user && !user.company_id) {
-          switchTab('profil');
+        const currentUser = S2WUtils.getLoggedInUser();
+        if (!currentUser) {
+          document.getElementById('app-container').style.display = 'none';
+          showWelcomeScreen();
+        } else {
+          window.currentUserId = currentUser.id;
+          document.getElementById('app-container').style.display = 'block';
+          updateNavigationUI(currentUser);
+          initMobNotifications();
+          initVehicleUI(currentUser);
+          
+          if (!currentUser.company_id) {
+            applyLimitedMode();
+          } else {
+            removeLimitedMode();
+          }
         }
 
         // Démarrer le polling 15s
@@ -2088,7 +2240,7 @@
     }
     const syncItem = {
       id: S2WUtils.uid('syn'),
-      user_id: 'usr_001',
+      user_id: window.currentUserId,
       action_type: actionType,
       payload: payload,
       status: 'PENDING',
@@ -2123,13 +2275,35 @@
   }
 
   function updateNavigationUI(user) {
-    const isActivated = user && user.company_id;
+    let isActivated = false;
+    const invitations = S2W.table('invitations') || [];
+    
+    if (user && user.company_id) {
+      const latestInv = invitations.filter(i => i.type === 'invitation' && i.used_by_user_id === user.id)
+                                   .sort((a,b) => new Date(b.used_at) - new Date(a.used_at))[0];
+      if (latestInv) {
+        if (!latestInv.expires_at || latestInv.expires_at === 'null') {
+          isActivated = true;
+        } else {
+          const expDate = new Date(latestInv.expires_at);
+          if (expDate > new Date()) {
+            isActivated = true;
+          } else {
+            // Token expiré ! On verrouille l'app.
+            isActivated = false;
+          }
+        }
+      } else {
+        // Cas particulier prototype : actif sans token trouvé
+        isActivated = true;
+      }
+    }
+    
     const menuList = document.getElementById('drawer-menu-list');
     if (!menuList) return;
 
     // Check if Circuit is active
-    const invitations = S2W.table('invitations') || [];
-    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === (user ? user.id : window.currentUserId) && i.status === 'used');
     let isCircuitActive = false;
     if (activeCircuit) {
       if (activeCircuit.expires_at === null || activeCircuit.expires_at === 'null') {
@@ -2204,18 +2378,18 @@
 
     inv.status = 'used';
     inv.used_at = new Date().toISOString();
-    inv.used_by_user_id = 'usr_001';
+    inv.used_by_user_id = window.currentUserId;
 
-    // Si c'est un code Circuit payant, calculer la date d'expiration (+30 jours)
-    if (inv.type === 'circuit' && inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
-      const expDate = new Date();
-      expDate.setDate(expDate.getDate() + 30);
-      inv.expires_at = expDate.toISOString();
-    }
+    // Calcul de la date d'expiration (+ jours du mois en cours) pour tous les tokens
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + daysInMonth);
+    inv.expires_at = expDate.toISOString();
 
     S2W.update('invitations', inv.id, inv);
 
-    const user = S2W.find('users', 'usr_001');
+    const user = S2W.find('users', window.currentUserId);
     if (user) {
       user.company_id = inv.company_id;
       S2W.update('users', user.id, user);
@@ -2298,10 +2472,10 @@
     if (!log) return;
     
     const messages = S2W.table('messages') || [];
-    const driverMessages = messages.filter(m => m.sender_id === 'usr_001' || m.receiver_id === 'usr_001');
+    const driverMessages = messages.filter(m => m.sender_id === window.currentUserId || m.receiver_id === window.currentUserId);
 
     log.innerHTML = driverMessages.map(m => {
-      const isMe = m.sender_id === 'usr_001';
+      const isMe = m.sender_id === window.currentUserId;
       const bg = isMe ? 'var(--navy)' : '#E1F5FE';
       const col = isMe ? 'white' : '#01579B';
       const align = isMe ? 'flex-end' : 'flex-start';
@@ -2318,7 +2492,7 @@
     
     let updated = false;
     messages.forEach(m => {
-      if (m.receiver_id === 'usr_001' && !m.is_read) {
+      if (m.receiver_id === window.currentUserId && !m.is_read) {
         m.is_read = true;
         updated = true;
       }
@@ -2342,7 +2516,7 @@
     
     const msg = {
       id: S2WUtils.uid('msg'),
-      sender_id: 'usr_001',
+      sender_id: window.currentUserId,
       receiver_id: 'gerant',
       text: txt,
       timestamp: new Date().toISOString(),
@@ -2360,7 +2534,7 @@
     
     const msg = {
       id: S2WUtils.uid('msg'),
-      sender_id: 'usr_001',
+      sender_id: window.currentUserId,
       receiver_id: 'gerant',
       text: txt,
       timestamp: new Date().toISOString(),
@@ -2397,7 +2571,7 @@
     
     if (tab === 'circuit') {
       const invitations = S2W.table('invitations') || [];
-      const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+      const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === window.currentUserId && i.status === 'used');
       let isCircuitActive = false;
       if (activeCircuit) {
         if (activeCircuit.expires_at === null || activeCircuit.expires_at === 'null') {
@@ -2465,42 +2639,17 @@
   function submitPopupCircuitCode() {
     const input = document.getElementById('popup-circuit-token');
     const code = input ? input.value.trim().toUpperCase() : '';
-    if (!code) { showMobToast('Veuillez saisir un code.'); return; }
     
-    const invitations = S2W.table('invitations') || [];
-    const inv = invitations.find(i => i.code.toUpperCase() === code);
-    
-    if (!inv) {
-      showMobToast('Code invalide ou inconnu.');
+    const result = S2WUtils.validateCircuitToken(code);
+    if (!result.success) {
+      showMobToast(result.message);
       return;
     }
     
-    if (inv.type !== 'circuit') {
-      showMobToast('Ce code n\'est pas un code d\'activation Circuit.');
-      return;
-    }
-    
-    if (inv.status !== 'pending') {
-      showMobToast('Ce code a déjà été utilisé ou est expiré.');
-      return;
-    }
-    
-    inv.status = 'used';
-    inv.used_at = new Date().toISOString();
-    inv.used_by_user_id = 'usr_001';
-    
-    if (inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
-      const expDate = new Date();
-      expDate.setDate(expDate.getDate() + 30);
-      inv.expires_at = expDate.toISOString();
-    }
-    
-    S2W.update('invitations', inv.id, inv);
-    
-    showMobToast('Service Circuit activé avec succès !');
+    showMobToast(result.message);
     closeCircuitModal();
     
-    const user = S2W.find('users', 'usr_001');
+    const user = S2W.find('users', window.currentUserId);
     updateNavigationUI(user);
     
     setTimeout(() => {
@@ -3523,7 +3672,7 @@
     const reportId = 'rep_circuit_' + Date.now();
     const newReport = {
       id: reportId,
-      driver_id: 'usr_001',
+      driver_id: window.currentUserId,
       type: 'circuit',
       created_at: new Date().toISOString(),
       success_rate: pct,
@@ -3689,6 +3838,7 @@
     mobNotifications.forEach(n => n.is_read = true);
     localStorage.setItem('s2w_mob_read_notifs', JSON.stringify(mobNotifications.map(n => n.id)));
     updateMobNotificationsUI();
+    toggleNotifPanel(); // Ferme le panneau pour un feedback visuel clair
     showMobToast("Toutes les alertes ont été lues.");
   }
 
@@ -3727,7 +3877,7 @@
 
   /* ─── SÉLECTION VÉHICULE ─────────────────────────────────────────────── */
   function getCurrentVehicleId() {
-    const user = S2W.find('users', 'usr_001');
+    const user = S2W.find('users', window.currentUserId);
     return (user && user.current_vehicle_id) ? user.current_vehicle_id : 'veh_001';
   }
 
@@ -3754,7 +3904,7 @@
       return `
         <div class="notif-item ${isCurrent ? 'is-read' : ''}" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="confirmVehicleSelection('${v.id}')">
           <div class="notif-content">
-            <div class="notif-title" style="font-size:16px;">${v.plate_number || v.immatriculation} ${isCurrent ? '<span style="color:#2E7D32; font-size:12px;">(Actuel)</span>' : ''}</div>
+            <div class="notif-title" style="font-size:16px;">${v.plate_number || v.immatriculation} ${isCurrent ? '<span style="color:var(--brand-green-light); font-size:12px;">(Actuel)</span>' : ''}</div>
             <div class="notif-desc">${v.brand_model || ''} — ${(v.max_weight_kg/1000).toFixed(1)}t</div>
           </div>
         </div>
@@ -3765,7 +3915,7 @@
   }
 
   function confirmVehicleSelection(vid) {
-    S2W.update('users', 'usr_001', { current_vehicle_id: vid });
+    S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
     updateVehiclePill(vid);
     document.getElementById('mob-vehicle-sheet').classList.remove('open');
     showMobToast("Véhicule mis à jour");
@@ -3830,67 +3980,121 @@
 
     const todayStr = new Date().toISOString().slice(0,10);
     const sessions = S2W.table('sessions') || [];
-    const closedToday = sessions.find(s => s.user_id === 'usr_001' && s.date === todayStr && s.status === 'closed');
+    const closedToday = sessions.find(s => s.user_id === window.currentUserId && s.date === todayStr && s.status === 'closed');
     
     if (closedToday) {
-      const confirmReopen = confirm("Vous avez déjà clôturé votre service aujourd'hui. Souhaitez-vous réouvrir la session existante pour la continuer ?");
-      if (confirmReopen) {
-        const pin = prompt("Veuillez saisir votre Code PIN de signature pour valider la réouverture :");
-        if (pin && pin.length === 4 && /^\d{4}$/.test(pin)) {
-          // Logger la réouverture
-          const logRecord = {
-            id: S2WUtils.uid('reop'),
-            session_id: closedToday.id,
-            reopened_at: new Date().toISOString(),
-            user_id: 'usr_001',
-            pin_verified: true
-          };
-          S2W.push('reopen_logs', logRecord);
-
-          // Réactiver la session
-          closedToday.status = 'active';
-          closedToday.stopped_at = null;
-          S2W.update('sessions', closedToday.id, closedToday);
-
-          // Supprimer le feuillet temporaire généré
-          const feuillets = S2W.table('feuillets') || [];
-          const targetFeuillet = feuillets.find(f => f.session_id === closedToday.id);
-          if (targetFeuillet) {
-            const data = S2W.get();
-            data.feuillets = data.feuillets.filter(f => f.id !== targetFeuillet.id);
-            S2W.set(data);
-          }
-
-          // Restaurer l'état
-          timerState = 'running';
-          sessionId = closedToday.id;
-          sessionDateStr = todayStr;
-          
-          // Recharger les secondes déjà écoulées
-          const allSegs = S2W.table('segments') || [];
-          const sessionSegs = allSegs.filter(s => s.session_id === closedToday.id);
-          
-          Object.keys(catTotals).forEach(k => catTotals[k] = 0);
-          elapsedSeconds = 0;
-          sessionSegs.forEach(s => {
-            catTotals[s.category] = (catTotals[s.category] || 0) + s.duration_sec;
-            elapsedSeconds += s.duration_sec;
-          });
-          
-          currentCategory = 'A';
-          segmentSeconds = 0;
-
-          setTimerUI('running', 'A');
-          timerInterval = setInterval(tickTimer, 1000);
-          queueSyncAction('REOPEN_SESSION', { session_id: closedToday.id });
-          showMobToast('Service réouvert avec succès ✓');
-          return;
-        } else {
-          showMobToast('Code PIN incorrect ou invalide. Réouverture annulée.');
-          return;
-        }
-      }
+      promptReopenSession(closedToday);
+      return;
     }
+
+    proceedStartNewSession();
+  }
+
+  function promptReopenSession(closedToday) {
+    const modalId = 'reopen-session-modal';
+    let modal = document.getElementById(modalId);
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal-overlay';
+      modal.style = 'z-index:1100;';
+      modal.innerHTML = `
+        <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+          <h3 style="margin-top:0; color:var(--navy); font-size:16px; display:flex; align-items:center; gap:8px;">
+            <span>⏱️</span> Réouverture de service
+          </h3>
+          <p style="font-size:13px; color:var(--text-sec); line-height:1.4; margin-bottom:16px; text-align:left;">
+            Vous avez déjà clôturé votre service aujourd'hui. Souhaitez-vous réouvrir la session existante pour la continuer ?<br><br>
+            Si oui, veuillez saisir votre Code PIN de signature pour valider la réouverture :
+          </p>
+          <div style="margin-bottom:16px;">
+            <input type="password" id="popup-reopen-pin" placeholder="Code PIN (4 chiffres)..." class="form-control" pattern="\\d{4}" style="font-size:14px; padding:10px; width:100%; border-radius:8px; border:1px solid var(--border); box-sizing:border-box;">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button id="btn-submit-reopen" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Confirmer</button>
+            <button onclick="document.getElementById('${modalId}').classList.remove('open')" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+          </div>
+        </div>
+      `;
+      document.querySelector('.phone-frame').appendChild(modal);
+    }
+    
+    document.getElementById('btn-submit-reopen').onclick = () => submitReopenSession(closedToday);
+    
+    modal.classList.add('open');
+    setTimeout(() => {
+      const input = document.getElementById('popup-reopen-pin');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }, 100);
+  }
+
+  function submitReopenSession(closedToday) {
+    const input = document.getElementById('popup-reopen-pin');
+    const pin = input ? input.value : '';
+    
+    if (!pin || pin.length !== 4 || !/^\\d{4}$/.test(pin)) {
+      showMobToast('Code PIN incorrect ou invalide. Veuillez réessayer.');
+      return;
+    }
+
+    document.getElementById('reopen-session-modal').classList.remove('open');
+
+    const todayStr = new Date().toISOString().slice(0,10);
+
+    // Logger la réouverture
+    const logRecord = {
+      id: S2WUtils.uid('reop'),
+      session_id: closedToday.id,
+      reopened_at: new Date().toISOString(),
+      user_id: window.currentUserId,
+      pin_verified: true
+    };
+    S2W.push('reopen_logs', logRecord);
+
+    // Réactiver la session
+    closedToday.status = 'active';
+    closedToday.stopped_at = null;
+    S2W.update('sessions', closedToday.id, closedToday);
+
+    // Supprimer le feuillet temporaire généré
+    const feuillets = S2W.table('feuillets') || [];
+    const targetFeuillet = feuillets.find(f => f.session_id === closedToday.id);
+    if (targetFeuillet) {
+      const data = S2W.get();
+      data.feuillets = data.feuillets.filter(f => f.id !== targetFeuillet.id);
+      S2W.set(data);
+    }
+
+    // Restaurer l'état
+    timerState = 'running';
+    sessionId = closedToday.id;
+    sessionDateStr = todayStr;
+    
+    // Recharger les secondes déjà écoulées
+    const allSegs = S2W.table('segments') || [];
+    const sessionSegs = allSegs.filter(s => s.session_id === closedToday.id);
+    
+    Object.keys(catTotals).forEach(k => catTotals[k] = 0);
+    elapsedSeconds = 0;
+    sessionSegs.forEach(s => {
+      catTotals[s.category] = (catTotals[s.category] || 0) + s.duration_sec;
+      elapsedSeconds += s.duration_sec;
+    });
+    
+    currentCategory = 'A';
+    segmentSeconds = 0;
+
+    setTimerUI('running', 'A');
+    timerInterval = setInterval(tickTimer, 1000);
+    queueSyncAction('REOPEN_SESSION', { session_id: closedToday.id });
+    showMobToast('Service réouvert avec succès ✓');
+  }
+
+  function proceedStartNewSession() {
+    const todayStr = new Date().toISOString().slice(0,10);
 
     timerState = 'running';
     currentCategory = 'A';
@@ -3904,7 +4108,7 @@
     const localStart = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
 
     S2W.push('sessions', {
-      id: sessionId, user_id: 'usr_001', vehicle_id: getCurrentVehicleId(),
+      id: sessionId, user_id: window.currentUserId, vehicle_id: getCurrentVehicleId(),
       date: todayStr,
       started_at: serverStart,
       stopped_at: null, status: 'active'
@@ -4072,7 +4276,7 @@
       sessionId = S2WUtils.uid('ses');
 
       S2W.push('sessions', {
-        id: sessionId, user_id: 'usr_001', vehicle_id: getCurrentVehicleId(),
+        id: sessionId, user_id: window.currentUserId, vehicle_id: getCurrentVehicleId(),
         date: nowStr,
         started_at: nowStr + 'T00:00:00Z',
         stopped_at: null, status: 'active'
@@ -4197,7 +4401,7 @@
 
   function checkUnsignedFeuillets() {
     const sessions = S2W.table('sessions') || [];
-    const userSessionIds = sessions.filter(s => s.user_id === 'usr_001').map(s => s.id);
+    const userSessionIds = sessions.filter(s => s.user_id === window.currentUserId).map(s => s.id);
     const feuillets = S2W.table('feuillets') || [];
     const unsigned = feuillets.filter(f => userSessionIds.includes(f.session_id) && !f.signed_at);
     
@@ -4427,7 +4631,7 @@
       // Chercher dans le localStorage
       const feuillets = S2W.table('feuillets');
       const sessions  = S2W.table('sessions');
-      const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+      const sess = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
       if (sess) {
         const f = feuillets.find(f => f.session_id === sess.id);
         if (f) {
@@ -4458,7 +4662,7 @@
     const dateLabel = S2WUtils.fmtDateLong(dateStr);
 
     const sessions = S2W.table('sessions') || [];
-    const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+    const sess = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
     const segments = getFeuilletSegments(sess?.id || 'mock_session', data);
     const licGridHtml = renderLICGridSVG(segments);
 
@@ -4650,7 +4854,7 @@
     const combinedSeal = await S2W.sha256(payload);
 
     const sessions = S2W.table('sessions') || [];
-    const sess = sessions.find(s => s.date === dateStr && s.user_id === 'usr_001');
+    const sess = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
     
     if (sess) {
       const feuillets = S2W.table('feuillets') || [];
@@ -4690,7 +4894,7 @@
     const filterVal = filterInput ? filterInput.value : '';
 
     const sessions = S2W.table('sessions') || [];
-    const userSessionIds = sessions.filter(s => s.user_id === 'usr_001').map(s => s.id);
+    const userSessionIds = sessions.filter(s => s.user_id === window.currentUserId).map(s => s.id);
 
     let feuillets = (S2W.table('feuillets') || [])
       .filter(f => userSessionIds.includes(f.session_id) || f.session_id?.startsWith('ses_ref') || f.session_id?.startsWith('ses_hist'))
@@ -4800,8 +5004,8 @@
     const container = document.getElementById('arch-docs-list-container');
     if (!container) return;
     
-    const user = S2W.find('users', 'usr_001');
-    const docs = S2W.findWhere('documents', 'owner_id', 'usr_001') || [];
+    const user = S2W.find('users', window.currentUserId);
+    const docs = S2W.findWhere('documents', 'owner_id', window.currentUserId) || [];
     const isVL = ['B', 'B1', 'BE'].includes(user?.license_category);
     const visibleDocs = docs.filter(d => !(isVL && d.type === 'fco_fimo'));
     
@@ -4831,7 +5035,7 @@
       showMobToast("Veuillez sélectionner un mois.");
       return;
     }
-    const user = S2W.find('users', 'usr_001');
+    const user = S2W.find('users', window.currentUserId);
     const company = S2W.find('companies', user?.company_id) || { id: 'cmp_001', legal_name: 'AMT Transport', siret: '803 492 109 00021' };
     
     const year = parseInt(monthVal.split('-')[0]);
@@ -4847,7 +5051,7 @@
       const dayStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       allDates.push(dayStr);
       
-      const sess = sessions.find(s => s.date === dayStr && s.user_id === 'usr_001');
+      const sess = sessions.find(s => s.date === dayStr && s.user_id === window.currentUserId);
       if (sess) {
         const f = feuillets.find(f => f.session_id === sess.id);
         if (f) {
@@ -4866,7 +5070,7 @@
     const report = {
       id: S2WUtils.uid('rpt'),
       company_id: company.id,
-      driver_id: 'usr_001',
+      driver_id: window.currentUserId,
       month: monthVal,
       included_dates: includedDates,
       all_dates: allDates,
@@ -5037,24 +5241,78 @@
   let _activeRepriseCodeRecord = null;
 
   function promptRepriseCode(feuilletId) {
-    const code = prompt("Veuillez saisir le Code Reprise fourni par votre employeur pour corriger ce feuillet :");
-    if (code === null) return;
+    const modalId = 'reprise-code-modal';
+    let modal = document.getElementById(modalId);
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal-overlay';
+      modal.style = 'z-index:1100;';
+      modal.innerHTML = `
+        <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+          <h3 style="margin-top:0; color:var(--navy); font-size:16px; display:flex; align-items:center; gap:8px;">
+            <span>🔄</span> Code Reprise
+          </h3>
+          <p style="font-size:13px; color:var(--text-sec); line-height:1.4; margin-bottom:16px; text-align:left;">
+            Veuillez saisir le Code Reprise fourni par votre employeur pour corriger ce feuillet.
+          </p>
+          <div style="margin-bottom:16px;">
+            <input type="text" id="popup-reprise-code" placeholder="Code Reprise..." class="form-control" style="font-size:14px; text-transform:uppercase; padding:10px; width:100%; border-radius:8px; border:1px solid var(--border); box-sizing:border-box;">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button id="btn-submit-reprise" class="btn-action-primary" style="background:var(--brand-green); color:var(--navy); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Confirmer</button>
+            <button onclick="document.getElementById('${modalId}').classList.remove('open')" class="btn-action-secondary" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:10px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+          </div>
+        </div>
+      `;
+      document.querySelector('.phone-frame').appendChild(modal);
+    }
+    
+    document.getElementById('btn-submit-reprise').onclick = () => submitRepriseCode(feuilletId);
+    
+    modal.classList.add('open');
+    setTimeout(() => {
+      const input = document.getElementById('popup-reprise-code');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+    }, 100);
+  }
+
+  function submitRepriseCode(feuilletId) {
+    const input = document.getElementById('popup-reprise-code');
+    const code = input ? input.value : '';
     const trimmedCode = code.trim().toUpperCase();
+    
     if (!trimmedCode) { showMobToast("Veuillez saisir un code."); return; }
 
     const reps = S2W.table('reprise_codes') || [];
-    const record = reps.find(r => r.code === trimmedCode && r.user_id === 'usr_001' && r.feuillet_id === feuilletId);
+    const record = reps.find(r => r.code === trimmedCode && r.user_id === window.currentUserId && r.feuillet_id === feuilletId);
 
     if (!record) {
       showMobToast("Code de reprise invalide ou non associé à ce feuillet.");
       return;
     }
 
-    const isExpired = new Date(record.expires_at) < new Date();
-    if (record.status !== 'pending' || isExpired) {
-      showMobToast("Ce code est expiré (validité 24h) ou a déjà été utilisé.");
+    if (record.status !== 'pending') {
+      showMobToast("Ce code a déjà été utilisé.");
       return;
     }
+    
+    const f = S2W.find('feuillets', feuilletId);
+    if (!f) { showMobToast("Erreur: Feuillet introuvable."); return; }
+    
+    const genDate = new Date(f.generated_at);
+    const diffHours = (Date.now() - genDate) / (1000 * 60 * 60);
+    
+    if (diffHours > 12) {
+      showMobToast("Délai dépassé : Ce feuillet a plus de 12 heures et ne peut plus être corrigé.");
+      return;
+    }
+
+    const modal = document.getElementById('reprise-code-modal');
+    if (modal) modal.classList.remove('open');
 
     _activeCorrectionFeuilletId = feuilletId;
     _activeRepriseCodeRecord = record;
@@ -5218,9 +5476,9 @@
     const container = document.getElementById('profil-content');
     if (!container) return;
 
-    const user    = S2W.find('users','usr_001');
+    const user    = S2W.find('users',window.currentUserId);
     const company = S2W.find('companies', user?.company_id);
-    const docs    = S2W.findWhere('documents','owner_id','usr_001');
+    const docs    = S2W.findWhere('documents','owner_id',window.currentUserId);
 
     const isVL = ['B', 'B1', 'BE'].includes(user?.license_category);
     const visibleDocs = docs.filter(d => !(isVL && d.type === 'fco_fimo'));
@@ -5233,7 +5491,7 @@
 
     // Calcul de l'état du service Circuit
     const invitations = S2W.table('invitations') || [];
-    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === 'usr_001' && i.status === 'used');
+    const activeCircuit = invitations.find(i => i.type === 'circuit' && i.used_by_user_id === window.currentUserId && i.status === 'used');
     let isCircuitActive = false;
     let circuitExpiryStr = '';
     
@@ -5341,6 +5599,12 @@
         </div>
       </div>
 
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <button onclick="logoutMobile()" style="width:100%; padding:14px; background:transparent; color:#D32F2F; border:2px solid #D32F2F; border-radius:8px; cursor:pointer; font-weight:bold; font-size:15px;">Se déconnecter</button>
+      </div>
+
 
       <!-- Options développeur (Simulateur) -->
       <div class="profil-section" style="background:#FFF9C4;border:1px solid #FBC02D;border-radius:12px;padding:16px;margin-top:20px;">
@@ -5367,40 +5631,14 @@
   function activateCircuitFromProfile() {
     const codeInput = document.getElementById('circuit-token-input');
     const code = codeInput ? codeInput.value.trim().toUpperCase() : '';
-    if (!code) { showMobToast('Veuillez saisir un code d\'activation.'); return; }
     
-    const invitations = S2W.table('invitations') || [];
-    const inv = invitations.find(i => i.code.toUpperCase() === code);
-    
-    if (!inv) {
-      showMobToast('Code invalide ou inconnu.');
+    const result = S2WUtils.validateCircuitToken(code);
+    if (!result.success) {
+      showMobToast(result.message);
       return;
     }
     
-    if (inv.type !== 'circuit') {
-      showMobToast('Ce code n\'est pas un code d\'activation Circuit.');
-      return;
-    }
-    
-    if (inv.status !== 'pending') {
-      showMobToast('Ce code a déjà été utilisé.');
-      return;
-    }
-    
-    inv.status = 'used';
-    inv.used_at = new Date().toISOString();
-    inv.used_by_user_id = 'usr_001';
-    
-    // Si ce n'est pas un code de lancement, il expire dans 30 jours
-    if (inv.expires_at !== null && inv.expires_at !== 'null' && !inv.code.includes('LANC')) {
-      const expDate = new Date();
-      expDate.setDate(expDate.getDate() + 30);
-      inv.expires_at = expDate.toISOString();
-    }
-    
-    S2W.update('invitations', inv.id, inv);
-    
-    showMobToast('Service Circuit activé avec succès !');
+    showMobToast(result.message);
     setTimeout(() => {
       renderProfil();
     }, 1500);
@@ -5429,6 +5667,224 @@
     }
     showMobToast('Décalage de l\'horloge simulé.');
   }
-  </script>
+  
+  // ===================== AUTH & ONBOARDING =====================
+  let mobileStepper = null;
+
+  function showWelcomeScreen() {
+    document.getElementById('welcome-screen').style.display = 'flex';
+  }
+
+  function showLoginModal() {
+    document.getElementById('login-modal').classList.add('open');
+  }
+
+  function closeLoginModal() {
+    document.getElementById('login-modal').classList.remove('open');
+  }
+
+  function submitLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-password').value;
+    if (!email || !pwd) {
+      S2WUtils.showToast('Veuillez remplir tous les champs', 'error');
+      return;
+    }
+    const users = S2W.table('users') || [];
+    const user = users.find(u => u.email === email && u.password === pwd);
+    if (!user) {
+      S2WUtils.showToast('Identifiants incorrects', 'error');
+      return;
+    }
+    
+    S2WUtils.login(user.id);
+    closeLoginModal();
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    
+    updateNavigationUI(user);
+    initMobNotifications();
+    initVehicleUI(user);
+    
+    if (!user.company_id) {
+      applyLimitedMode();
+      switchTab('profil');
+    } else {
+      removeLimitedMode();
+      switchTab('home');
+    }
+    S2WUtils.showToast('Connexion réussie', 'success');
+  }
+
+  function showSignupModal() {
+    document.getElementById('signup-modal').classList.add('open');
+    if (!mobileStepper) {
+      mobileStepper = new S2WStepper({
+        formId: 'signup-form',
+        maxSteps: 4,
+        labels: ['Infos perso', 'Permis', 'Sécurité', 'Activation']
+      });
+      mobileStepper.init();
+    }
+  }
+
+  function closeSignupModal() {
+    document.getElementById('signup-modal').classList.remove('open');
+  }
+
+  function togglePLFields() {
+    const type = document.getElementById('su-permis-type').value;
+    document.getElementById('pl-fields').style.display = type === 'PL' ? 'flex' : 'none';
+  }
+
+  function checkMobilePwdStrength() {
+    const pwd = document.getElementById('su-mdp').value;
+    const res = S2WUtils.passwordStrength(pwd);
+    const el = document.getElementById('su-mdp-strength');
+    el.textContent = res.label;
+    el.className = res.cls;
+  }
+
+  function gatherSignupData() {
+    const pwd = document.getElementById('su-mdp').value;
+    const pwdConf = document.getElementById('su-mdp-conf').value;
+    if (pwd !== pwdConf) {
+      S2WUtils.showToast('Les mots de passe ne correspondent pas', 'error');
+      return null;
+    }
+    const pin = document.getElementById('su-pin').value;
+    const pinConf = document.getElementById('su-pin-conf').value;
+    if (pin !== pinConf || !/^\d{4}$/.test(pin)) {
+      S2WUtils.showToast('Le code PIN doit comporter 4 chiffres identiques', 'error');
+      return null;
+    }
+
+    return {
+      id: S2WUtils.uid('usr'),
+      first_name: document.getElementById('su-prenom').value.trim(),
+      last_name: document.getElementById('su-nom').value.trim().toUpperCase(),
+      email: document.getElementById('su-email').value.trim(),
+      phone: document.getElementById('su-tel').value.trim(),
+      birth_date: document.getElementById('su-dob').value,
+      license_category: document.getElementById('su-permis-type').value,
+      license_number: document.getElementById('su-permis-num').value.trim(),
+      fco_expiration: document.getElementById('su-fco').value,
+      medical_expiration: document.getElementById('su-visite').value,
+      emergency_contact: document.getElementById('su-urgence').value.trim(),
+      // SIMULATION DÉMO — en production, le hachage de mot de passe doit être effectué côté serveur avec bcrypt ou argon2, jamais côté client avec SHA-256 (trop rapide, vulnérable aux attaques par force brute).
+      password: pwd,
+      pin_code: pin,
+      company_id: null,
+      status: 'actif',
+      created_at: new Date().toISOString()
+    };
+  }
+
+  function submitSignup() {
+    const user = gatherSignupData();
+    if (!user) return;
+
+    const code = document.getElementById('su-inv-code').value.trim().toUpperCase();
+    if (!code) {
+      S2WUtils.showToast('Veuillez saisir un code d\'invitation', 'error');
+      return;
+    }
+
+    const invitations = S2W.table('invitations') || [];
+    const inv = invitations.find(i => i.code.toUpperCase() === code);
+    
+    if (!inv || inv.type !== 'invitation' || inv.status !== 'pending') {
+      S2WUtils.showToast('Code invalide, déjà utilisé ou expiré.', 'error');
+      return;
+    }
+
+    // Activate token
+    inv.status = 'used';
+    inv.used_at = new Date().toISOString();
+    inv.used_by_user_id = user.id;
+    
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const expDate = new Date();
+    expDate.setDate(expDate.getDate() + daysInMonth);
+    inv.expires_at = expDate.toISOString();
+    
+    S2W.update('invitations', inv.id, inv);
+
+    user.company_id = inv.company_id;
+    finalizeSignup(user);
+    S2WUtils.showToast('Compte créé et activé avec succès !', 'success');
+  }
+
+  function skipActivation() {
+    const user = gatherSignupData();
+    if (!user) return;
+    finalizeSignup(user);
+    S2WUtils.showToast('Compte créé en mode limité.', 'info');
+  }
+
+  function finalizeSignup(user) {
+    S2W.push('users', user);
+    S2WUtils.login(user.id);
+    closeSignupModal();
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    
+    updateNavigationUI(user);
+    initMobNotifications();
+    initVehicleUI(user);
+    
+    if (!user.company_id) {
+      applyLimitedMode();
+      switchTab('profil');
+    } else {
+      removeLimitedMode();
+      switchTab('home');
+    }
+  }
+
+  function applyLimitedMode() {
+    document.getElementById('limited-mode-banner').style.display = 'block';
+    const drawerItems = document.querySelectorAll('.drawer-item');
+    drawerItems.forEach(item => {
+      const isAllowed = item.id === 'drawer-btn-profil' || item.id === 'drawer-btn-chatbot';
+      if (!isAllowed) {
+        item.classList.add('locked');
+        const icon = item.querySelector('.drawer-item-icon');
+        if (icon) icon.textContent = '🔒';
+      }
+    });
+  }
+
+  function removeLimitedMode() {
+    document.getElementById('limited-mode-banner').style.display = 'none';
+    const drawerItems = document.querySelectorAll('.drawer-item');
+    drawerItems.forEach(item => {
+      // Les items peuvent avoir d'autres icones d'origine, on les gère via updateNavigationUI
+      item.classList.remove('locked');
+    });
+  }
+  
+  function logoutMobile() {
+    S2WUtils.logout();
+    location.reload();
+  }
+
+  // Intercept tab switching in limited mode
+  const originalSwitchTab = switchTab;
+  switchTab = function(tabId) {
+    const user = S2WUtils.getLoggedInUser();
+    if (user && !user.company_id) {
+      if (tabId !== 'profil' && tabId !== 'chatbot') {
+        S2WUtils.showToast('Vous devez d\'abord activer votre compte avec un Code Invitation.', 'warning');
+        return; // blocked
+      }
+    }
+    originalSwitchTab(tabId);
+  }
+
+</script>
+
+    </div>
 </body>
 </html>
