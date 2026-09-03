@@ -3759,11 +3759,30 @@
     const comp = companies[0] || {
       id: 'cmp_001', legal_name: 'AMT Transport', trade_name: 'AMT', legal_form: 'SAS',
       siren: '105185496', siret: '10518549600012', naf_code: '49.41A', tva_number: 'FR105185496',
+      activity_sector: 'Transport & Logistique', timezone: 'Europe/Paris',
       rcs: 'Bobigny', address: '122 avenue de la Résistance', postal: '93340', city: 'Le Raincy', country: 'France',
       phone: '01 49 39 00 46', email: 'contact@amttransport.fr',
       rep_first: 'Jean', rep_last: 'Dupont', rep_role: 'Gérant', rep_email: 'jean@entreprise.com', rep_phone: '06 12 34 56 78',
       holder: 'AMT Transport', iban: 'FR7630006000011234567890123', bic: 'SOGEFRPP'
     };
+    
+    // Build options for select
+    const validSectors = [
+      "Transport & Logistique", "BTP & Construction", "Industrie & Production", "Commerce & Distribution",
+      "Agriculture & Agroalimentaire", "Services aux entreprises", "Maintenance & Intervention technique",
+      "Environnement & Déchets", "Santé & Médico-social", "Sécurité", "Énergie",
+      "Administration / Collectivités", "Déménagement", "Autre"
+    ];
+    let sectorOptions = '<option value="">Choisir…</option>';
+    validSectors.forEach(s => {
+      sectorOptions += `<option value="${s}" ${comp.activity_sector === s ? 'selected' : ''}>${s}</option>`;
+    });
+    
+    let tzOptions = '';
+    const tzList = typeof Intl !== 'undefined' && Intl.supportedValuesOf ? Intl.supportedValuesOf('timeZone') : ['Europe/Paris', 'America/New_York'];
+    tzList.forEach(tz => {
+      tzOptions += `<option value="${tz}" ${comp.timezone === tz ? 'selected' : ''}>${tz}</option>`;
+    });
     const box = document.getElementById('modal-box');
     box.className = 'modal-box modal-box-lg';
     let rawIban = comp.iban || '';
@@ -3799,6 +3818,16 @@
             <div class="form-group"><label class="form-label" for="me-siret">SIRET *</label><input type="text" id="me-siret" class="form-control" value="${comp.siret || ''}" required></div>
             <div class="form-group"><label class="form-label" for="me-tva">N° TVA *</label><input type="text" id="me-tva" class="form-control" value="${comp.tva_number || ''}" required></div>
             <div class="form-group"><label class="form-label" for="me-naf">Code NAF/APE *</label><input type="text" id="me-naf" class="form-control" value="${comp.naf_code || ''}" required></div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label class="form-label" for="me-activity-sector">Secteur d'activité de l'entreprise *</label>
+              <select id="me-activity-sector" class="form-control" required onchange="const el=document.getElementById('me-activity-other-container'); if(this.value==='Autre') el.style.display=''; else el.style.display='none';">
+                ${sectorOptions}
+              </select>
+            </div>
+            <div class="form-group" id="me-activity-other-container" style="display:${comp.activity_sector === 'Autre' ? '' : 'none'}; grid-column: span 2;">
+              <label class="form-label" for="me-activity-sector-other">Précisez votre activité *</label>
+              <input type="text" id="me-activity-sector-other" class="form-control" placeholder="Votre secteur" value="${comp.activity_sector_other || ''}">
+            </div>
           </div>
         </div>
 
@@ -3809,6 +3838,9 @@
             <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-comp">Complément</label><input type="text" id="me-comp" class="form-control" value="${comp.address_comp || ''}"></div>
             <div class="form-group"><label class="form-label" for="me-postal">Code postal *</label><input type="text" id="me-postal" class="form-control" value="${comp.postal || ''}" required></div>
             <div class="form-group"><label class="form-label" for="me-city">Ville *</label><input type="text" id="me-city" class="form-control" value="${comp.city || ''}" required></div>
+            <div class="form-group" style="grid-column: span 2;"><label class="form-label" for="me-timezone">Fuseau horaire de l'entreprise *</label>
+              <select id="me-timezone" class="form-control" required>${tzOptions}</select>
+            </div>
           </div>
         </div>
 
@@ -3935,7 +3967,8 @@
   function saveMonEntreprise(e) {
     if (e) e.preventDefault();
     const companies = S2W.table('companies');
-    const comp = companies[0] || { id: 'cmp_001' }; // Keep existing company object
+    const oldComp = companies[0] || {};
+    const comp = { ...oldComp, id: oldComp.id || 'cmp_001' }; // Keep existing company object
     
     // PATCH only the fields available in the 5 steps
     comp.legal_form = document.getElementById('me-lform').value;
@@ -3967,12 +4000,39 @@
     // We do NOT update IBAN if it's masked (disabled field), so we only save if it was modified (not supported in this simple edit)
     comp.bic        = document.getElementById('me-bic').value.toUpperCase();
 
+    // Nouvelles données métier
+    comp.activity_sector = document.getElementById('me-activity-sector').value;
+    comp.activity_sector_other = document.getElementById('me-activity-sector-other').value;
+    comp.timezone = document.getElementById('me-timezone').value;
+
+    const diff = {};
+    for (const k of Object.keys(comp)) {
+      if (oldComp[k] !== comp[k]) diff[k] = { old: oldComp[k], new: comp[k] };
+    }
+
     // WARNING: 'email' (login) and 'password' and 'cgu' are intentionally NOT updated here. They are preserved.
 
     if (comp.id) {
       S2W.update('companies', comp.id, comp);
     } else {
       S2W.push('companies', comp);
+    }
+    
+    if (Object.keys(diff).length > 0) {
+      const logId = 'log_' + Math.random().toString(36).substr(2,9);
+      const logData = {
+        id: logId,
+        company_id: comp.id,
+        operation: 'COMPANY_PROFILE_UPDATED',
+        timestamp: new Date().toISOString(),
+        diff: diff
+      };
+      // Send a traceability event to the central server using the V5 engine
+      if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
+        window.enqueueSyncOperation('company_profile_changes', logId, 'CREATE', logData);
+      } else {
+        S2W.push('company_profile_changes', logData);
+      }
     }
     
     showToast('Fiche entreprise mise à jour avec succès (Patch partiel).', 'success');
