@@ -8,12 +8,29 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Database initialization
-const dbPath = process.env.DB_PATH || 's2w_recovery.db';
+let dbPath = process.env.DB_PATH;
+if (process.env.NODE_ENV === 'production' && !dbPath) {
+  console.error("FATAL: DB_PATH must be provided in production.");
+  process.exit(1);
+}
+if (!dbPath) {
+  dbPath = 's2w_recovery.db';
+}
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 // 1. Schema setup
 db.exec(`
+  
+  CREATE TABLE IF NOT EXISTS sessions (
+    token TEXT PRIMARY KEY,
+    user_id TEXT,
+    company_id TEXT,
+    role TEXT,
+    created_at TEXT,
+    expires_at TEXT
+  );
+
   CREATE TABLE IF NOT EXISTS entities (
     entity TEXT,
     entity_id TEXT,
@@ -229,13 +246,57 @@ function isConflictAlreadyApplied(conflict, currentEntity) {
   return false;
 }
 
+
+// ----------------------------------------------------
+// AUTH & HASHING
+// ----------------------------------------------------
+const SALT_SIZE = 16;
+const KEY_LEN = 64;
+
+function hashSecret(secret) {
+  if (!secret) return null;
+  if (secret.startsWith('$scrypt$')) return secret; // already hashed
+  const salt = crypto.randomBytes(SALT_SIZE).toString('hex');
+  const derivedKey = crypto.scryptSync(secret, salt, KEY_LEN).toString('hex');
+  return `$scrypt$${salt}$${derivedKey}`;
+}
+
+function verifySecret(secret, hashStr) {
+  if (!secret || !hashStr) return false;
+  if (!hashStr.startsWith('$scrypt$')) {
+    // Legacy plaintext support during transition
+    return secret === hashStr;
+  }
+  const parts = hashStr.split('$');
+  const salt = parts[2];
+  const storedKey = parts[3];
+  const derivedKey = crypto.scryptSync(secret, salt, KEY_LEN).toString('hex');
+  return derivedKey === storedKey;
+}
+
+function getUserAuth(req) {
+  let token = null;
+  const authHeader = req.headers['authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.substring(7);
+  } else if (req.query.token) {
+    token = req.query.token;
+  }
+  
+  if (token) {
+    const session = db.prepare('SELECT * FROM sessions WHERE token = ? AND expires_at > ?').get(token, new Date().toISOString());
+    if (session) return session;
+  }
+  return null;
+}
+
 // UUID helper
 function uuidv4() {
   return crypto.randomUUID();
 }
 
 // Sanitization functions
-const ALLOWED_ENTITIES = ['employments', 'feuillets', 'segments', 'vehicle_usages', 'event_logs', 'day_declarations', 'company_profile_changes'];
+const ALLOWED_ENTITIES = ['employments', 'feuillets', 'segments', 'vehicle_usages', 'event_logs', 'day_declarations', 'documents'];
 
 function sanitizeForEmployee(entityType, payload) {
   if (!payload) return payload;
@@ -344,6 +405,17 @@ function sanitizeForEmployee(entityType, payload) {
       reason_note: p.reason_note
     };
   }
+  
+  if (entityType === 'users') {
+    delete p.password;
+    delete p.pin_code;
+    return p;
+  }
+  if (entityType === 'companies') {
+    delete p.password;
+    return p;
+  }
+
   return p; // fallback
 }
 
@@ -419,6 +491,17 @@ function sanitizeForCompany(entityType, payload) {
       reason_note: p.reason_note
     };
   }
+  
+  if (entityType === 'users') {
+    delete p.password;
+    delete p.pin_code;
+    return p;
+  }
+  if (entityType === 'companies') {
+    delete p.password;
+    return p;
+  }
+
   return p;
 }
 
@@ -429,6 +512,17 @@ function sanitizeForTech(entityType, payload) {
   delete p.secret_token;
   delete p.password;
   delete p.pin_code;
+  
+  if (entityType === 'users') {
+    delete p.password;
+    delete p.pin_code;
+    return p;
+  }
+  if (entityType === 'companies') {
+    delete p.password;
+    return p;
+  }
+
   return p;
 }
 
@@ -728,6 +822,17 @@ const applyMutation = db.transaction((reqData) => {
   // 3 & 4. Write entity and changelog
   const newVersion = existingEntity ? currentServerVersion + 1 : 1;
   const now = new Date().toISOString();
+  
+  // Hash secrets for users
+  if (entity === 'users' && payload) {
+    if (payload.password && !payload.password.startsWith('$scrypt$')) {
+      payload.password = hashSecret(payload.password);
+    }
+    if (payload.pin_code && !payload.pin_code.startsWith('$scrypt$')) {
+      payload.pin_code = hashSecret(payload.pin_code);
+    }
+  }
+
   const payloadStr = JSON.stringify(payload);
 
   if (existingEntity) {
@@ -763,70 +868,205 @@ const applyMutation = db.transaction((reqData) => {
 // Endpoints
 app.get('/health', (req, res) => res.send('OK'));
 
+// ----------------------------------------------------
+// AUTH ENDPOINTS
+// ----------------------------------------------------
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'MISSING_CREDENTIALS' });
+
+  const users = db.prepare("SELECT entity_id, payload FROM entities WHERE entity = 'users'").all();
+  let foundUser = null;
+  let userPayload = null;
+
+  for (const u of users) {
+    try {
+      const p = JSON.parse(u.payload);
+      if (p.email === email && verifySecret(password, p.password)) {
+        foundUser = u.entity_id;
+        userPayload = p;
+        break;
+      }
+    } catch(e) {}
+  }
+
+  // Also check companies for legacy/simple company login
+  let foundCompany = null;
+  let companyPayload = null;
+  if (!foundUser) {
+    const companies = db.prepare("SELECT entity_id, payload FROM entities WHERE entity = 'companies'").all();
+    for (const c of companies) {
+      try {
+        const p = JSON.parse(c.payload);
+        if (p.email === email && verifySecret(password, p.password)) {
+          foundCompany = c.entity_id;
+          companyPayload = p;
+          break;
+        }
+      } catch(e) {}
+    }
+  }
+
+  if (!foundUser && !foundCompany) {
+    return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+  if (foundUser) {
+    // If it's a tech user
+    const role = userPayload.role === 'tech' ? 'tech' : 'salarie';
+    db.prepare('INSERT INTO sessions (token, user_id, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
+      token, foundUser, role, new Date().toISOString(), expiresAt.toISOString()
+    );
+    return res.json({ token, user: sanitizeForEmployee('users', userPayload) });
+  } else {
+    db.prepare('INSERT INTO sessions (token, company_id, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
+      token, foundCompany, 'company', new Date().toISOString(), expiresAt.toISOString()
+    );
+    return res.json({ token, company: sanitizeForCompany('companies', companyPayload) });
+  }
+});
+
+
+// ----------------------------------------------------
+// BINARY DOCUMENT STORAGE
+// ----------------------------------------------------
+const fs = require('fs');
+const path = require('path');
+const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+app.post('/api/documents/:id/file', (req, res) => {
+  const auth = getUserAuth(req);
+  if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
+  const documentId = req.params.id;
+  const { fileData, ext } = req.body;
+  if (!fileData || !ext) return res.status(400).json({ error: 'MISSING_FILE_DATA' });
+
+  if (!['pdf', 'png', 'jpg', 'jpeg'].includes(ext.toLowerCase())) {
+    return res.status(400).json({ error: 'INVALID_EXTENSION' });
+  }
+
+  // The client must have created the document entity in the database first
+  // Verify authorization: the user or company uploading must be the owner or authorized
+  const docEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'documents' AND entity_id = ?").get(documentId);
+  if (!docEnt) return res.status(404).json({ error: 'DOCUMENT_METADATA_NOT_FOUND' });
+  
+  const payload = JSON.parse(docEnt.payload);
+  if (auth.user_id && payload.owner_user_id !== auth.user_id && payload.user_id !== auth.user_id) return res.status(403).json({ error: 'FORBIDDEN' });
+  if (auth.company_id && payload.company_id !== auth.company_id && !payload.employment_id) return res.status(403).json({ error: 'FORBIDDEN' });
+
+  const buffer = Buffer.from(fileData.split(',')[1] || fileData, 'base64');
+  if (buffer.length > 10 * 1024 * 1024) return res.status(400).json({ error: 'FILE_TOO_LARGE' });
+
+  const filePath = path.join(UPLOADS_DIR, documentId + '.' + ext);
+  fs.writeFileSync(filePath, buffer);
+
+  // Mark as uploaded in DB
+  payload.file_status = 'UPLOADED';
+  payload.file_ext = ext;
+  db.prepare("UPDATE entities SET payload = ? WHERE entity = 'documents' AND entity_id = ?").run(JSON.stringify(payload), documentId);
+
+  res.json({ success: true });
+});
+
+app.get('/api/documents/:id/file', (req, res) => {
+  const auth = getUserAuth(req);
+  if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
+  const documentId = req.params.id;
+  const docEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'documents' AND entity_id = ?").get(documentId);
+  if (!docEnt) return res.status(404).json({ error: 'DOCUMENT_NOT_FOUND' });
+
+  const payload = JSON.parse(docEnt.payload);
+  const ext = payload.file_ext || 'pdf';
+  const filePath = path.join(UPLOADS_DIR, documentId + '.' + ext);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'FILE_NOT_FOUND' });
+  }
+
+  // Authorisation logic : must map to scoping logic (PERSONAL, PROFESSIONAL, EMPLOYMENT_SCOPED, COMPANY)
+  let allowed = false;
+  if (auth.role === 'tech') allowed = true;
+  else if (auth.user_id) {
+    if (payload.user_id === auth.user_id || payload.owner_user_id === auth.user_id) allowed = true;
+  }
+  else if (auth.company_id) {
+    if (payload.company_id === auth.company_id) allowed = true;
+    else if (payload.scope === 'EMPLOYMENT_SCOPED' && payload.employment_id) {
+      const emp = db.prepare("SELECT payload FROM entities WHERE entity = 'employments' AND entity_id = ?").get(payload.employment_id);
+      if (emp) {
+        const empData = JSON.parse(emp.payload);
+        if (empData.company_id === auth.company_id) allowed = true;
+      }
+    } else if (payload.scope === 'PROFESSIONAL' && payload.user_id) {
+      // Allow company if they have an active employment with this user
+      const emps = db.prepare("SELECT payload FROM entities WHERE entity = 'employments'").all();
+      for (const e of emps) {
+        const eData = JSON.parse(e.payload);
+        if (eData.user_id === payload.user_id && eData.company_id === auth.company_id && eData.status === 'ACTIVE') {
+          allowed = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!allowed) return res.status(403).json({ error: 'FORBIDDEN_SCOPE' });
+
+  res.sendFile(filePath);
+});
+// ----------------------------------------------------
+
+app.post('/api/auth/verify-pin', (req, res) => {
+  const auth = getUserAuth(req);
+  if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
+  const { pin } = req.body;
+  if (!pin) return res.status(400).json({ error: 'MISSING_PIN' });
+
+  const userEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'users' AND entity_id = ?").get(auth.user_id);
+  if (!userEnt) return res.status(404).json({ error: 'NOT_FOUND' });
+
+  const p = JSON.parse(userEnt.payload);
+  if (!verifySecret(pin, p.pin_code)) {
+    return res.status(401).json({ error: 'INVALID_PIN' });
+  }
+
+  res.json({ success: true });
+});
+
+// ----------------------------------------------------
+
+
 
 const getConflictStmt = db.prepare('SELECT * FROM sync_conflicts WHERE conflict_id = ?');
 
 app.post('/api/sync/conflicts/:id/recheck', (req, res) => {
-  const clientType = req.headers['x-client-type'] || 'UNKNOWN';
-  const actorId = req.headers['x-client-id'] || req.headers['x-user-id'] || req.headers['x-company-id'] || 'UNKNOWN';
-
-  if (clientType === 'START2WAY_TECH_PANEL') {
-    return res.status(403).json({ error: 'TECH_PANEL_READONLY' });
-  }
-  if (clientType !== 'EMPLOYEE_APP' && clientType !== 'COMPANY_PANEL') {
-    return res.status(403).json({ error: 'FORBIDDEN' });
-  }
-
-  const conflict = getConflictStmt.get(req.params.id);
-  if (!conflict) return res.status(404).json({ error: 'NOT_FOUND' });
-
-  if (clientType === 'EMPLOYEE_APP' && conflict.user_id !== actorId) return res.status(403).json({ error: 'FORBIDDEN' });
-  if (clientType === 'COMPANY_PANEL' && conflict.company_id !== actorId) return res.status(403).json({ error: 'FORBIDDEN' });
-
-  if (conflict.status !== 'OPEN') {
-    return res.json({ status: conflict.status, resolution_type: conflict.resolution_type });
-  }
-
-  const currentEntity = getEntityStmt.get(conflict.entity, conflict.entity_id);
-  if (!currentEntity) {
-    return res.json({ status: 'OPEN' });
-  }
-
-  const isApplied = isConflictAlreadyApplied(conflict, currentEntity);
-
-  if (isApplied) {
-    const now = new Date().toISOString();
-    const result = db.prepare(`
-      UPDATE sync_conflicts 
-      SET status = 'RESOLVED_ALREADY_APPLIED', 
-          resolution_type = 'ALREADY_APPLIED', 
-          resolved_at = ?,
-          resolution_from_server_version = ?,
-          resolution_to_server_version = ?
-      WHERE conflict_id = ? AND status = 'OPEN'
-    `).run(now, currentEntity.version, currentEntity.version, conflict.conflict_id);
-    
-    if (result.changes === 0) {
-      const updated = getConflictStmt.get(conflict.conflict_id);
-      return res.json({ status: updated ? updated.status : 'OPEN', resolution_type: updated ? updated.resolution_type : null });
-    }
-    
-    return res.json({ status: 'RESOLVED_ALREADY_APPLIED', resolution_type: 'ALREADY_APPLIED' });
-  }
-
-  return res.json({ status: 'OPEN' });
-});
-
-app.post('/api/sync/mutate', (req, res) => {
+  const auth = getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (clientType === 'START2WAY_TECH_PANEL') {
     return res.status(403).json({ error: 'TECH_PANEL_READONLY' });
   }
 
   const { operation_id, entity, entity_id, version, operation, payload, company_id, user_id } = req.body;
-  const actorId = req.headers['x-client-id'] || req.headers['x-user-id'] || req.headers['x-company-id'] || 'UNKNOWN';
-  const reqUserId = req.headers['x-user-id'] || user_id || (payload ? payload.user_id : undefined);
-  const reqCompanyId = req.headers['x-company-id'] || company_id || (payload ? payload.company_id : undefined);
+  const actorId = auth ? auth.user_id || auth.company_id : 'UNKNOWN';
+  
+  // Verify that the requested identity matches the session
+  const reqUserId = auth ? auth.user_id : undefined;
+  const reqCompanyId = auth ? auth.company_id : undefined;
+  
+  if (!auth && entity !== 'users') {
+     // Allow users creation without auth for signup V1
+     return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
 
   if (!operation_id || !entity || !entity_id) {
     return res.status(400).json({ error: 'MISSING_FIELDS' });
@@ -879,9 +1119,18 @@ app.post('/api/sync/mutate', (req, res) => {
 app.get('/api/sync/changes', (req, res) => {
   const after = parseInt(req.query.after) || 0;
   const limit = parseInt(req.query.limit) || 100;
+  const auth = getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
-  const userId = req.headers['x-user-id'];
-  const companyId = req.headers['x-company-id'];
+  if (!auth) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+  const userId = auth.user_id;
+  const companyId = auth.company_id;
+  
+  // For TECH, we might need a role check, but V1 says TECH access only via policy
+  if (clientType === 'START2WAY_TECH_PANEL' && auth.role !== 'tech') {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
 
   try {
     const rawChanges = db.prepare('SELECT * FROM changelog WHERE sequence > ? ORDER BY sequence ASC LIMIT ?').all(after, limit);
@@ -932,9 +1181,18 @@ app.get('/api/sync/changes', (req, res) => {
 });
 
 app.get('/api/sync/conflicts', (req, res) => {
+  const auth = getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
-  const userId = req.headers['x-user-id'];
-  const companyId = req.headers['x-company-id'];
+  if (!auth) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+  const userId = auth.user_id;
+  const companyId = auth.company_id;
+  
+  // For TECH, we might need a role check, but V1 says TECH access only via policy
+  if (clientType === 'START2WAY_TECH_PANEL' && auth.role !== 'tech') {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
 
   let query = 'SELECT * FROM sync_conflicts WHERE 1=1';
   const params = [];
@@ -988,9 +1246,18 @@ app.get('/api/sync/conflicts', (req, res) => {
 });
 
 app.get('/api/sync/conflicts/:id', (req, res) => {
+  const auth = getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
-  const userId = req.headers['x-user-id'];
-  const companyId = req.headers['x-company-id'];
+  if (!auth) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
+  }
+  const userId = auth.user_id;
+  const companyId = auth.company_id;
+  
+  // For TECH, we might need a role check, but V1 says TECH access only via policy
+  if (clientType === 'START2WAY_TECH_PANEL' && auth.role !== 'tech') {
+    return res.status(403).json({ error: 'FORBIDDEN' });
+  }
 
   try {
     const c = db.prepare('SELECT * FROM sync_conflicts WHERE conflict_id = ?').get(req.params.id);
@@ -1191,7 +1458,7 @@ app.use('/api/legacy', async (req, res) => {
     return res.status(503).json({ error: 'AIRTABLE_NOT_CONFIGURED' });
   }
 
-  const allowlist = ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'company_profile_changes'];
+  const allowlist = ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'documents'];
   if (!allowlist.includes(table)) {
     return res.status(403).json({ error: 'FORBIDDEN_TABLE' });
   }

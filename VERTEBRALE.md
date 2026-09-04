@@ -97,19 +97,18 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
 - **Fichiers concernés :** `landing.html`, `souscription.html`, `paiement.html`, `app-web.html` (modale email, facturation additionnelle 3e+), `app-mobile.html` (liaison onboarding, activation Circuit dans le Profil), table `invitations`
 - **Règles :**
   - **Abonnement de base :** 14,99 €/mois HT (17,99 € TTC) incluant l'accès gérant et 2 salariés.
-  - **Token_Invitation supplémentaire :** 2,99 €/mois HT (3,59 € TTC), validité de 12 heures à la génération.
-  - **Token_Circuit (Planification/Optimisation) :** 7,99 €/mois HT (9,59 € TTC) pour les salariés 3e+, validité de 30 jours à compter de son activation par le conducteur.
-  - **Jetons de lancement :** 2 Token_Invitation de lancement (`INV-AMT-LANCx`) et 2 Token_Circuit de lancement (`CIR-AMT-LANCx`) offerts sans limite de validité dès l'inscription.
+  - **Token_Invitation supplémentaire :** 2,99 €/mois HT (3,59 € TTC). Durée de vie : fin du mois calendaire en cours après activation par le salarié. Format : `INV-XXXX-XXXX`. N'est **jamais** nominatif à la génération.
+  - **Token_Circuit (Planification/Optimisation) :** 7,99 €/mois HT (9,59 € TTC) pour les salariés 3e+. Durée de vie : fin du mois calendaire en cours après activation. Format : `CIR-XXXX-XXXX-XXXX`. N'est plus nominatif à la génération.
+  - **Token_Reprise :** Généré depuis l'historique d'un conducteur, strictement limité aux 12 heures suivant la validation du feuillet initial. Format : `REP-XXXX-XXXX-XXXX`.
+  - **Jetons de lancement :** 2 Token_Invitation et 2 Token_Circuit inclus dans l'abonnement. Ils expirent également à la fin du mois calendaire en cours. La règle d'exception "Jamais (Offre)" est supprimée.
   - **Règle de conversion :** Tous les calculs financiers utilisent la TVA française de 20%, appliquée sur les tarifs HT avant facturation TTC.
   - **Affichage & Génération (Codes Générés) :** 
-    - 3 boutons distincts en haut pour générer les invitations, reprises et circuits (chacun avec popup de saisie/sélection du salarié).
+    - 3 boutons distincts en haut pour générer les invitations, reprises et circuits.
     - Bandeau de statut résumant les salariés inclus (max 2), salariés supplémentaires actifs (à +2,99€ HT/mois) et circuits actifs (à +7,99€ HT/mois).
-    - 3 tableaux distincts affichant le nom du salarié, le code, le statut et les dates clés (création, activation, expiration).
+    - 3 tableaux distincts affichant le jeton, le code, le statut et les dates clés (création, activation, expiration).
   - **Gestion des Homonymes / Doublons :**
-    - Le lien technique est exclusivement assuré par l'ID unique du salarié, jamais par correspondance de nom.
-    - La sélection Circuit affiche le nom + contact (email ou téléphone) pour distinguer deux salariés homonymes.
-    - La saisie d'invitation lance un avertissement visuel si le nom complet existe déjà dans le Registre.
-    - Les 3 tableaux de codes affichent le contact (email/téléphone) en sous-texte sous le nom du salarié pour une identification facilitée.
+    - Le lien technique est exclusivement assuré par l'ID unique du salarié, défini au moment où il saisit le code dans son application.
+    - Il n'y a plus de saisie nominative (nom, prénom) par l'employeur lors de la génération des jetons, le lien se fait automatiquement à l'activation.
 
 
 ### VERTÈBRE 13 — Distinction Historique / Archives (App Salarié)
@@ -176,6 +175,18 @@ Ce fichier est la carte des dépendances croisées du projet. Il doit être mis 
   - **Distinction "Lu" vs "Résolu" (Cohérence des badges) :**
     - **Marquer comme lu** (clic cloche/item) : fait disparaître la notification du badge numérique de la cloche 🔔 (qui ne compte que les notifications non lues par le gérant), mais le problème sous-jacent (ex: document expiré) reste affiché sur le Dashboard.
     - **Résoudre** (action métier sur le Dashboard ou Documents) : le fait de résoudre le problème (ex: cliquer sur `✓ Lu` pour la dérive horaire, ou renouveler/valider un document expiré) met à jour la base de données locale, fait disparaître l'alerte du Dashboard **et** marque automatiquement la notification cloche associée comme lue en arrière-plan.
+
+### VERTÈBRE 18 — Onboarding Salarié & Mur de Connexion (Mode Limité)
+- **Fichiers concernés :** `app-mobile.html`, `VERTEBRALE.md`
+- **Règles :**
+  - **Démarrage à zéro :** Aucun utilisateur factice (ex: `usr_001`) n'est injecté automatiquement au lancement. L'application démarre vierge, nécessitant la création d'un compte ou une connexion.
+  - **Écran de bienvenue exclusif :** Un nouvel utilisateur ne voit initialement que l'écran de bienvenue avec deux choix : "Créer mon compte" ou "J'ai déjà un compte" (sans accès aux options développeurs ou à d'autres onglets).
+  - **Stepper de création de compte :** L'inscription se fait via un formulaire modal en 4 étapes fluides, guidées par un composant `S2WStepper` visuel (points et lignes reliant les étapes 1 à 4).
+  - **Mode Limité (Verrouillage par Code Invitation) :** 
+    - Si l'utilisateur clique sur "Plus tard" à l'étape 4 (sans saisir de code invitation valide de son employeur), l'application active le `is-limited` mode sur le `body`.
+    - **Mur de sécurité CSS :** Tous les contenus des onglets fonctionnels (Accueil, Feuillet, Historique, Circuit) sont masqués physiquement via `display: none !important`.
+    - Ils sont remplacés visuellement par un énorme cadenas 🔒 et un texte invitant à saisir le code invitation. Le chronomètre et les actions métiers sont inaccessibles.
+    - Seul l'onglet "Profil" reste accessible et utilisable pour permettre à l'utilisateur de saisir son Code Invitation à tout moment et débloquer son application.
 
 ## DETTE TECHNIQUE & LIMITES DE PRODUCTION
 
@@ -274,3 +285,19 @@ Ce point sera affiné davantage avec le fondateur au moment de basculer de la si
   - Refonte du flux : Si la réouverture est annulée, aucune nouvelle session n'est démarrée par erreur. Si validée, la logique est déportée dans `submitReopenSession(closedToday)`.
   - **Sécurité et Validation** : Le code PIN est soumis à une validation stricte (`!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)`) avant tout traitement.
   - Test en situation de la **Z-Index Supremacy** (mise en place au Chantier 2) : Les Toasts d'erreur s'affichent correctement et bien au-dessus des nouvelles modales (qui possèdent un `z-index` de 1100).
+
+### VERTÈBRE 24 — Mur de connexion et Onboarding Mobile (Sécurisation)
+- **Date :** 2026-08-28
+- **Fichiers concernés :** `app-mobile.html`, `docs/s1/js/s2w-utils.js`
+- **Résumé :** Suppression totale de l'injection en dur du faux compte `usr_001`. Mise en place d'un véritable parcours d'authentification et de création de compte via un Stepper, ainsi qu'un "Mode Limité" pour restreindre l'accès à l'application tant qu'un Code Invitation valide n'a pas été saisi.
+- **Détails Techniques :**
+  - **Gestion de Session (`s2w-utils.js`) :** Ajout des méthodes utilitaires `S2WUtils.login(userId)`, `logout()`, et `getLoggedInUser()` basées sur le localStorage.
+  - **Refactoring Massif (`usr_001`) :** Remplacement de la soixantaine d'occurrences statiques `'usr_001'` par la variable globale dynamique `window.currentUserId` dans toute la logique de l'application mobile (requêtes, filtrage, sauvegarde).
+  - **Écran de Bienvenue & Modales :** Intégration d'un `#welcome-screen` interceptant l'accès initial. Ajout de modales de connexion (`#login-modal`) et d'inscription (`#signup-modal`).
+  - **Parcours Stepper :** Création de compte en 4 étapes : 1) Infos perso, 2) Infos pro (Permis VL/PL conditionnel), 3) Sécurité (Validation stricte du code PIN à 4 chiffres, nécessaire pour les signatures), 4) Rattachement via Code Invitation (avec option de report).
+  - **Mode Limité :** Si l'utilisateur est connecté mais n'a pas d'`company_id`, une bannière rouge s'affiche en haut de l'écran. Les menus vitaux du tiroir (Accueil, Feuillet, Historique, Circuit, Messagerie) sont verrouillés visuellement (🔒) et fonctionnellement (redirection annulée). Seuls Profil et Support Chatbot restent accessibles.
+- **Règle associée :** Le code PIN saisi à l'étape 3 de l'onboarding est le SEUL et UNIQUE code de sécurité du chauffeur, exploité ensuite pour rouvrir une session ou signer son feuillet. Il doit être strictement validé (Regex `^\d{4}$`).
+
+### RÈGLE DE SÉCURITÉ & DONNÉES DE DÉMO (Mise à jour Onboarding)
+> Lors de la suppression des accès directs de test (ex: `usr_001`), toutes les données liées à ces comptes fictifs doivent être purgées intégralement des bases Airtable de production (`users`, `sessions`, `rep_codes`, `documents`, `vehicles`) pour garantir un départ à zéro.
+> **Note de conception :** Le mot de passe de l'application mobile est actuellement stocké en texte clair (simulation démo). Un commentaire explicite a été ajouté dans le code source signalant que pour la production, un hachage robuste côté serveur (via bcrypt ou argon2) est obligatoire, et qu'un hachage côté client type SHA-256 est proscrit.

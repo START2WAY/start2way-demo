@@ -916,6 +916,51 @@
   let _activePage = 'dashboard';
   let _pollingInterval = null;
 
+  
+  async function submitLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pwd = document.getElementById('login-password').value;
+    if (!email || !pwd) {
+      showToast('Veuillez remplir tous les champs', 'error');
+      return;
+    }
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pwd })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error === 'INVALID_CREDENTIALS' ? 'Identifiants incorrects' : 'Erreur de connexion', 'error');
+        return;
+      }
+      
+      localStorage.setItem('sessionToken', data.token);
+      if (data.company) {
+        localStorage.setItem('currentCompanyId', data.company.id);
+        window.currentCompanyId = data.company.id;
+        S2W.update('companies', data.company.id, data.company);
+      }
+      
+      document.getElementById('login-modal').style.display = 'none';
+      await S2W.init();
+      updateCompanyUI();
+      switchPage(_activePage);
+      startPagePolling();
+    } catch(err) {
+      showToast('Erreur réseau', 'error');
+    }
+  }
+
+  function checkAuth() {
+    if (!localStorage.getItem('sessionToken')) {
+      document.getElementById('login-modal').style.display = 'flex';
+      return false;
+    }
+    return true;
+  }
+
   function checkAirtableConfig() {
     const token = localStorage.getItem('s2w_airtable_token');
     const baseId = localStorage.getItem('s2w_airtable_base_id');
@@ -953,24 +998,24 @@
     checkAllEmployerAlerts();
     switchPage('dashboard');
 
-    checkAirtableConfig();
+    // checkAirtableConfig();
 
-    (async () => {
-      try {
-        await S2W.init();
-        const banner = document.getElementById('airtable-warning-banner');
-        if (banner) banner.remove();
-        updateCompanyUI();
-        checkEmployerMidnightAutoCut();
-        updateUnreadMessageBadge();
-        checkNewSignupEmail();
-        checkAllEmployerAlerts();
-        switchPage(_activePage);
-        startPagePolling();
-      } catch (e) {
-        console.error("Erreur d'initialisation de la base :", e);
-      }
-    })();
+    if (checkAuth()) {
+      (async () => {
+        try {
+          await S2W.init();
+          updateCompanyUI();
+          checkEmployerMidnightAutoCut();
+          updateUnreadMessageBadge();
+          checkNewSignupEmail();
+          checkAllEmployerAlerts();
+          switchPage(_activePage);
+          startPagePolling();
+        } catch (e) {
+          console.error("Erreur d'initialisation :", e);
+        }
+      })();
+    }
   });
 
   function checkNewSignupEmail() {
@@ -3478,7 +3523,23 @@
   function renderArchiveTab(tab) {
     const container = document.getElementById('archive-content');
     if (!container) return;
-    const docs    = S2W.table('documents');
+    
+    const allDocs = S2W.table('documents') || [];
+    const employments = S2W.table('employments') || [];
+    const activeEmployments = employments.filter(e => e.company_id === _activeCompanyId && e.status === 'active');
+    const activeEmploymentIds = activeEmployments.map(e => e.id);
+
+    const docs = allDocs.filter(d => {
+        if (d.scope === 'COMPANY') {
+            return d.company_id === _activeCompanyId;
+        }
+        if (d.scope === 'PROFESSIONAL' || d.scope === 'EMPLOYMENT_SCOPED') {
+            return d.company_id === _activeCompanyId && activeEmploymentIds.includes(d.employment_id);
+        }
+        // PERSONAL is never visible
+        return false;
+    });
+    
     const reports = S2W.table('reports');
 
     if (tab === 'documents') {
@@ -3486,24 +3547,32 @@
       if (!visible.length) { container.innerHTML = '<div class="empty-state"><span class="empty-icon">📄</span>Aucun document archivé.</div>'; return; }
       container.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
         ${visible.map(d => {
-          let ownerName = d.owner_id;
+          const ownerId = d.owner_user_id || d.owner_id;
+          let ownerName = ownerId;
           if (d.owner_type === 'vehicle') {
-            const v = S2W.find('vehicles', d.owner_id);
-            ownerName = v ? v.plate_number : d.owner_id;
+            const v = S2W.find('vehicles', ownerId);
+            ownerName = v ? v.plate_number : ownerId;
           } else {
-            const u = S2W.find('users', d.owner_id);
-            ownerName = u ? S2WUtils.fullName(u) : d.owner_id;
+            const u = S2W.find('users', ownerId);
+            ownerName = u ? S2WUtils.fullName(u) : ownerId;
           }
+          
+          const docType = (d.document_type || d.type || '').replace(/_/g,' ');
+          const sideText = d.side ? ` (${d.side})` : '';
+          const statusIcon = d.verification_status === 'VERIFIED' ? '✅' : (d.verification_status === 'EXPIRED' ? '🔴' : (d.verification_status === 'TO_VERIFY' ? '🟠' : ''));
+          
           return `
           <div class="archive-item">
-            <span class="archive-type">${d.type.replace(/_/g,' ')}</span>
+            <span class="archive-type">${statusIcon} ${docType}${sideText}</span>
             <span class="archive-owner">${d.owner_type === 'vehicle' ? '🚚' : '👤'} ${ownerName}</span>
-            ${S2WUtils.badgeExpiry(d.expires_at)}
+            ${S2WUtils.badgeExpiry(d.expires_at || d.expiry_date)}
             <span class="archive-date">${S2WUtils.fmtDateShort(d.created_at)}</span>
+            <button class="action-btn" onclick="window.open('/api/documents/' + '${d.id}' + '/file?token=' + localStorage.getItem('sessionToken'), '_blank')" title="Voir le document">👁</button>
             <button class="action-btn" onclick="archiveDoc('${d.id}')" title="Archiver">🗑</button>
           </div>`;
         }).join('')}
       </div>`;
+    } else if (tab === 'rapports') {
     } else if (tab === 'rapports') {
       if (!reports.length) { container.innerHTML = '<div class="empty-state"><span class="empty-icon">📑</span>Aucun rapport généré.<br><button class="btn btn-brand-green" onclick="switchPage(\'rapports\')" style="margin-top:16px">Générer un rapport DREAL</button></div>'; return; }
       container.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">

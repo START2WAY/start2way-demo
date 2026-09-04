@@ -158,6 +158,33 @@
               <input type="text" id="f-siret" class="form-control" placeholder="14 chiffres" required>
             </div>
           </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-activity-sector">Secteur d'activité de l'entreprise *</label>
+              <select id="f-activity-sector" class="form-control" required>
+                <option value="">Choisir…</option>
+                <option>Transport & Logistique</option>
+                <option>BTP & Construction</option>
+                <option>Industrie & Production</option>
+                <option>Commerce & Distribution</option>
+                <option>Agriculture & Agroalimentaire</option>
+                <option>Services aux entreprises</option>
+                <option>Maintenance & Intervention technique</option>
+                <option>Environnement & Déchets</option>
+                <option>Santé & Médico-social</option>
+                <option>Sécurité</option>
+                <option>Énergie</option>
+                <option>Administration / Collectivités</option>
+                <option>Déménagement</option>
+                <option>Autre</option>
+              </select>
+            </div>
+            <div class="form-group" id="f-activity-other-container" style="display:none;">
+              <label class="form-label" for="f-activity-sector-other">Précisez votre activité *</label>
+              <input type="text" id="f-activity-sector-other" class="form-control" placeholder="Votre secteur">
+            </div>
+          </div>
           <div class="form-grid-2">
             <div class="form-group">
               <label class="form-label" for="f-tva">N° TVA intracommunautaire *</label>
@@ -190,9 +217,16 @@
               <input type="text" id="f-city" class="form-control" placeholder="Le Raincy" required>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label" for="f-country">Pays</label>
-            <input type="text" id="f-country" class="form-control" value="France" readonly style="background:#eee;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="f-country">Pays</label>
+              <input type="text" id="f-country" class="form-control" value="France" readonly style="background:#eee;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-timezone">Fuseau horaire de l'entreprise *</label>
+              <select id="f-timezone" class="form-control" required></select>
+              <small style="color:var(--text-sec);font-size:11px;display:block;margin-top:4px;">Utilisé pour calculer vos journées de travail selon l'heure locale de l'entreprise.</small>
+            </div>
           </div>
         </div>
 
@@ -321,6 +355,38 @@
         }
       },
       onFinish: () => {
+        const actSector = document.getElementById('f-activity-sector').value;
+        const validSectors = [
+          "Transport & Logistique", "BTP & Construction", "Industrie & Production", "Commerce & Distribution",
+          "Agriculture & Agroalimentaire", "Services aux entreprises", "Maintenance & Intervention technique",
+          "Environnement & Déchets", "Santé & Médico-social", "Sécurité", "Énergie",
+          "Administration / Collectivités", "Déménagement", "Autre"
+        ];
+        if (!actSector || !validSectors.includes(actSector)) {
+          alert("Le secteur d'activité de l'entreprise est requis et doit être valide.");
+          return;
+        }
+        let actSectorOther = '';
+        if (actSector === 'Autre') {
+          actSectorOther = document.getElementById('f-activity-sector-other').value.trim();
+          if (!actSectorOther) {
+            alert("Veuillez préciser votre secteur d'activité.");
+            return;
+          }
+        }
+
+        const tz = document.getElementById('f-timezone').value;
+        if (!tz) {
+          alert("Le fuseau horaire de l'entreprise est requis.");
+          return;
+        }
+        try {
+          new Intl.DateTimeFormat(undefined, { timeZone: tz });
+        } catch (e) {
+          alert("Fuseau horaire invalide.");
+          return;
+        }
+
         const companyData = {
           legal_form: document.getElementById('f-lform').value,
           legal_name: document.getElementById('f-lname').value,
@@ -329,11 +395,14 @@
           siret: document.getElementById('f-siret').value,
           tva_number: document.getElementById('f-tva').value,
           naf_code: document.getElementById('f-naf').value,
+          activity_sector: actSector,
+          activity_sector_other: actSectorOther,
           address: document.getElementById('f-addr').value,
           address_comp: document.getElementById('f-comp').value,
           postal: document.getElementById('f-postal').value,
           city: document.getElementById('f-city').value,
           country: document.getElementById('f-country').value,
+          timezone: document.getElementById('f-timezone').value,
           rep_first: document.getElementById('f-rfirst').value,
           rep_last: document.getElementById('f-rlast').value,
           rep_role: document.getElementById('f-rrole').value,
@@ -358,6 +427,38 @@
 
     const stepper = new S2WStepper(stepperConfig);
     stepper.init();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const actSelect = document.getElementById('f-activity-sector');
+      if (actSelect) {
+        actSelect.addEventListener('change', function() {
+          const otherContainer = document.getElementById('f-activity-other-container');
+          if (this.value === 'Autre') {
+            otherContainer.style.display = 'block';
+            document.getElementById('f-activity-sector-other').required = true;
+          } else {
+            otherContainer.style.display = 'none';
+            document.getElementById('f-activity-sector-other').required = false;
+          }
+        });
+      }
+
+      const tzSelect = document.getElementById('f-timezone');
+      if (!tzSelect) return;
+      let tzs = [];
+      try {
+        tzs = Intl.supportedValuesOf('timeZone');
+      } catch (e) {
+        tzs = ['Europe/Paris', 'America/New_York', 'UTC'];
+      }
+      tzs.forEach(tz => {
+        const opt = document.createElement('option');
+        opt.value = tz;
+        opt.textContent = tz;
+        if (tz === 'Europe/Paris') opt.selected = true;
+        tzSelect.appendChild(opt);
+      });
+    });
   </script>
 </body>
 </html>

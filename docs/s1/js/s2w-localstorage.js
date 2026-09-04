@@ -15,9 +15,9 @@ const S2W = {
   // NOTE DE SÉCURITÉ : Les identifiants de connexion Airtable sont saisis via une interface utilisateur
   // sécurisée au premier chargement et stockés localement dans le localStorage du navigateur client.
   // En production, toutes les requêtes Airtable doivent transiter par un serveur backend sécurisé.
-  AIRTABLE_TOKEN: '',
-  BASE_ID: '',
-  TABLES_LIST: ['companies', 'users', 'sessions', 'feuillets', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports'],
+  // CONFIGURATION AIRTABLE — SUPPRIMÉE LORS DE LA MIGRATION D2B
+  // Le client s'adresse uniquement au serveur local (façade Legacy Airtable)
+  TABLES_LIST: ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'day_declarations'],
 
   /* Lecture complète du cache local */
   get() {
@@ -38,20 +38,28 @@ const S2W = {
   },
 
   /* Ajout d'un enregistrement (synchrone + push asynchrone) */
-  push(name, record) {
+  push(name, record, options = {}) {
     const d = this.get();
     if (!Array.isArray(d[name])) d[name] = [];
     d[name].push(record);
     this.set(d);
     
-    // Push asynchrone vers Airtable en arrière-plan
-    this.insertToAirtable(name, record);
+    // Si l'option silent est activée, on n'enqueue pas la synchro
+    if (!options.silent) {
+      if (name !== 'feuillets' && name !== 'employments' && name !== 'day_declarations') {
+        this.insertToAirtable(name, record);
+      } else {
+        if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
+          window.enqueueSyncOperation(name, record.id, 'CREATE', record);
+        }
+      }
+    }
     
     return record;
   },
 
   /* Mise à jour partielle par id (synchrone + patch asynchrone) */
-  update(name, id, patch) {
+  update(name, id, patch, options = {}) {
     const d = this.get();
     if (!Array.isArray(d[name])) return false;
     const idx = d[name].findIndex(r => r.id === id || r.code === id);
@@ -59,8 +67,15 @@ const S2W = {
     d[name][idx] = { ...d[name][idx], ...patch };
     this.set(d);
     
-    // Patch asynchrone vers Airtable en arrière-plan
-    this.updateInAirtable(name, id, patch);
+    if (!options.silent) {
+      if (name !== 'feuillets' && name !== 'employments' && name !== 'day_declarations') {
+        this.updateInAirtable(name, id, patch);
+      } else {
+        if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
+          window.enqueueSyncOperation(name, id, 'UPDATE', patch);
+        }
+      }
+    }
     
     return d[name][idx];
   },
@@ -220,67 +235,12 @@ const S2W = {
 
   _credentialsPromise: null,
 
+  _credentialsPromise: null,
+
   async ensureCredentials() {
-    if (this.AIRTABLE_TOKEN && this.BASE_ID) {
-      return true;
-    }
-    const t = localStorage.getItem('s2w_airtable_token');
-    const b = localStorage.getItem('s2w_airtable_base_id');
-    if (t && b) {
-      this.AIRTABLE_TOKEN = t;
-      this.BASE_ID = b;
-      return true;
-    }
-
-    if (this._credentialsPromise) {
-      return this._credentialsPromise;
-    }
-
-    this._credentialsPromise = new Promise((resolve) => {
-      if (typeof document === 'undefined') {
-        resolve(false);
-        return;
-      }
-
-      const overlay = document.createElement('div');
-      overlay.id = 's2w-config-overlay';
-      overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(13,34,66,0.95);display:flex;align-items:center;justify-content:center;z-index:999999;font-family:sans-serif;color:#fff;padding:20px;box-sizing:border-box;backdrop-filter:blur(8px);';
-      
-      overlay.innerHTML = `
-        <div style="background:#fff;color:#0D2242;padding:30px;border-radius:16px;max-width:450px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,0.3);box-sizing:border-box;">
-          <h2 style="margin:0 0 10px 0;font-size:22px;font-weight:700;color:#0D2242;display:flex;align-items:center;gap:8px;">🚀 Configuration Airtable</h2>
-          <p style="margin:0 0 20px 0;font-size:13px;color:#555;line-height:1.5;">Veuillez renseigner vos identifiants Airtable pour connecter la base de données démo de START2WAY.</p>
-          
-          <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px;">Token d'accès personnel Airtable (PAT)</label>
-          <input type="password" id="s2w-cfg-token" placeholder="pat..." style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:16px;box-sizing:border-box;font-size:14px;" />
-          
-          <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;color:#888;margin-bottom:6px;">ID de la Base Airtable</label>
-          <input type="text" id="s2w-cfg-base" placeholder="app..." style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;margin-bottom:20px;box-sizing:border-box;font-size:14px;" />
-          
-          <button id="s2w-cfg-submit" style="width:100%;background:#009A44;color:#fff;border:none;padding:12px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;">Enregistrer et se connecter</button>
-        </div>
-      `;
-      
-      document.body.appendChild(overlay);
-      
-      document.getElementById('s2w-cfg-submit').onclick = () => {
-        const tVal = document.getElementById('s2w-cfg-token').value.trim();
-        const bVal = document.getElementById('s2w-cfg-base').value.trim();
-        if (!tVal || !bVal) {
-          alert("Veuillez remplir tous les champs.");
-          return;
-        }
-        localStorage.setItem('s2w_airtable_token', tVal);
-        localStorage.setItem('s2w_airtable_base_id', bVal);
-        this.AIRTABLE_TOKEN = tVal;
-        this.BASE_ID = bVal;
-        document.body.removeChild(overlay);
-        this._credentialsPromise = null;
-        resolve(true);
-      };
-    });
-
-    return this._credentialsPromise;
+    // Phase D2B: Les credentials frontend sont supprimés. 
+    // Le serveur s'occupe de l'authentification Airtable de manière centralisée.
+    return true;
   },
 
   _serializeFields(record) {
@@ -298,6 +258,24 @@ const S2W = {
     }
     return fields;
   },
+
+  _getLegacyHeaders() {
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-client-type': (typeof window !== 'undefined' && window.START2WAY_CLIENT_TYPE) ? window.START2WAY_CLIENT_TYPE : 'UNKNOWN'
+    };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('sessionToken');
+      if (token) {
+        headers['Authorization'] = 'Bearer ' + token;
+      }
+      // Keep x-user-id for backwards compatibility or fallback during signup
+      if (window.currentUserId) headers['x-user-id'] = window.currentUserId;
+      if (window.currentCompanyId) headers['x-company-id'] = window.currentCompanyId;
+    }
+    return headers;
+  },,
+
 
   _deserializeFields(fields) {
     const item = { ...fields };
@@ -325,12 +303,10 @@ const S2W = {
     try {
       const fields = this._serializeFields(record);
       
-      const res = await fetch(`https://api.airtable.com/v0/${this.BASE_ID}/${tableName}`, {
+      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+      const res = await fetch(`${API_URL}/legacy/${tableName}`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.AIRTABLE_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
+        headers: this._getLegacyHeaders(),
         body: JSON.stringify({ fields })
       });
       
@@ -369,19 +345,72 @@ const S2W = {
 
       const fields = this._serializeFields(patch);
 
-      const res = await fetch(`https://api.airtable.com/v0/${this.BASE_ID}/${tableName}/${record._airtable_id}`, {
+      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+      const res = await fetch(`${API_URL}/legacy/${tableName}/${record._airtable_id}`, {
         method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${this.AIRTABLE_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
+        headers: this._getLegacyHeaders(),
         body: JSON.stringify({ fields })
       });
       
       if (res.ok) {
         console.log(`[S2W] Enregistrement Airtable ${record._airtable_id} mis à jour.`);
       } else {
-        console.error(`[S2W] Échec de mise à jour Airtable pour ${tableName}/${record._airtable_id} :`, await res.text());
+        const text = await res.text();
+        console.error(`[S2W] Échec de mise à jour Airtable pour ${tableName}/${record._airtable_id} :`, text);
+        try {
+          const body = JSON.parse(text);
+          if (res.status === 409 && body.error === 'VERSION_CONFLICT' && body.conflict_id) {
+            console.warn('[S2W] VERSION_CONFLICT intercepté en direct (Company). Appel au recheck...');
+            
+            // Notification UI if available
+            if (typeof window !== 'undefined' && window.showToast) {
+              window.showToast('Conflit détecté, vérification de la résolution...', 'error');
+            }
+
+            const recheckRes = await fetch(`${API_URL}/sync/conflicts/${body.conflict_id}/recheck`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-client-type': 'COMPANY_PANEL',
+                'x-company-id': this.get().session?.company_id || ''
+              }
+            });
+
+            if (recheckRes.ok) {
+              const recheckBody = await recheckRes.json();
+              if (recheckBody.status === 'RESOLVED_ALREADY_APPLIED') {
+                console.log('[S2W] Conflit Company résolu (ALREADY_APPLIED). Application locale.');
+                if (recheckBody.central_state && recheckBody.central_state.payload) {
+                  const centralPayload = typeof recheckBody.central_state.payload === 'string'
+                    ? JSON.parse(recheckBody.central_state.payload)
+                    : recheckBody.central_state.payload;
+                  
+                  const currentData = this.get();
+                  if (currentData[tableName]) {
+                    const idx = currentData[tableName].findIndex(r => r.id === id);
+                    if (idx >= 0) {
+                      currentData[tableName][idx] = { ...currentData[tableName][idx], ...centralPayload };
+                      this.set(currentData);
+                    }
+                  }
+                }
+                if (typeof window !== 'undefined' && window.showToast) {
+                  window.showToast('Conflit résolu. Affichage rafraîchi.', 'success');
+                }
+                return; // Treated as success
+              } else if (recheckBody.status === 'OPEN') {
+                console.warn('[S2W] Conflit Company resté OPEN. Mutation bloquée.');
+                if (typeof window !== 'undefined' && window.showToast) {
+                  window.showToast('Conflit non résoluble. Veuillez recharger la page.', 'error');
+                }
+              }
+            } else {
+              console.error('[S2W] Recheck Company a échoué avec status', recheckRes.status);
+            }
+          }
+        } catch(e) {
+          // Ignore parse error
+        }
       }
     } catch (e) {
       console.error(`[S2W] Erreur lors du patch Airtable (${tableName}) :`, e);
@@ -394,12 +423,13 @@ const S2W = {
     let offset = '';
     try {
       do {
-        const url = `https://api.airtable.com/v0/${this.BASE_ID}/${tableName}${offset ? `?offset=${offset}` : ''}`;
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${this.AIRTABLE_TOKEN}`
-          }
-        });
+        const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+        const url = `${API_URL}/legacy/${tableName}${offset ? `?offset=${offset}` : ''}`;
+        
+        // Remove Content-Type for GET requests, although fetch usually ignores it or handles it fine.
+        // We'll just pass _getLegacyHeaders() which has it, that's harmless.
+        const headers = this._getLegacyHeaders();
+        const res = await fetch(url, { headers });
         if (!res.ok) {
           console.error(`[S2W] Erreur de récupération ${tableName} :`, await res.text());
           break;
@@ -411,6 +441,7 @@ const S2W = {
     } catch (e) {
       console.error(`[S2W] Erreur de connexion Airtable (${tableName}) :`, e);
     }
+    console.log(`[S2W] fetchAllFromAirtable(${tableName}) returned ${allRecords.length} records`);
     return allRecords;
   },
 
@@ -472,10 +503,13 @@ const S2W = {
       for (let i = 0; i < ids.length; i += 10) {
         const batch = ids.slice(i, i + 10);
         const query = batch.map(id => `records[]=${id}`).join('&');
-        await fetch(`https://api.airtable.com/v0/${this.BASE_ID}/${tableName}?${query}`, {
+        const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+        await fetch(`${API_URL}/legacy/${tableName}?${query}`, {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${this.AIRTABLE_TOKEN}`
+            'x-client-type': 'START2WAY_TECH_PANEL',
+            'x-user-id': 'tech_admin',
+            'x-company-id': 'tech_admin'
           }
         });
       }
@@ -492,6 +526,7 @@ const S2W = {
     // Si déjà initialisé localement, faire un pull rapide pour rester synchrone
     if (existing._initialized) {
       await this.syncFromAirtable();
+      await this.migrateEmployments();
       return;
     }
     
@@ -512,7 +547,82 @@ const S2W = {
     cache._version = '1.0.0';
     cache._created_at = new Date().toISOString();
     this.set(cache);
+    await this.migrateEmployments();
     console.log('[S2W] Cache initialisé avec succès depuis Airtable (base propre).');
+  },
+
+  async migrateEmployments() {
+    console.log('[S2W] Exécution de la migration Employments...');
+    const data = this.get();
+    data.employments = data.employments || [];
+    data.migration_logs = data.migration_logs || [];
+    let modified = false;
+
+    // 1. Migrate Users to Employments
+    const users = data.users || [];
+    console.log('[S2W] migrateEmployments called. data.users length:', users.length, JSON.stringify(users));
+    for (const user of users) {
+      if (user.type === 'employee' && user.company_id) {
+        const existing = data.employments.find(e => e.user_id === user.id && e.company_id === user.company_id);
+        if (!existing) {
+          const emp = {
+            id: 'emp_' + Math.random().toString(36).substr(2, 9),
+            user_id: user.id,
+            company_id: user.company_id,
+            status: user.status === 'depart' ? 'depart' : 'active',
+            created_at: new Date().toISOString(),
+            depart_at: user.depart_at || null
+          };
+          data.employments.push(emp);
+          modified = true;
+          // Note: On évite un push asynchrone massif, la sync se fera via le mécanisme global
+        }
+      }
+    }
+
+    // 2. Migrate Sessions
+    const sessions = data.sessions || [];
+    for (const session of sessions) {
+      if (!session.employment_id) {
+        const userEmps = data.employments.filter(e => e.user_id === session.user_id);
+        if (userEmps.length === 1) {
+          session.employment_id = userEmps[0].id;
+          modified = true;
+        } else if (userEmps.length > 1) {
+          data.migration_logs.push({ entity: 'session', id: session.id, issue: 'MIGRATION_AMBIGUOUS' });
+          modified = true;
+        }
+      }
+    }
+
+    // 3. Migrate Feuillets
+    const feuillets = data.feuillets || [];
+    for (const feuillet of feuillets) {
+      if (!feuillet.employment_id) {
+        // Retrouver le user_id via la session
+        const session = sessions.find(s => s.id === feuillet.session_id);
+        if (session && session.employment_id) {
+          feuillet.employment_id = session.employment_id;
+          modified = true;
+        } else if (session) {
+          const userEmps = data.employments.filter(e => e.user_id === session.user_id);
+          if (userEmps.length === 1) {
+            feuillet.employment_id = userEmps[0].id;
+            modified = true;
+          } else {
+            data.migration_logs.push({ entity: 'feuillet', id: feuillet.id, issue: 'MIGRATION_AMBIGUOUS' });
+            modified = true;
+          }
+        }
+      }
+    }
+
+    if (modified) {
+      this.set(data);
+      console.log('[S2W] Migration Employments terminée avec succès.');
+    } else {
+      console.log('[S2W] Aucune donnée à migrer pour Employments.');
+    }
   },
 
   /* Réinitialisation complète (Données + Déconnexion) */

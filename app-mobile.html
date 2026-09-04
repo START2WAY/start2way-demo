@@ -11,6 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script src="docs/s1/js/s2w-localstorage.js"></script>
   <script src="docs/s1/js/s2w-utils.js?v=23"></script>
+  <script src="docs/s1/js/lib/html2pdf.bundle.min.js"></script>
+  <script src="docs/s1/js/lib/xlsx.full.min.js"></script>
   <style>
     /* ─── TOKENS ──────────────────────────────────────────────────────── */
     :root {
@@ -1267,70 +1269,322 @@
         <p class="modal-desc">Configurez votre profil conducteur en 4 étapes.</p>
 
         <!-- Container for S2WStepper -->
+        
+    <!-- ==================== PRE-FORM VL/PL ==================== -->
+    <div id="signup-preform" style="display:none; flex-direction:column; align-items:center; justify-content:center; position:absolute; top:0; left:0; width:100%; height:100%; background:var(--bg-main); z-index:10000; padding:20px; text-align:center;">
+      <h2 style="font-family:var(--font-head); font-size:22px; color:var(--text-main); margin-bottom:12px;">Quel type de permis utilisez-vous pour votre activité professionnelle ?</h2>
+      <p style="color:var(--text-sec); font-size:14px; margin-bottom:32px;">Ce choix permet d'adapter votre formulaire d'inscription.</p>
+      
+      <div style="display:flex; flex-direction:column; gap:16px; width:100%; max-width:320px;">
+        <button onclick="startSignupFlow('VL')" style="background:var(--card-bg); border:2px solid var(--border); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:12px;">
+          <div style="font-size:40px;">🚗</div>
+          <div style="font-size:18px; font-weight:600; color:var(--text-main);">Permis VL</div>
+          <div style="font-size:13px; color:var(--text-sec);">Véhicule léger</div>
+        </button>
+        
+        <button onclick="startSignupFlow('PL')" style="background:var(--card-bg); border:2px solid var(--border); border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:12px;">
+          <div style="font-size:40px;">🚛</div>
+          <div style="font-size:18px; font-weight:600; color:var(--text-main);">Permis PL</div>
+          <div style="font-size:13px; color:var(--text-sec);">Poids lourd</div>
+        </button>
+      </div>
+      <button class="btn-secondary" onclick="closePreForm()" style="margin-top:32px; width:100%; max-width:320px;">Retour</button>
+    </div>
+
         <div id="signup-form">
-          <!-- Step 1: Infos perso -->
+          <!-- STEP 1: Identité & Coordonnées -->
           <div id="emp-s1" class="s2w-step-content" style="display:block;">
-            <div class="form-group">
-              <label class="form-label">Nom *</label>
-              <input type="text" id="su-nom" class="input-field" required>
-            </div>
             <div class="form-group">
               <label class="form-label">Prénom *</label>
               <input type="text" id="su-prenom" class="input-field" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Email *</label>
-              <input type="email" id="su-email" class="input-field" required>
+              <label class="form-label">Nom *</label>
+              <input type="text" id="su-nom" class="input-field" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Téléphone *</label>
-              <input type="tel" id="su-tel" class="input-field" required>
+              <label class="form-label">Nom d'usage (Optionnel)</label>
+              <input type="text" id="su-nom-usage" class="input-field">
             </div>
             <div class="form-group">
               <label class="form-label">Date de naissance *</label>
               <input type="date" id="su-dob" class="input-field" required>
             </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Lieu de naissance *</label>
+              <input type="text" id="su-lieu-naiss" class="input-field">
+            </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Nationalité *</label>
+              <input type="text" id="su-nationalite" class="input-field">
+            </div>
+            
+            <hr style="border:0; border-top:1px solid var(--border); margin:24px 0;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Coordonnées</h4>
+            
+            <div class="form-group">
+              <label class="form-label">Email *</label>
+              <input type="email" id="su-email" class="input-field" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone portable *</label>
+              <input type="tel" id="su-tel" class="input-field" required>
+            </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Adresse de résidence *</label>
+              <input type="text" id="su-adresse" class="input-field">
+            </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Complément d'adresse</label>
+              <input type="text" id="su-adresse-comp" class="input-field">
+            </div>
+            <div style="display:flex; gap:12px;" class="pl-only">
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Code postal *</label>
+                <input type="text" id="su-cp" class="input-field">
+              </div>
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Ville *</label>
+                <input type="text" id="su-ville" class="input-field">
+              </div>
+            </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Pays *</label>
+              <input type="text" id="su-pays" class="input-field" value="France">
+            </div>
+            
+            <div class="form-group pl-only">
+              <label class="form-label">Contact d'urgence (Optionnel)</label>
+              <input type="text" id="su-urgence" class="input-field" placeholder="Nom et numéro">
+            </div>
+            <div class="form-group pl-only">
+              <label class="form-label">Moyen de contact préféré *</label>
+              <select id="su-pref-contact" class="input-field">
+                <option value="Téléphone">Téléphone</option>
+                <option value="SMS">SMS</option>
+                <option value="E-mail">E-mail</option>
+                <option value="Application">Application</option>
+              </select>
+            </div>
+
             <div class="modal-actions" style="justify-content:flex-end;">
               <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
             </div>
           </div>
 
-          <!-- Step 2: Infos professionnelles -->
+          <!-- STEP 2: Profil Professionnel -->
           <div id="emp-s2" class="s2w-step-content" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Situation professionnelle actuelle</h4>
             <div class="form-group">
-              <label class="form-label">Catégorie de permis *</label>
-              <select id="su-permis-type" class="input-field" required onchange="togglePLFields()">
-                <option value="">Sélectionnez...</option>
-                <option value="VL">VL (Véhicule Léger)</option>
-                <option value="PL">PL (Poids Lourd)</option>
+              <label class="form-label">Quelle est votre activité professionnelle réglementaire réelle ? *</label>
+              <select id="su-regulated-activity" class="input-field" onchange="toggleRegulatedActivity()">
+                <option value="">Sélectionnez une activité...</option>
+                <option value="Marchandises (général)" class="pl-only">Marchandises (général)</option>
+                <option value="Messagerie / livraison">Messagerie / livraison</option>
+                <option value="Déménagement" class="pl-only">Déménagement</option>
+                <option value="Taxi / VTC">Taxi / VTC</option>
+                <option value="LOTI">LOTI</option>
+                <option value="Transport de voyageurs — ligne régulière">Transport de voyageurs — ligne régulière</option>
+                <option value="Transport de voyageurs — occasionnel">Transport de voyageurs — occasionnel</option>
+                <option value="Transport en compte propre">Transport en compte propre</option>
+                <option value="Autre activité concernée">Autre activité concernée</option>
               </select>
             </div>
-            <div class="form-group">
-              <label class="form-label">Numéro de permis *</label>
-              <input type="text" id="su-permis-num" class="input-field" required>
-            </div>
-            <div id="pl-fields" style="display:none; flex-direction:column;">
-              <div class="form-group">
-                <label class="form-label">Expiration FCO *</label>
-                <input type="date" id="su-fco" class="input-field">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Expiration Visite Médicale *</label>
-                <input type="date" id="su-visite" class="input-field">
-              </div>
+            <div class="form-group" id="su-regulated-activity-autre-group" style="display:none;">
+              <label class="form-label">Précisez l'activité *</label>
+              <input type="text" id="su-regulated-activity-autre" class="input-field">
             </div>
             <div class="form-group">
-              <label class="form-label">Contact d'urgence (Optionnel)</label>
-              <input type="text" id="su-urgence" class="input-field" placeholder="Nom et numéro">
+              <label class="form-label">Statut *</label>
+              <select id="su-statut" class="input-field" onchange="toggleEmployerFields()">
+                <option value="">Sélectionnez...</option>
+                <option value="Salarié">Salarié</option>
+                <option value="Intérimaire">Intérimaire</option>
+                <option value="Indépendant">Indépendant</option>
+                <option value="Autre">Autre</option>
+              </select>
             </div>
-            <div class="modal-actions" style="justify-content:space-between;">
+            <div class="form-group" id="su-statut-autre-group" style="display:none;">
+              <label class="form-label">Précisez le statut *</label>
+              <input type="text" id="su-statut-autre" class="input-field">
+            </div>
+            
+            <div id="employer-fields" style="display:none; flex-direction:column; gap:16px; margin-top:16px; padding:16px; background:var(--bg-main); border-radius:8px;">
+              <div class="form-group">
+                <label class="form-label">Nom de l'employeur</label>
+                <input type="text" id="su-emp-nom" class="input-field">
+              </div>
+              <div class="form-group">
+                <label class="form-label">SIRET de l'employeur</label>
+                <input type="text" id="su-emp-siret" class="input-field">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fonction / poste</label>
+                <input type="text" id="su-emp-poste" class="input-field">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date de début dans l'entreprise</label>
+                <input type="date" id="su-emp-debut" class="input-field">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type de contrat</label>
+                <select id="su-emp-contrat" class="input-field">
+                  <option value="">Sélectionnez...</option>
+                  <option value="CDI">CDI</option>
+                  <option value="CDD">CDD</option>
+                  <option value="Intérim">Intérim</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
               <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
               <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
             </div>
           </div>
 
-          <!-- Step 3: Sécurité -->
+          <!-- STEP 3: Permis -->
           <div id="emp-s3" class="s2w-step-content" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Catégories de permis possédées</h4>
+            
+            <!-- VL Categories -->
+            <div id="permis-vl-cats" class="vl-only">
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <input type="checkbox" id="cat-B" checked disabled> Permis B (Obligatoire)
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <input type="checkbox" id="cat-BE" onchange="togglePermitDetails('BE')"> Permis BE
+              </label>
+            </div>
+
+            <!-- PL Categories -->
+            <div id="permis-pl-cats" class="pl-only">
+              <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-C" onchange="togglePermitDetails('C')"> C</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-CE" onchange="togglePermitDetails('CE')"> CE</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-C1" onchange="togglePermitDetails('C1')"> C1</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-C1E" onchange="togglePermitDetails('C1E')"> C1E</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-D" onchange="togglePermitDetails('D')"> D</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="cat-PL-DE" onchange="togglePermitDetails('DE')"> DE</label>
+              </div>
+            </div>
+
+            <div id="permit-details-container"></div>
+
+            <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- STEP 4: Documents (Coffre Permis/CNI) -->
+          <div id="emp-s4" class="s2w-step-content" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Documents d'identité et Permis</h4>
+            
+            <div style="background:var(--bg-main); padding:16px; border-radius:8px; margin-bottom:16px;">
+              <strong style="display:block; margin-bottom:8px;">Permis de conduire *</strong>
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <button class="btn-secondary" style="flex:1;" onclick="alert('Upload simulé')">📸 Recto</button>
+                <button class="btn-secondary" style="flex:1;" onclick="alert('Upload simulé')">📸 Verso</button>
+              </div>
+              <span style="font-size:12px; color:var(--text-sec);">Formats acceptés: JPG, PNG, PDF</span>
+            </div>
+
+            <div style="background:var(--bg-main); padding:16px; border-radius:8px;">
+              <strong style="display:block; margin-bottom:8px;">Pièce d'identité (CNI / Passeport) *</strong>
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <button class="btn-secondary" style="flex:1;" onclick="alert('Upload simulé')">📸 Recto</button>
+                <button class="btn-secondary" style="flex:1;" onclick="alert('Upload simulé')">📸 Verso</button>
+              </div>
+            </div>
+
+            <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- STEP 5: Qualifications PL (dynamique PL-only) -->
+          <div id="emp-s5" class="s2w-step-content pl-only-step" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Qualifications professionnelles (FIMO/FCO)</h4>
+            <div class="form-group">
+              <label class="form-label">Type de formation *</label>
+              <select id="su-fimo-type" class="input-field" onchange="toggleFimoFields()">
+                <option value="">Aucune sélectionnée</option>
+                <option value="FIMO Marchandises">FIMO Marchandises</option>
+                <option value="FCO Marchandises">FCO Marchandises</option>
+                <option value="Equivalence">Formation équivalente / dispense</option>
+              </select>
+            </div>
+            <div id="fimo-fields" style="display:none; background:var(--bg-main); padding:16px; border-radius:8px; margin-bottom:16px;">
+              <div class="form-group"><label class="form-label">Date d'obtention</label><input type="date" id="su-fimo-obtention" class="input-field"></div>
+              <div class="form-group"><label class="form-label">Date de validité / Expiration</label><input type="date" id="su-fimo-exp" class="input-field"></div>
+              <div class="form-group"><label class="form-label">Organisme formateur</label><input type="text" id="su-fimo-org" class="input-field"></div>
+              <button class="btn-secondary" style="width:100%;" onclick="alert('Upload simulé')">📎 Justificatif</button>
+            </div>
+
+            <h4 style="font-size:15px; margin-bottom:16px; margin-top:24px;">Habilitation ADR</h4>
+            <div class="form-group">
+              <label class="form-label">Êtes-vous habilité à transporter des marchandises dangereuses ?</label>
+              <select id="su-adr-has" class="input-field" onchange="toggleAdrFields()">
+                <option value="Non">Non</option>
+                <option value="Oui">Oui</option>
+              </select>
+            </div>
+            <div id="adr-fields" style="display:none; background:var(--bg-main); padding:16px; border-radius:8px; margin-bottom:16px;">
+              <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="adr-base"> ADR de base</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="adr-colis"> ADR colis</label>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="adr-citerne"> ADR citerne</label>
+              </div>
+              <div class="form-group"><label class="form-label">Classes autorisées</label><input type="text" id="su-adr-classes" class="input-field" placeholder="Ex: 2, 3, 4.1"></div>
+              <div class="form-group"><label class="form-label">Date d'expiration</label><input type="date" id="su-adr-exp" class="input-field"></div>
+              <button class="btn-secondary" style="width:100%;" onclick="alert('Upload simulé')">📎 Justificatif ADR</button>
+            </div>
+
+            <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- STEP 6: Outils & Technologies -->
+          <div id="emp-s6" class="s2w-step-content" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Outils professionnels utilisés</h4>
+            <p style="font-size:12px; color:var(--text-sec); margin-bottom:16px;">Quels outils avez-vous déjà utilisés ? (Informatif)</p>
+            
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
+              <label class="pl-only" style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-gps-pl"> GPS poids lourd</label>
+              <label class="pl-only" style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-chrono"> Chronotachygraphe numérique</label>
+              <label class="pl-only" style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-carte"> Carte conducteur</label>
+              <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-app-tournee"> Application de tournée</label>
+              <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-app-livraison"> Application de livraison</label>
+              <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-tms"> TMS (Transport Management System)</label>
+              <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-pda"> PDA / Scanner</label>
+              <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="tool-autre" onchange="document.getElementById('su-tool-autre').style.display=this.checked?'block':'none'"> Autre</label>
+            </div>
+            <input type="text" id="su-tool-autre" class="input-field" placeholder="Précisez" style="display:none;">
+
+            <div class="form-group" style="margin-top:24px;">
+              <label class="form-label" style="font-weight:600;">Disposez-vous des justificatifs professionnels nécessaires à l'exercice de votre activité ?</label>
+              <select id="su-conformite" class="input-field" style="margin-top:8px;">
+                <option value="À vérifier">À vérifier</option>
+                <option value="Oui">Oui</option>
+                <option value="Non">Non</option>
+              </select>
+            </div>
+
+            <div class="modal-actions" style="justify-content:space-between; margin-top:24px;">
+              <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
+              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
+            </div>
+          </div>
+
+          <!-- STEP 7: Compte & Validation Finale -->
+          <div id="emp-s7" class="s2w-step-content" style="display:none;">
+            <h4 style="font-size:15px; margin-bottom:16px;">Sécurité de votre compte</h4>
+            
             <div class="form-group">
               <label class="form-label">Mot de passe *</label>
               <input type="password" id="su-mdp" class="input-field" required onkeyup="checkMobilePwdStrength()">
@@ -1340,7 +1594,7 @@
               <label class="form-label">Confirmer le mot de passe *</label>
               <input type="password" id="su-mdp-conf" class="input-field" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" style="margin-top:16px;">
               <label class="form-label">Code PIN (4 chiffres) *</label>
               <p style="font-size:12px; color:var(--text-sec); margin-bottom:8px;">Ce code vous sera demandé pour déverrouiller l'accès lors de vos prises de service.</p>
               <input type="password" id="su-pin" class="input-field" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
@@ -1349,32 +1603,40 @@
               <label class="form-label">Confirmer le Code PIN *</label>
               <input type="password" id="su-pin-conf" class="input-field" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" required>
             </div>
+            <div class="form-group">
+              <label class="form-label">Code Invitation Entreprise (Optionnel)</label>
+              <input type="text" id="su-inv-code" class="input-field" placeholder="Ex: INV-1234" style="text-transform:uppercase;">
+            </div>
+
+            <h4 style="font-size:15px; margin-bottom:16px; margin-top:24px;">Validation</h4>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+              <label style="display:flex; align-items:flex-start; gap:8px;">
+                <input type="checkbox" id="chk-exactitude" style="margin-top:4px;" required>
+                <span style="font-size:13px;">J'atteste que les informations fournies sont exactes. *</span>
+              </label>
+              <label style="display:flex; align-items:flex-start; gap:8px;">
+                <input type="checkbox" id="chk-cgu" style="margin-top:4px;" required>
+                <span style="font-size:13px;">J'accepte les conditions d'utilisation du service. *</span>
+              </label>
+              <label style="display:flex; align-items:flex-start; gap:8px;">
+                <input type="checkbox" id="chk-rgpd" style="margin-top:4px;" required>
+                <span style="font-size:13px;">J'ai pris connaissance de la politique de confidentialité. *</span>
+              </label>
+              <label style="display:flex; align-items:flex-start; gap:8px;">
+                <input type="checkbox" id="chk-comm" style="margin-top:4px;">
+                <span style="font-size:13px;">Je souhaite recevoir des communications commerciales (facultatif).</span>
+              </label>
+            </div>
+
             <div class="modal-actions" style="justify-content:space-between;">
               <button class="btn-secondary" onclick="mobileStepper.prev()">Retour</button>
-              <button class="btn-primary" onclick="mobileStepper.next()">Suivant</button>
-            </div>
-          </div>
-
-          <!-- Step 4: Activation -->
-          <div id="emp-s4" class="s2w-step-content" style="display:none;">
-            <div class="alert alert-info" style="margin-bottom:16px;">
-              <strong>Rejoindre votre entreprise</strong><br>
-              Demandez un Code Invitation à votre gérant pour relier votre compte au Dashboard de l'entreprise.
-            </div>
-            <div class="form-group">
-              <label class="form-label">Code Invitation (ex: INV-1234-ABCD)</label>
-              <input type="text" id="su-inv-code" class="input-field" placeholder="Laissez vide si vous n'avez pas de code" style="text-transform:uppercase;">
-            </div>
-            <div class="modal-actions" style="justify-content:space-between;">
-              <button class="btn-secondary" onclick="skipActivation()">Plus tard (Accès Limité)</button>
-              <button class="btn-primary" onclick="submitSignup()">Activer et Terminer</button>
+              <button class="btn-primary" onclick="submitSignup()">Terminer l'inscription</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- ==================== LOGIN MODAL ==================== -->
+<!-- ==================== LOGIN MODAL ==================== -->
     <div class="modal-overlay" id="login-modal">
       <div class="modal-sheet">
         <button class="modal-close" onclick="closeLoginModal()">×</button>
@@ -2090,6 +2352,24 @@
       <button class="min-bar-btn" onclick="switchTab('support')" aria-label="Support technique START2WAY">🤖</button>
     </div>
 
+    <!-- ==================== BOOKLET QUALIFICATION MODAL ==================== -->
+    <div class="modal-overlay" id="booklet-qualification-modal">
+      <div class="modal-sheet" style="max-height:85vh; overflow-y:auto; display:flex; flex-direction:column; padding: 20px;">
+        <button class="modal-close" onclick="closeBookletModal()">×</button>
+        <h3 class="modal-title">Livret Mensuel Incomplet</h3>
+        <p class="modal-desc" style="font-size: 13px; color: var(--text-sec); margin-bottom: 20px;">
+          Certaines journées du mois sélectionné n'ont aucune activité enregistrée. 
+          Conformément à la réglementation LIC, veuillez qualifier ces journées pour finaliser le livret.
+        </p>
+        <div id="booklet-unresolved-days" style="margin-bottom:20px; display:flex; flex-direction:column; gap:16px;">
+        </div>
+        <div class="modal-actions" style="justify-content:flex-end; gap: 8px;">
+          <button class="btn-action-secondary" onclick="closeBookletModal()" style="background:#eee; color:var(--text-main); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Annuler</button>
+          <button class="btn-action-primary" onclick="submitBookletQualifications()" style="background:var(--navy); color:var(--white); font-weight:700; font-size:13px; padding:12px; border-radius:8px; border:none; flex:1; cursor:pointer;">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL PAUSE -->
     <div class="modal-overlay" id="pause-modal" role="dialog" aria-modal="true"
       aria-labelledby="pause-modal-title">
@@ -2127,6 +2407,36 @@
           <button class="sheet-confirm" id="pause-confirm-btn" onclick="confirmPause()"
             disabled aria-label="Confirmer le type de pause">Confirmer la pause</button>
           <button class="sheet-cancel" onclick="closePauseModal()">Annuler — reprendre la conduite</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ODOMETER START MODAL -->
+    <div class="modal-overlay" id="modal-odometer-start" role="dialog" aria-modal="true" aria-labelledby="modal-odometer-start-title">
+      <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+        <h2 class="modal-title" id="modal-odometer-start-title">Kilométrage de départ</h2>
+        <p class="modal-sub">Veuillez saisir le kilométrage de départ pour le véhicule <strong id="odo-start-plate"></strong>.</p>
+        <div style="margin-top: 20px;">
+          <input type="number" id="odo-start-input" class="input-field" placeholder="Ex: 10500" style="width: 100%; box-sizing: border-box; font-size: 20px; padding: 12px; text-align: center;">
+        </div>
+        <div class="modal-actions" style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn-primary" onclick="submitOdometerStart()" style="flex:1;">Valider</button>
+          <button class="btn-secondary" onclick="cancelOdometer('modal-odometer-start')" style="flex:1; background:#eee; color:var(--text-main); border:none;">Annuler</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ODOMETER END MODAL -->
+    <div class="modal-overlay" id="modal-odometer-end" role="dialog" aria-modal="true" aria-labelledby="modal-odometer-end-title">
+      <div class="modal-sheet" style="padding:20px; box-sizing:border-box;">
+        <h2 class="modal-title" id="modal-odometer-end-title">Kilométrage de fin</h2>
+        <p class="modal-sub">Veuillez saisir le kilométrage de fin pour le véhicule <strong id="odo-end-plate"></strong>.</p>
+        <div style="margin-top: 20px;">
+          <input type="number" id="odo-end-input" class="input-field" placeholder="Ex: 10600" style="width: 100%; box-sizing: border-box; font-size: 20px; padding: 12px; text-align: center;">
+        </div>
+        <div class="modal-actions" style="margin-top:20px; display:flex; gap:10px;">
+          <button class="btn-primary" onclick="submitOdometerEnd()" style="flex:1;">Valider</button>
+          <button class="btn-secondary" onclick="cancelOdometer('modal-odometer-end')" style="flex:1; background:#eee; color:var(--text-main); border:none;">Annuler</button>
         </div>
       </div>
     </div>
@@ -2197,6 +2507,52 @@
           } else {
             removeLimitedMode();
           }
+          
+          // CRASH RECOVERY: Restore active session if any
+          const sessions = S2W.table('sessions') || [];
+          const activeSession = sessions.find(s => s.user_id === window.currentUserId && s.status === 'active');
+          if (activeSession) {
+             timerState = 'running';
+             sessionId = activeSession.id;
+             sessionDateStr = activeSession.date;
+             
+             if (activeSession.current_segment_started_at) {
+                currentSegmentStartedAt = activeSession.current_segment_started_at;
+             } else {
+                currentSegmentStartedAt = activeSession.started_at;
+                activeSession.current_segment_started_at = currentSegmentStartedAt;
+                S2W.update('sessions', sessionId, activeSession);
+             }
+
+             // Calculate elapsed time from segments
+             const allSegs = S2W.table('segments') || [];
+             const sessionSegs = allSegs.filter(s => s.session_id === activeSession.id);
+             
+             Object.keys(catTotals).forEach(k => catTotals[k] = 0);
+             elapsedSeconds = 0;
+             sessionSegs.forEach(s => {
+                if(catTotals[s.category] !== undefined) {
+                   catTotals[s.category] += s.duration_sec;
+                }
+                elapsedSeconds += s.duration_sec;
+             });
+
+             // Calculate open segment elapsed time
+             const openDuration = Math.round((Date.now() - new Date(currentSegmentStartedAt).getTime()) / 1000);
+             currentCategory = activeSession.current_segment_category || 'A';
+             if (openDuration > 0) {
+               catTotals[currentCategory] = (catTotals[currentCategory] || 0) + openDuration;
+               elapsedSeconds += openDuration;
+               segmentSeconds = openDuration;
+             } else {
+               segmentSeconds = 0;
+             }
+
+             setTimerUI('running', currentCategory);
+             if (typeof timerInterval === 'undefined' || !timerInterval) {
+               timerInterval = setInterval(tickTimer, 1000);
+             }
+          }
         }
 
         // Démarrer le polling 15s
@@ -2233,6 +2589,50 @@
     }
   }
 
+  function updateSessionCategory(newCat) {
+    if (!sessionId) return;
+    const session = S2W.find('sessions', sessionId);
+    if (session) {
+      session.current_segment_category = newCat;
+      S2W.update('sessions', sessionId, session);
+    }
+  }
+
+  function persistCurrentSegment(endTimestamp, categoryOverride) {
+    if (!sessionId) return;
+    const session = S2W.find('sessions', sessionId);
+    if (!session || !session.current_segment_started_at) return;
+    
+    const startedAt = session.current_segment_started_at;
+    const cat = categoryOverride || currentCategory;
+    const duration = Math.round((new Date(endTimestamp) - new Date(startedAt)) / 1000);
+    
+    if (duration > 0) {
+      const segment = {
+        id: S2WUtils.uid('seg'),
+        session_id: sessionId,
+        user_id: session.user_id,
+        employment_id: session.employment_id || 'emp_default',
+        company_id: session.company_id || null,
+        category: cat,
+        started_at: startedAt,
+        ended_at: endTimestamp,
+        duration_sec: duration,
+        business_timezone: session.business_timezone || 'Europe/Paris',
+        business_date: session.date
+      };
+      S2W.push('segments', segment);
+      
+      // On attache le segment complet au payload pour le backend
+      queueSyncAction('SAVE_SEGMENT', segment);
+    }
+    
+    // Le prochain segment démarre maintenant
+    session.current_segment_started_at = endTimestamp;
+    currentSegmentStartedAt = endTimestamp; // pour synchro globale mémoire
+    S2W.update('sessions', sessionId, session);
+  }
+
   function queueSyncAction(actionType, payload) {
     const data = S2W.get();
     if (!data.sync_queue) {
@@ -2256,17 +2656,223 @@
     }
   }
 
-  function triggerSyncPush() {
+    async function triggerSyncPush() {
+    console.log('triggerSyncPush called, _isOnline:', _isOnline);
     if (!_isOnline) return;
     const data = S2W.get();
     const queue = data.sync_queue || [];
+    console.log('queue length:', queue.length, queue);
+
+    const blockedOps = queue.filter(item => item.status === 'FAILED_BLOCKED' && item.blocked_reason === 'VERSION_CONFLICT' && item.conflict_id);
+    console.log('blockedOps:', blockedOps);
+    for (let op of blockedOps) {
+      try {
+        console.log('Sending recheck for ' + op.conflict_id);
+        const res = await fetch(`${window.START2WAY_API_BASE_URL || '/api'}/sync/conflicts/${op.conflict_id}/recheck`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-client-type': 'EMPLOYEE_APP',
+            'x-user-id': window.currentUserId
+          }
+        });
+        if (res.ok) {
+          const body = await res.json();
+          if (body.status === 'RESOLVED_ALREADY_APPLIED') {
+            op.status = 'COMPLETED';
+            op.resolution_type = 'ALREADY_APPLIED';
+            if (body.data) {
+              const items = data[op.entity] || [];
+              const idx = items.findIndex(i => i.id === op.entity_id);
+              if (idx > -1) {
+                const localItem = items[idx];
+                if (localItem.signed_at && !body.data.signed_at) {
+                    body.data.signed_at = localItem.signed_at;
+                    body.data.integrity_hash = localItem.integrity_hash;
+                }
+                items[idx] = Object.assign({}, items[idx], body.data);
+              } else {
+                items.push(body.data);
+              }
+              data[op.entity] = items;
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Recheck failed', err);
+      }
+    }
+
     const pending = queue.filter(item => item.status === 'PENDING');
+    let hasChanges = false;
     
-    if (pending.length === 0) return;
+    if (blockedOps.length > 0) {
+      hasChanges = true;
+    }
     
-    pending.forEach(item => {
-      item.status = 'COMPLETED';
-    });
+    if (pending.length > 0) {
+      for (let item of pending) {
+        if (item.action_type === 'SAVE_SEGMENT') {
+          try {
+            const res = await fetch(`${window.START2WAY_API_BASE_URL || '/api'}/sync/mutate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-client-type': 'EMPLOYEE_APP',
+                'x-user-id': window.currentUserId
+              },
+              body: JSON.stringify({
+                operation_id: item.id,
+                entity: 'segments',
+                entity_id: item.payload.id,
+                operation: 'UPDATE',
+                payload: item.payload
+              })
+            });
+            if (res.ok) {
+              item.status = 'COMPLETED';
+            } else if (res.status === 409) {
+              const errBody = await res.json();
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = errBody.error || 'VERSION_CONFLICT';
+              item.conflict_id = errBody.conflict_id || null;
+            } else if (res.status === 400 || res.status === 403) {
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = 'VALIDATION_FAILED';
+            } else {
+              item.status = 'FAILED_RETRYABLE';
+            }
+          } catch (e) {
+            console.error('Sync network error', e);
+            item.status = 'FAILED_RETRYABLE';
+          }
+        } else if (item.action_type === 'SAVE_FEUILLET') {
+          try {
+            const res = await fetch(`${window.START2WAY_API_BASE_URL || '/api'}/sync/mutate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-client-type': 'EMPLOYEE_APP',
+                'x-user-id': window.currentUserId
+              },
+              body: JSON.stringify({
+                operation_id: item.id,
+                entity: 'feuillets',
+                entity_id: item.payload.id,
+                operation: 'UPDATE',
+                payload: item.payload
+              })
+            });
+            if (res.ok) {
+              item.status = 'COMPLETED';
+              const fIdx = (data.feuillets || []).findIndex(f => f.id === item.payload.id);
+              if (fIdx > -1) {
+                data.feuillets[fIdx].status_sync = 'SYNCED_CONFIRMED';
+              }
+            } else if (res.status === 409) {
+              const errBody = await res.json();
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = errBody.error || 'VERSION_CONFLICT';
+              item.conflict_id = errBody.conflict_id || null;
+            } else if (res.status === 400 || res.status === 403) {
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = 'VALIDATION_FAILED';
+            } else {
+              item.status = 'FAILED_RETRYABLE';
+            }
+          } catch (e) {
+            console.error('Sync network error', e);
+            item.status = 'FAILED_RETRYABLE';
+          }
+        } else if (item.action_type === 'SAVE_VEHICLE_USAGE') {
+          try {
+            const res = await fetch(`${window.START2WAY_API_BASE_URL || '/api'}/sync/mutate`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-client-type': 'EMPLOYEE_APP',
+                'x-user-id': window.currentUserId
+              },
+              body: JSON.stringify({
+                operation_id: item.id,
+                entity: 'vehicle_usages',
+                entity_id: item.payload.id,
+                operation: 'UPDATE',
+                payload: item.payload
+              })
+            });
+            if (res.ok) {
+              item.status = 'COMPLETED';
+              const vuIdx = (data.vehicle_usages || []).findIndex(vu => vu.id === item.payload.id);
+              if (vuIdx > -1) {
+                data.vehicle_usages[vuIdx].status_sync = 'SYNCED_CONFIRMED';
+              }
+            } else if (res.status === 409) {
+              const errBody = await res.json();
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = errBody.error || 'VERSION_CONFLICT';
+              item.conflict_id = errBody.conflict_id || null;
+            } else if (res.status === 400 || res.status === 403) {
+              item.status = 'FAILED_BLOCKED';
+              item.blocked_reason = 'VALIDATION_FAILED';
+            } else {
+              item.status = 'FAILED_RETRYABLE';
+            }
+          } catch (e) {
+            console.error('Sync network error', e);
+            item.status = 'FAILED_RETRYABLE';
+          }
+        } else if (item.action_type === 'START_SESSION' || item.action_type === 'STOP_SESSION') {
+          const eventPayload = item.payload.event;
+          if (eventPayload) {
+            try {
+              const res = await fetch(`${window.START2WAY_API_BASE_URL || '/api'}/sync/mutate`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-client-type': 'EMPLOYEE_APP',
+                  'x-user-id': window.currentUserId
+                },
+                body: JSON.stringify({
+                  operation_id: item.id,
+                  entity: 'event_logs',
+                  entity_id: eventPayload.id,
+                  operation: 'UPDATE',
+                  payload: eventPayload
+                })
+              });
+              if (res.ok) {
+                item.status = 'COMPLETED';
+                const evtIdx = (data.event_logs || []).findIndex(e => e.id === eventPayload.id);
+                if (evtIdx > -1) {
+                  data.event_logs[evtIdx]._dirty = false;
+                }
+              } else if (res.status === 409) {
+                const errBody = await res.json();
+                item.status = 'FAILED_BLOCKED';
+                item.blocked_reason = errBody.error || 'VERSION_CONFLICT';
+                item.conflict_id = errBody.conflict_id || null;
+              } else if (res.status === 400 || res.status === 403) {
+                item.status = 'FAILED_BLOCKED';
+                item.blocked_reason = 'VALIDATION_FAILED';
+              } else {
+                item.status = 'FAILED_RETRYABLE';
+              }
+            } catch (e) {
+              console.error('Sync network error', e);
+              item.status = 'FAILED_RETRYABLE';
+            }
+          } else {
+            item.status = 'COMPLETED';
+          }
+        } else {
+          item.status = 'COMPLETED'; // Mock retrocompat
+        }
+      }
+      hasChanges = true;
+    }
+    
+    if (!hasChanges) return;
     
     data.sync_queue = queue.filter(item => item.status !== 'COMPLETED');
     S2W.set(data);
@@ -2278,7 +2884,7 @@
     let isActivated = false;
     const invitations = S2W.table('invitations') || [];
     
-    if (user && user.company_id) {
+    if (user && (function(u) { const emps = window.S2W ? window.S2W.table('employments') || [] : []; return emps.some(e => e.user_id === u.id && e.status === 'active'); })(user)) {
       const latestInv = invitations.filter(i => i.type === 'invitation' && i.used_by_user_id === user.id)
                                    .sort((a,b) => new Date(b.used_at) - new Date(a.used_at))[0];
       if (latestInv) {
@@ -3915,10 +4521,71 @@
   }
 
   function confirmVehicleSelection(vid) {
-    S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
-    updateVehiclePill(vid);
+    if (getCurrentVehicleId() === vid) {
+      document.getElementById('mob-vehicle-sheet').classList.remove('open');
+      return;
+    }
+
+    let empId = window.currentEmploymentId;
+    const employments = S2W.table('employments') || [];
+    if (!empId) empId = employments.find(e => e.user_id === window.currentUserId && e.status === 'active')?.id;
+    if (!empId) {
+      S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
+      updateVehiclePill(vid);
+      document.getElementById('mob-vehicle-sheet').classList.remove('open');
+      return;
+    }
+
+    const tz = employments.find(e => e.id === empId)?.business_timezone || 'Europe/Paris';
+    const todayStr = S2WUtils.getBusinessDate(new Date().toISOString(), tz);
+    const activeUsage = getActiveVehicleUsage(window.currentUserId, empId, todayStr);
+
     document.getElementById('mob-vehicle-sheet').classList.remove('open');
-    showMobToast("Véhicule mis à jour");
+
+    if (activeUsage) {
+      openOdometerEnd(activeUsage, (kmEnd) => {
+        if (kmEnd !== undefined) {
+          activeUsage.ended_at = new Date().toISOString();
+          activeUsage.odometer_end = kmEnd;
+          S2W.update('vehicle_usages', activeUsage.id, activeUsage);
+          queueSyncAction('SAVE_VEHICLE_USAGE', activeUsage);
+          
+          openOdometerStart(vid, (kmStart) => {
+             if (kmStart !== undefined) {
+                const v = S2W.find('vehicles', vid);
+                const newUsage = {
+                  id: S2WUtils.uid('vu'),
+                  user_id: window.currentUserId,
+                  employment_id: empId,
+                  business_date: todayStr,
+                  business_timezone: tz,
+                  vehicle_id: vid,
+                  plate_snapshot: v ? (v.immatriculation || v.plate_number) : '',
+                  started_at: new Date().toISOString(),
+                  ended_at: null,
+                  odometer_start: kmStart,
+                  odometer_end: null,
+                  status_sync: 'PENDING_SYNC'
+                };
+                S2W.push('vehicle_usages', newUsage);
+                queueSyncAction('SAVE_VEHICLE_USAGE', newUsage);
+
+                S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
+                updateVehiclePill(vid);
+                showMobToast("Véhicule mis à jour");
+             } else {
+                // If cancelled start, still update UI selection
+                S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
+                updateVehiclePill(vid);
+             }
+          });
+        }
+      });
+    } else {
+      S2W.update('users', window.currentUserId, { current_vehicle_id: vid });
+      updateVehiclePill(vid);
+      showMobToast("Véhicule mis à jour");
+    }
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -3929,6 +4596,7 @@
   let currentCategory = 'A';  // Catégorie en cours
   let elapsedSeconds = 0;     // Temps total session
   let segmentSeconds = 0;     // Temps segment actif
+  let currentSegmentStartedAt = null; // Heure réelle de début du segment en cours
   let sessionId = null;
   let sessionDateStr = null;
 
@@ -3975,10 +4643,122 @@
     }
   }
 
+  /* ─── VEHICLE USAGES (F2A) ───────────────────────────────────────────── */
+  function getActiveVehicleUsage(userId, empId, dateStr) {
+    const usages = S2W.table('vehicle_usages') || [];
+    return usages.find(u => u.user_id === userId && u.employment_id === empId && u.business_date === dateStr && !u.ended_at);
+  }
+
+  function getMissingOdometerUsage(userId, empId, dateStr) {
+    const usages = getVehicleUsagesForDay(userId, empId, dateStr);
+    return usages.find(u => u.odometer_end == null);
+  }
+
+  function getVehicleUsagesForDay(userId, empId, dateStr) {
+    const usages = S2W.table('vehicle_usages') || [];
+    return usages.filter(u => u.user_id === userId && u.employment_id === empId && u.business_date === dateStr).sort((a,b) => new Date(a.started_at) - new Date(b.started_at));
+  }
+
+  let pendingVehicleAction = null; // callback
+  let pendingVehicleUsage = null;
+
+  function openOdometerStart(vid, callback) {
+    const v = S2W.find('vehicles', vid);
+    if (!v) return callback(); // fallback
+    document.getElementById('odo-start-plate').textContent = v.immatriculation || v.plate_number;
+    document.getElementById('odo-start-input').value = '';
+    document.getElementById('modal-odometer-start').style.display = 'flex';
+    pendingVehicleAction = callback;
+  }
+
+  function openOdometerEnd(usage, callback) {
+    document.getElementById('odo-end-plate').textContent = usage.plate_snapshot;
+    document.getElementById('odo-end-input').value = '';
+    document.getElementById('modal-odometer-end').style.display = 'flex';
+    pendingVehicleAction = callback;
+    pendingVehicleUsage = usage;
+  }
+
+  function submitOdometerStart() {
+    const val = document.getElementById('odo-start-input').value;
+    if (!val) return showMobToast("Veuillez saisir le kilométrage de départ.");
+    document.getElementById('modal-odometer-start').style.display = 'none';
+    if (pendingVehicleAction) pendingVehicleAction(parseInt(val, 10));
+    pendingVehicleAction = null;
+  }
+
+  function submitOdometerEnd() {
+    const val = document.getElementById('odo-end-input').value;
+    if (!val) return showMobToast("Veuillez saisir le kilométrage de fin.");
+    
+    const kmEnd = parseInt(val, 10);
+    if (pendingVehicleUsage && pendingVehicleUsage.odometer_start != null && kmEnd < pendingVehicleUsage.odometer_start) {
+      return showMobToast("Le kilométrage de fin doit être supérieur ou égal au kilométrage de départ (" + pendingVehicleUsage.odometer_start + ").");
+    }
+
+    document.getElementById('modal-odometer-end').style.display = 'none';
+    if (pendingVehicleAction) pendingVehicleAction(kmEnd);
+    pendingVehicleAction = null;
+    pendingVehicleUsage = null;
+  }
+
+  function cancelOdometer(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    if (pendingVehicleAction) pendingVehicleAction(undefined);
+    pendingVehicleAction = null;
+  }
+
+  function ensureActiveVehicleUsage(callback) {
+    let empId = window.currentEmploymentId;
+    const employments = S2W.table('employments') || [];
+    if (!empId) empId = employments.find(e => e.user_id === window.currentUserId && e.status === 'active')?.id;
+    if (!empId) return callback();
+    
+    const tz = employments.find(e => e.id === empId)?.business_timezone || 'Europe/Paris';
+    const todayStr = S2WUtils.getBusinessDate(new Date().toISOString(), tz);
+    const activeUsage = getActiveVehicleUsage(window.currentUserId, empId, todayStr);
+    
+    if (activeUsage) {
+      return callback(); // Already active
+    }
+    
+    const vid = getCurrentVehicleId();
+    openOdometerStart(vid, (kmStart) => {
+      if (kmStart !== undefined) {
+        const v = S2W.find('vehicles', vid);
+        const newUsage = {
+          id: S2WUtils.uid('vu'),
+          user_id: window.currentUserId,
+          employment_id: empId,
+          business_date: todayStr,
+          business_timezone: tz,
+          vehicle_id: vid,
+          plate_snapshot: v ? (v.immatriculation || v.plate_number) : '',
+          started_at: new Date().toISOString(),
+          ended_at: null,
+          odometer_start: kmStart,
+          odometer_end: null,
+          status_sync: 'PENDING_SYNC'
+        };
+        S2W.push('vehicle_usages', newUsage);
+        queueSyncAction('SAVE_VEHICLE_USAGE', newUsage);
+      }
+      callback();
+    });
+  }
+
   function startTimer() {
     if (timerState !== 'idle') return;
 
-    const todayStr = new Date().toISOString().slice(0,10);
+    let empId = window.currentEmploymentId;
+    const employments = S2W.table('employments') || [];
+    if (!empId) {
+      const emp = employments.find(e => e.user_id === window.currentUserId && e.status === 'active');
+      if (emp) empId = emp.id;
+    }
+    const tz = employments.find(e => e.id === empId)?.business_timezone || 'Europe/Paris';
+    const todayStr = S2WUtils.getBusinessDate(new Date().toISOString(), tz);
+    
     const sessions = S2W.table('sessions') || [];
     const closedToday = sessions.find(s => s.user_id === window.currentUserId && s.date === todayStr && s.status === 'closed');
     
@@ -3987,7 +4767,7 @@
       return;
     }
 
-    proceedStartNewSession();
+    ensureActiveVehicleUsage(proceedStartNewSession);
   }
 
   function promptReopenSession(closedToday) {
@@ -4042,8 +4822,6 @@
 
     document.getElementById('reopen-session-modal').classList.remove('open');
 
-    const todayStr = new Date().toISOString().slice(0,10);
-
     // Logger la réouverture
     const logRecord = {
       id: S2WUtils.uid('reop'),
@@ -4071,7 +4849,7 @@
     // Restaurer l'état
     timerState = 'running';
     sessionId = closedToday.id;
-    sessionDateStr = todayStr;
+    sessionDateStr = closedToday.date;
     
     // Recharger les secondes déjà écoulées
     const allSegs = S2W.table('segments') || [];
@@ -4087,14 +4865,95 @@
     currentCategory = 'A';
     segmentSeconds = 0;
 
-    setTimerUI('running', 'A');
-    timerInterval = setInterval(tickTimer, 1000);
-    queueSyncAction('REOPEN_SESSION', { session_id: closedToday.id });
-    showMobToast('Service réouvert avec succès ✓');
+    ensureActiveVehicleUsage(() => {
+      setTimerUI('running', 'A');
+      timerInterval = setInterval(tickTimer, 1000);
+      queueSyncAction('REOPEN_SESSION', { session_id: closedToday.id });
+      showMobToast('Service réouvert avec succès ✓');
+    });
   }
 
-  function proceedStartNewSession() {
-    const todayStr = new Date().toISOString().slice(0,10);
+  async function captureCurrentPosition() {
+    const captured_at = new Date().toISOString();
+    
+    if (!navigator.geolocation) {
+      return {
+        status: "FAILED",
+        error_code: "GEOLOCATION_UNSUPPORTED",
+        captured_at,
+        source: "WEB_GEOLOCATION"
+      };
+    }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            status: "CAPTURED",
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            position_timestamp: position.timestamp,
+            captured_at: new Date().toISOString(),
+            source: "WEB_GEOLOCATION"
+          });
+        },
+        (error) => {
+          let error_code = "GEOLOCATION_ERROR";
+          if (error.code === error.PERMISSION_DENIED) error_code = "PERMISSION_DENIED";
+          if (error.code === error.POSITION_UNAVAILABLE) error_code = "POSITION_UNAVAILABLE";
+          if (error.code === error.TIMEOUT) error_code = "TIMEOUT";
+          
+          resolve({
+            status: "FAILED",
+            error_code: error_code,
+            captured_at: new Date().toISOString(),
+            source: "WEB_GEOLOCATION"
+          });
+        },
+        options
+      );
+    });
+  }
+
+  async function proceedStartNewSession() {
+    const serverStart = new Date().toISOString();
+    const currentUser = S2WUtils.getLoggedInUser();
+    if (!currentUser) {
+      showMobToast('Utilisateur non connecté', 'error');
+      return;
+    }
+
+    let empId = window.currentEmploymentId;
+    let compId = null;
+    const employments = window.S2W.table('employments') || [];
+    // VALIDER L'EMPLOYMENT ACTIF: existant, appartenant à currentUserId, et status === 'active'
+    const emp = employments.find(e => e.id === empId && e.user_id === currentUser.id && e.status === 'active');
+    
+    if (emp) {
+      compId = emp.company_id;
+    } else {
+      // EN CAS D'EMPLOYMENT INVALIDE: bloquer silencieusement et ne pas créer de fausse session
+      showMobToast('Veuillez sélectionner un contexte professionnel actif.', 'error');
+      return;
+    }
+    
+    let tz;
+    try {
+      tz = S2WUtils.getEmploymentBusinessTimezone(empId, true);
+    } catch (e) {
+      console.error(e);
+      showMobToast('Configuration entreprise invalide (fuseau horaire manquant ou incorrect).', 'error');
+      return;
+    }
+    
+    const todayStr = S2WUtils.getBusinessDate(serverStart, tz);
 
     timerState = 'running';
     currentCategory = 'A';
@@ -4104,29 +4963,48 @@
 
     sessionDateStr = todayStr;
     sessionId = S2WUtils.uid('ses');
-    const serverStart = new Date().toISOString();
     const localStart = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
 
     S2W.push('sessions', {
       id: sessionId, user_id: window.currentUserId, vehicle_id: getCurrentVehicleId(),
+      employment_id: empId,
+      company_id: compId,
+      business_timezone: tz,
       date: todayStr,
       started_at: serverStart,
+      current_segment_started_at: serverStart,
+      current_segment_category: 'A',
       stopped_at: null, status: 'active'
     });
+
+    showMobToast('Acquisition de la position...');
+    const geo = await captureCurrentPosition();
 
     // Logger l'événement d'embauche avec dérive d'horloge et GPS
     const eventRecord = {
       id: S2WUtils.uid('evt'),
       session_id: sessionId,
       event_type: 'CLOCK_IN',
+      business_date: todayStr,
+      business_timezone: tz,
       local_timestamp: localStart,
       server_timestamp: serverStart,
       device_clock_diff: _devClockDriftSec,
-      gps_latitude: 49.4181,
-      gps_longitude: 2.8224,
+      
+      gps_status: geo.status,
+      gps_latitude: geo.latitude,
+      gps_longitude: geo.longitude,
+      gps_accuracy: geo.accuracy,
+      gps_captured_at: geo.captured_at,
+      gps_position_timestamp: geo.position_timestamp,
+      gps_source: geo.source,
+      gps_error_code: geo.error_code,
+
       integrity_hash: 'lh_evt_' + Math.random().toString(36).slice(2, 10)
     };
     S2W.push('event_logs', eventRecord);
+
+    currentSegmentStartedAt = serverStart;
 
     setTimerUI('running', 'A');
     timerInterval = setInterval(tickTimer, 1000);
@@ -4143,7 +5021,7 @@
     openPauseModal();
   }
 
-  function stopTimer() {
+  async function stopTimer() {
     if (timerState === 'idle') return;
     clearInterval(timerInterval);
 
@@ -4152,53 +5030,44 @@
       const serverStop = new Date().toISOString();
       const localStop = new Date(Date.now() + _devClockDriftSec * 1000).toISOString();
 
+      persistCurrentSegment(serverStop);
+
       S2W.update('sessions', sessionId, {
         stopped_at: serverStop, status: 'closed'
       });
+
+      showMobToast('Acquisition de la position...');
+      const geo = await captureCurrentPosition();
+
+      // Récupérer la date et la timezone depuis la session
+      const sess = S2W.get().sessions.find(s => s.id === sessionId);
+      const bizDate = sess ? sess.date : '';
+      const bizTz = sess ? sess.business_timezone : '';
 
       // Logger l'événement de débauche avec dérive d'horloge et GPS
       const eventRecord = {
         id: S2WUtils.uid('evt'),
         session_id: sessionId,
         event_type: 'CLOCK_OUT',
+        business_date: bizDate,
+        business_timezone: bizTz,
         local_timestamp: localStop,
         server_timestamp: serverStop,
         device_clock_diff: _devClockDriftSec,
-        gps_latitude: 49.4181,
-        gps_longitude: 2.8224,
+        
+        gps_status: geo.status,
+        gps_latitude: geo.latitude,
+        gps_longitude: geo.longitude,
+        gps_accuracy: geo.accuracy,
+        gps_captured_at: geo.captured_at,
+        gps_position_timestamp: geo.position_timestamp,
+        gps_source: geo.source,
+        gps_error_code: geo.error_code,
+
         integrity_hash: 'lh_evt_' + Math.random().toString(36).slice(2, 10)
       };
       S2W.push('event_logs', eventRecord);
 
-      const total_a_sec = catTotals.A;
-      const total_b_sec = catTotals.B;
-      const total_c_sec = catTotals.C;
-      const total_d_sec = catTotals.D;
-      
-      const fmt = (sec) => S2WUtils.fmtDuration(sec);
-      
-      const E = total_a_sec + total_b_sec + total_c_sec;
-      const total = E + total_d_sec;
-      const check24 = Math.abs(total - 86400) <= 120;
-      const checkDrive = total_a_sec <= 9 * 3600;
-      const status = (check24 && checkDrive) ? 'conforme' : 'non_conforme';
-
-      S2W.push('feuillets', {
-        id: S2WUtils.uid('feu'),
-        session_id: sessionId,
-        total_a_sec,
-        total_b_sec,
-        total_c_sec,
-        total_d_sec,
-        total_a: fmt(total_a_sec),
-        total_b: fmt(total_b_sec),
-        total_c: fmt(total_c_sec),
-        total_d: fmt(total_d_sec),
-        status: status,
-        integrity_hash: 'lh_' + Math.random().toString(36).slice(2, 10),
-        generated_at: serverStop,
-        signed_at: null
-      });
       queueSyncAction('STOP_SESSION', { session_id: sessionId, event: eventRecord });
     }
 
@@ -4211,7 +5080,7 @@
     updateGauges(0, 0);
 
     if (navigator.vibrate) navigator.vibrate([100,50,100]);
-    showMobToast('Session terminée — Feuillet disponible dans l\'onglet Feuillet');
+    showMobToast('Service arrêté (reprise possible aujourd\'hui).');
   }
 
   function tickTimer() {
@@ -4230,57 +5099,93 @@
   }
 
   function checkMidnightAutoCut() {
-    if (timerState === 'idle') return;
-    const nowStr = new Date().toISOString().slice(0, 10);
-    if (sessionDateStr && nowStr !== sessionDateStr) {
-      if (sessionId) {
-        // Clôturer la session d'hier
-        S2W.update('sessions', sessionId, {
-          stopped_at: sessionDateStr + 'T23:59:59Z', status: 'closed'
-        });
+    if (timerState === 'idle' || !sessionId) return;
+    
+    const session = S2W.find('sessions', sessionId);
+    if (!session) return;
 
-        // Générer le feuillet d'hier
-        const total_a_sec = catTotals.A;
-        const total_b_sec = catTotals.B;
-        const total_c_sec = catTotals.C;
-        const total_d_sec = catTotals.D;
-        const fmt = (sec) => S2WUtils.fmtDuration(sec);
-        
-        const E = total_a_sec + total_b_sec + total_c_sec;
-        const total = E + total_d_sec;
-        const check24 = Math.abs(total - 86400) <= 120;
-        const checkDrive = total_a_sec <= 9 * 3600;
-        const status = (check24 && checkDrive) ? 'conforme' : 'non_conforme';
+    const tz = session.business_timezone || 'Europe/Paris';
+    const nowIso = new Date().toISOString();
+    const currentBusinessDate = S2WUtils.getBusinessDate(nowIso, tz);
 
-        S2W.push('feuillets', {
-          id: S2WUtils.uid('feu'),
-          session_id: sessionId,
-          total_a_sec,
-          total_b_sec,
-          total_c_sec,
-          total_d_sec,
-          total_a: fmt(total_a_sec),
-          total_b: fmt(total_b_sec),
-          total_c: fmt(total_c_sec),
-          total_d: fmt(total_d_sec),
-          status: status,
-          integrity_hash: 'lh_' + Math.random().toString(36).slice(2, 10),
-          generated_at: sessionDateStr + 'T23:59:59Z',
-          signed_at: null // Statut Non signé
-        });
-      }
+    if (session.date && currentBusinessDate !== session.date) {
+      // Calcul du timestamp exact du minuit métier en UTC
+      const nextMidnightUTC = S2WUtils.getMidnightUTC(currentBusinessDate, tz);
+
+      // Clôturer le segment courant à minuit précis
+      persistCurrentSegment(nextMidnightUTC);
+
+      // Clôturer la session d'hier
+      session.stopped_at = nextMidnightUTC;
+      session.status = 'closed';
+      S2W.update('sessions', sessionId, session);
+
+      // Générer le feuillet d'hier
+      const totals = computeFeuilletTotals(session.user_id, session.employment_id, session.date);
+      const fmt = (sec) => S2WUtils.fmtDuration(sec);
+      
+      const allUsers = S2W.table('users') || [];
+      const user = allUsers.find(u => u.id === session.user_id) || {};
+      const allCompanies = S2W.table('companies') || [];
+      const company = allCompanies.find(c => c.id === session.company_id) || {};
+
+      const feuillet = {
+        id: S2WUtils.uid('feu'),
+        session_id: sessionId,
+        employment_id: session.employment_id,
+        user_id: session.user_id,
+        company_id: session.company_id,
+        business_date: session.date,
+        business_timezone: tz,
+        total_a_sec: totals.A_sec,
+        total_b_sec: totals.B_sec,
+        total_c_sec: totals.C_sec,
+        total_d_sec: totals.D_sec,
+        total_a: fmt(totals.A_sec),
+        total_b: fmt(totals.B_sec),
+        total_c: fmt(totals.C_sec),
+        total_d: fmt(totals.D_sec),
+        status: totals.status,
+        status_sync: 'CLOSED_LOCAL',
+        integrity_hash: 'lh_' + Math.random().toString(36).slice(2, 10),
+        generated_at: nextMidnightUTC,
+        signed_at: null,
+        employee_snapshot: {
+          user_id: session.user_id,
+          first_name: user.first_name || '',
+          last_name: user.last_name || ''
+        },
+        company_snapshot: {
+          company_id: session.company_id,
+          name: company.name || ''
+        }
+      };
+
+      S2W.push('feuillets', feuillet);
+      queueSyncAction('SAVE_FEUILLET', feuillet);
 
       // Ouvrir la session d'aujourd'hui
       const oldCategory = currentCategory;
-      sessionDateStr = nowStr;
+      sessionDateStr = currentBusinessDate;
       sessionId = S2WUtils.uid('ses');
 
       S2W.push('sessions', {
-        id: sessionId, user_id: window.currentUserId, vehicle_id: getCurrentVehicleId(),
-        date: nowStr,
-        started_at: nowStr + 'T00:00:00Z',
-        stopped_at: null, status: 'active'
+        id: sessionId, 
+        user_id: window.currentUserId, 
+        vehicle_id: getCurrentVehicleId(),
+        employment_id: session.employment_id,
+        company_id: session.company_id,
+        business_timezone: tz,
+        date: currentBusinessDate,
+        started_at: nextMidnightUTC,
+        current_segment_started_at: nextMidnightUTC,
+        current_segment_category: oldCategory,
+        stopped_at: null, 
+        status: 'active'
       });
+
+      // Le nouveau segment démarre à minuit
+      currentSegmentStartedAt = nextMidnightUTC;
 
       // Réinitialiser les compteurs
       elapsedSeconds = 0;
@@ -4437,7 +5342,15 @@
   function closePauseModal() {
     document.getElementById('pause-modal').classList.remove('open');
     if (timerState === 'paused') {
-      // Reprise sans changer de catégorie
+      if (currentCategory !== 'A') {
+        catTotals[currentCategory] = catTotals[currentCategory] || 0;
+        persistCurrentSegment(new Date().toISOString());
+        currentCategory = 'A';
+        segmentSeconds = 0;
+        if (navigator.vibrate) navigator.vibrate(50);
+        queueSyncAction('CHANGE_CATEGORY', { category: 'A' });
+        showMobToast(`Reprise — Catégorie A (${CAT_LABELS['A']})`);
+      }
       timerState = 'running';
       setTimerUI('running', currentCategory);
       timerInterval = setInterval(tickTimer, 1000);
@@ -4459,10 +5372,13 @@
 
   function confirmPause() {
     if (!selectedPauseCat) return;
-    // Sauvegarder le segment A terminé
+    // Sauvegarder le segment terminé
     catTotals[currentCategory] = catTotals[currentCategory] || 0;
+    persistCurrentSegment(new Date().toISOString());
+
     // Commencer le nouveau segment
     currentCategory = selectedPauseCat;
+    updateSessionCategory(currentCategory);
     segmentSeconds = 0;
     timerState = 'running';
 
@@ -4470,6 +5386,8 @@
     setTimerUI('running', currentCategory);
     timerInterval = setInterval(tickTimer, 1000);
     if (navigator.vibrate) navigator.vibrate(50);
+    // Note: queueSyncAction est déjà appelé dans persistCurrentSegment mais sous forme de SAVE_SEGMENT.
+    // L'ancien CHANGE_CATEGORY est conservé pour la rétrocompatibilité
     queueSyncAction('CHANGE_CATEGORY', { category: currentCategory });
     showMobToast(`Pause démarrée — Catégorie ${currentCategory} (${CAT_LABELS[currentCategory]})`);
   }
@@ -4483,15 +5401,16 @@
     '2026-08-14': { A_sec:32520, B_sec:0,    C_sec:0,    D_sec:54480, signed:false },
   };
 
-  function getFeuilletSegments(sessionId, data) {
-    let segments = [];
-    
-    // Si on a des segments persistés dans le localStorage
-    const allSegs = S2W.table('segments') || [];
-    segments = allSegs.filter(s => s.session_id === sessionId);
-    
-    if (segments.length === 0) {
-      // Générer une répartition fictive réaliste et proportionnelle
+  function getFeuilletSegments(userId, employmentId, dateStr) {
+    const allSessions = S2W.table('sessions') || [];
+    const sessionIds = allSessions
+      .filter(s => s.user_id === userId && s.employment_id === employmentId && s.date === dateStr)
+      .map(s => s.id);
+      
+    if (sessionIds.length === 0 && FEUILLETS_DEMO[dateStr]) {
+      // Mocked demo data logic kept for demo purposes
+      let segments = [];
+      const data = FEUILLETS_DEMO[dateStr];
       const aVal = data.A_sec || 0;
       const bVal = data.B_sec || 0;
       const cVal = data.C_sec || 0;
@@ -4515,15 +5434,156 @@
         current += sec;
       };
       
-      addSeg('D', d1);
-      addSeg('A', a1);
-      addSeg('B', bVal);
-      addSeg('D', d2);
-      addSeg('A', a2);
-      addSeg('C', cVal);
-      addSeg('D', d3);
+      addSeg('D', d1); addSeg('A', a1); addSeg('B', bVal); addSeg('D', d2); addSeg('A', a2); addSeg('C', cVal); addSeg('D', d3);
+      return segments;
     }
-    return segments;
+
+    const allSegs = S2W.table('segments') || [];
+    return allSegs.filter(s => sessionIds.includes(s.session_id));
+  }
+
+  function computeFeuilletTotals(userId, employmentId, dateStr) {
+    const segments = getFeuilletSegments(userId, employmentId, dateStr);
+    
+    let A_sec = 0, B_sec = 0, C_sec = 0, D_sec = 0;
+    
+    segments.forEach(seg => {
+      const dur = seg.duration_sec || 0;
+      if (seg.category === 'A') A_sec += dur;
+      else if (seg.category === 'B') B_sec += dur;
+      else if (seg.category === 'C') C_sec += dur;
+      else if (seg.category === 'D') D_sec += dur;
+    });
+    
+    const E = A_sec + B_sec + C_sec;
+    const total = E + D_sec;
+    
+    const check24 = Math.abs(total - 86400) <= 120;
+    const checkDrive = A_sec <= 9 * 3600;
+    const status = (check24 && checkDrive) ? 'conforme' : 'non_conforme';
+    
+    return { A_sec, B_sec, C_sec, D_sec, E, total, status, segments, check24, checkDrive };
+  }
+
+  function getFeuilletLocations(userId, employmentId, dateStr) {
+    const data = S2W.get();
+    const sessions = (data.sessions || []).filter(s => 
+      s.user_id === userId && 
+      s.employment_id === employmentId && 
+      s.date === dateStr
+    );
+    const sessionIds = sessions.map(s => s.id);
+    const events = (data.event_logs || []).filter(e => sessionIds.includes(e.session_id) && (e.event_type === 'CLOCK_IN' || e.event_type === 'CLOCK_OUT'));
+    
+    // Trier les événements chronologiquement
+    events.sort((a, b) => new Date(a.server_timestamp) - new Date(b.server_timestamp));
+    
+    const clockIns = events.filter(e => e.event_type === 'CLOCK_IN');
+    const clockOuts = events.filter(e => e.event_type === 'CLOCK_OUT');
+    
+    const firstIn = clockIns.length > 0 ? clockIns[0] : null;
+    const lastOut = clockOuts.length > 0 ? clockOuts[clockOuts.length - 1] : null;
+    
+    const extractLoc = (evt) => {
+      if (!evt) return null;
+      if (evt.gps_status === 'CAPTURED') {
+        return {
+          status: 'CAPTURED',
+          latitude: evt.gps_latitude,
+          longitude: evt.gps_longitude,
+          accuracy: evt.gps_accuracy,
+          captured_at: evt.gps_captured_at,
+          position_timestamp: evt.gps_position_timestamp,
+          source: evt.gps_source,
+          clock_time: evt.server_timestamp || evt.client_timestamp,
+          _dirty: evt._dirty
+        };
+      } else {
+        return {
+          status: 'FAILED',
+          error_code: evt.gps_error_code,
+          _dirty: evt._dirty
+        };
+      }
+    };
+    
+    return {
+      start_location: extractLoc(firstIn),
+      end_location: extractLoc(lastOut),
+      all_location_events: events
+    };
+  }
+
+  function canSignFeuillet(userId, employmentId, dateStr) {
+    if (FEUILLETS_DEMO[dateStr]) return true; // allow demo signature
+
+    const data = S2W.get();
+    const feuillets = data.feuillets || [];
+    const feuillet = feuillets.find(f => f.user_id === userId && f.employment_id === employmentId && f.business_date === dateStr);
+    
+    // A. Feuillet est généré et CLOSED_LOCAL ou +
+    if (!feuillet) return false;
+    if (feuillet.status_sync !== 'CLOSED_LOCAL' && feuillet.status_sync !== 'PENDING_SYNC' && feuillet.status_sync !== 'SYNCED_CONFIRMED') {
+       return false;
+    }
+    
+    // B & C. Aucune opération PENDING/FAILED sur cette journée (segments ou session ou feuillet)
+    const queue = data.sync_queue || [];
+    const allSessions = data.sessions || [];
+    const sessionIds = allSessions
+      .filter(s => s.user_id === userId && s.employment_id === employmentId && s.date === dateStr)
+      .map(s => s.id);
+      
+    const hasPendingBlocks = queue.some(item => {
+      if ((item.action_type === 'SAVE_SEGMENT' || item.action_type === 'STOP_SESSION') && item.payload) {
+        if (sessionIds.includes(item.payload.session_id)) {
+          if (item.status === 'PENDING' || item.status === 'FAILED_RETRYABLE' || item.status === 'FAILED_BLOCKED') {
+            return true;
+          }
+        }
+      }
+      if (item.action_type === 'SAVE_FEUILLET' && item.payload) {
+        if (item.payload.id === feuillet.id) {
+          if (item.status === 'PENDING' || item.status === 'FAILED_RETRYABLE' || item.status === 'FAILED_BLOCKED') {
+            return true;
+          }
+        }
+      }
+      if (item.action_type === 'SAVE_VEHICLE_USAGE' && item.payload) {
+        if (item.payload.business_date === dateStr && item.payload.user_id === userId && item.payload.employment_id === employmentId) {
+          if (item.status === 'PENDING' || item.status === 'FAILED_RETRYABLE' || item.status === 'FAILED_BLOCKED') {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
+    
+    if (hasPendingBlocks) return false;
+    
+    // D. Le feuillet est confirmé centralement (ACK)
+    if (feuillet.status_sync !== 'SYNCED_CONFIRMED') return false;
+    
+    // E. Le feuillet n'est pas déjà signé
+    if (feuillet.signed_at) return false;
+    
+    // F2A/F2C. Le feuillet a toutes ses utilisations véhicules complétées et validées
+    const usages = getVehicleUsagesForDay(userId, employmentId, dateStr);
+    for (let u of usages) {
+      if (!u.plate_snapshot || u.odometer_start == null || u.odometer_end == null || !u.ended_at) {
+        return false;
+      }
+      if (u.status_sync !== 'SYNCED_CONFIRMED') {
+        return false;
+      }
+    }
+
+    // F3. Couche Lieu GPS
+    const locs = getFeuilletLocations(userId, employmentId, dateStr);
+    if (!locs.start_location || locs.start_location.status !== 'CAPTURED' || locs.start_location._dirty) return false;
+    if (!locs.end_location || locs.end_location.status !== 'CAPTURED' || locs.end_location._dirty) return false;
+
+    return true;
   }
 
   function renderLICGridSVG(segments) {
@@ -4624,57 +5684,104 @@
     const dp = document.getElementById('feuillet-date-picker');
     if (dp && dp.value !== dateStr) dp.value = dateStr;
 
-    // Chercher dans les données demo ou dans l'historique mocké
-    let data = FEUILLETS_DEMO[dateStr];
-
-    if (!data) {
-      // Chercher dans le localStorage
-      const feuillets = S2W.table('feuillets');
-      const sessions  = S2W.table('sessions');
-      const sess = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
-      if (sess) {
-        const f = feuillets.find(f => f.session_id === sess.id);
-        if (f) {
-          data = {
-            A_sec: f.total_a_sec || 0, B_sec: f.total_b_sec || 0,
-            C_sec: f.total_c_sec || 0, D_sec: f.total_d_sec || 0,
-            signed: !!f.signed_at
-          };
-        }
-      }
+    // Déterminer l'employment_id pour ce jour
+    const sessions = S2W.table('sessions') || [];
+    const sessForDay = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
+    const employments = S2W.table('employments') || [];
+    let empId = sessForDay ? sessForDay.employment_id : window.currentEmploymentId;
+    if (!empId) {
+      const emp = employments.find(e => e.user_id === window.currentUserId && e.status === 'active');
+      if (emp) empId = emp.id;
     }
 
-    if (!data) {
-      container.innerHTML = `<div class="empty-state">
-        <span class="empty-state-icon">📋</span>
-        Aucun feuillet enregistré pour le ${S2WUtils.fmtDateShort(dateStr)}.
-      </div>`;
-      return;
+    let data, totals, isSigned = false;
+    
+    if (FEUILLETS_DEMO[dateStr]) {
+      data = FEUILLETS_DEMO[dateStr];
+      totals = { 
+        A_sec: data.A_sec, B_sec: data.B_sec, C_sec: data.C_sec, D_sec: data.D_sec,
+        E: data.A_sec + data.B_sec + data.C_sec,
+        total: data.A_sec + data.B_sec + data.C_sec + data.D_sec,
+        check24: true, checkDrive: true, status: 'conforme'
+      };
+      isSigned = data.signed;
+    } else {
+      totals = computeFeuilletTotals(window.currentUserId, empId, dateStr);
+      if (totals.segments.length === 0) {
+        container.innerHTML = `<div class="empty-state">
+          <span class="empty-state-icon">📋</span>
+          Aucun feuillet enregistré pour le ${S2WUtils.fmtDateShort(dateStr)}.
+        </div>`;
+        return;
+      }
+      
+      const feuillets = S2W.table('feuillets') || [];
+      const sessionIds = sessions.filter(s => s.date === dateStr && s.user_id === window.currentUserId).map(s => s.id);
+      const f = feuillets.find(f => sessionIds.includes(f.session_id));
+      if (f) isSigned = !!f.signed_at;
     }
 
     const fmt = (sec) => S2WUtils.fmtDuration(sec);
-    const E = data.A_sec + data.B_sec + data.C_sec;
-    const total = E + data.D_sec;
-    const check24 = Math.abs(total - 86400) <= 120;
-    const checkDrive = data.A_sec <= 9 * 3600;
-    const conforme = check24 && checkDrive;
-
     const dateLabel = S2WUtils.fmtDateLong(dateStr);
-
-    const sessions = S2W.table('sessions') || [];
-    const sess = sessions.find(s => s.date === dateStr && s.user_id === window.currentUserId);
-    const segments = getFeuilletSegments(sess?.id || 'mock_session', data);
+    const segments = FEUILLETS_DEMO[dateStr] ? getFeuilletSegments('demo', empId, dateStr) : totals.segments;
     const licGridHtml = renderLICGridSVG(segments);
 
+    let empName = "Employé Inconnu";
+    let compName = "Entreprise Inconnue";
+    if (f && f.employee_snapshot && f.company_snapshot) {
+      empName = f.employee_snapshot.first_name + ' ' + f.employee_snapshot.last_name;
+      compName = f.company_snapshot.name;
+    } else {
+      const u = (S2W.table('users') || []).find(u => u.id === window.currentUserId);
+      if (u) empName = (u.first_name || '') + ' ' + (u.last_name || '');
+      const allEmp = S2W.table('employments') || [];
+      const e = allEmp.find(e => e.id === empId);
+      if (e) {
+        const c = (S2W.table('companies') || []).find(c => c.id === e.company_id);
+        if (c) compName = c.name || '';
+      }
+    }
+    const subTitleEl = document.getElementById('feuillet-subtitle');
+    if (subTitleEl) subTitleEl.innerText = empName + ' — ' + compName;
+
+    const fmtTime = (iso) => {
+      if (!iso) return '--:--';
+      return new Intl.DateTimeFormat('fr-FR', {
+        hour: '2-digit', minute: '2-digit', timeZone: (f && f.business_timezone) ? f.business_timezone : S2WUtils.getLocalTZ()
+      }).format(new Date(iso));
+    };
+
+    const allUsages = S2W.table('vehicle_usages') || [];
+    const dayUsages = allUsages.filter(v => v.user_id === window.currentUserId && v.employment_id === empId && v.business_date === dateStr);
+    let vehiclesHtml = '';
+    if (dayUsages.length > 0) {
+      vehiclesHtml = `<div style="margin-top:16px;">
+        <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:8px;">Véhicules conduits (F2)</div>
+        ${dayUsages.map(v => {
+          let vPlate = v.plate_snapshot || 'Inconnue';
+          if (!v.plate_snapshot && v.vehicle_id) vPlate = v.vehicle_id.substring(0, 8);
+          return `
+          <div style="background:white;border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;font-size:12px;">
+            <div style="font-weight:bold;color:var(--navy);">${vPlate}</div>
+            <div style="color:var(--text-sec);margin-top:4px;display:flex;justify-content:space-between;">
+              <span>${v.odometer_start} km &rarr; ${v.odometer_end != null ? v.odometer_end + ' km' : 'En cours'}</span>
+              <span>${fmtTime(v.started_at)} &rarr; ${v.ended_at ? fmtTime(v.ended_at) : '...'}</span>
+            </div>
+          </div>
+          `;
+        }).join('')}
+      </div>`;
+    }
+
     container.innerHTML = `
-      <div class="conformity-badge ${conforme ? 'ok' : 'bad'}" role="status">
-        <span>${conforme ? '✓' : '✗'}</span>
-        <span>${conforme ? 'Journée conforme' : 'Non conforme'} — ${dateLabel}</span>
+      <div class="conformity-badge ${totals.status === 'conforme' ? 'ok' : 'bad'}" role="status">
+        <span>${totals.status === 'conforme' ? '✓' : '✗'}</span>
+        <span>${totals.status === 'conforme' ? 'Journée conforme' : 'Non conforme'} — ${dateLabel}</span>
       </div>
 
-      ${!conforme ? `<div style="margin:8px 16px 0;padding:10px 14px;background:var(--danger-bg);border-radius:8px;font-size:12px;color:var(--danger);">
-        ${!checkDrive ? `<div>⚠️ Conduite : ${fmt(data.A_sec)} (max 9h — R3315-1)</div>` : ''}
-        ${!check24   ? `<div>⚠️ Total ≠ 24h : E+D = ${fmt(total)} (attendu 24h00)</div>` : ''}
+      ${totals.status !== 'conforme' ? `<div style="margin:8px 16px 0;padding:10px 14px;background:var(--danger-bg);border-radius:8px;font-size:12px;color:var(--danger);">
+        ${!totals.checkDrive ? `<div>⚠️ Conduite : ${fmt(totals.A_sec)} (max 9h — R3315-1)</div>` : ''}
+        ${!totals.check24   ? `<div>⚠️ Total ≠ 24h : E+D = ${fmt(totals.total)} (attendu 24h00)</div>` : ''}
       </div>` : ''}
 
       ${licGridHtml}
@@ -4683,36 +5790,96 @@
         <div class="feuillet-row" role="row">
           <div class="feuillet-cat A" aria-hidden="true">A</div>
           <div class="feuillet-label">Conduite</div>
-          <div class="feuillet-value ${data.A_sec > 9*3600 ? 'text-danger' : ''}">${fmt(data.A_sec)}</div>
+          <div class="feuillet-value ${totals.A_sec > 9*3600 ? 'text-danger' : ''}">${fmt(totals.A_sec)}</div>
         </div>
         <div class="feuillet-row" role="row">
           <div class="feuillet-cat B" aria-hidden="true">B</div>
           <div class="feuillet-label">Autre travail</div>
-          <div class="feuillet-value">${fmt(data.B_sec)}</div>
+          <div class="feuillet-value">${fmt(totals.B_sec)}</div>
         </div>
         <div class="feuillet-row" role="row">
           <div class="feuillet-cat C" aria-hidden="true">C</div>
           <div class="feuillet-label">Disponibilité</div>
-          <div class="feuillet-value">${fmt(data.C_sec)}</div>
+          <div class="feuillet-value">${fmt(totals.C_sec)}</div>
         </div>
         <div class="feuillet-row" role="row">
           <div class="feuillet-cat D" aria-hidden="true">D</div>
           <div class="feuillet-label">Repos</div>
-          <div class="feuillet-value">${fmt(data.D_sec)}</div>
+          <div class="feuillet-value">${fmt(totals.D_sec)}</div>
         </div>
         <div class="feuillet-row total" role="row">
           <div class="feuillet-cat E" style="font-size:11px;font-weight:700;background:rgba(13,34,66,0.1);color:var(--navy)" aria-hidden="true">E</div>
           <div class="feuillet-label"><strong>E = A+B+C</strong></div>
-          <div class="feuillet-value"><strong>${fmt(E)}</strong></div>
+          <div class="feuillet-value"><strong>${fmt(totals.E)}</strong></div>
         </div>
-        <div class="feuillet-row ${check24 ? 'total' : 'error-row'}" role="row">
-          <div class="feuillet-cat" style="font-size:10px;font-weight:700;background:${check24?'rgba(46,125,50,0.1)':'rgba(211,47,47,0.1)'};color:${check24?'var(--success)':'var(--danger)'}" aria-hidden="true">24h</div>
-          <div class="feuillet-label">E + D ${check24 ? '= 24h ✓' : '≠ 24h ✗'}</div>
-          <div class="feuillet-value">${fmt(total)}</div>
+        <div class="feuillet-row ${totals.check24 ? 'total' : 'error-row'}" role="row">
+          <div class="feuillet-cat" style="font-size:10px;font-weight:700;background:${totals.check24?'rgba(46,125,50,0.1)':'rgba(211,47,47,0.1)'};color:${totals.check24?'var(--success)':'var(--danger)'}" aria-hidden="true">24h</div>
+          <div class="feuillet-label">E + D ${totals.check24 ? '= 24h ✓' : '≠ 24h ✗'}</div>
+          <div class="feuillet-value">${fmt(totals.total)}</div>
         </div>
       </div>
 
-      ${!data.signed ? `
+      ${(() => {
+        const locs = FEUILLETS_DEMO[dateStr] ? null : getFeuilletLocations(window.currentUserId, empId, dateStr);
+        if (!locs) return '';
+        const renderLoc = (loc, type) => {
+          if (!loc || loc.status !== 'CAPTURED') {
+            return `<div style="color:var(--danger);font-size:11px;">⚠️ Lieu de ${type} non disponible</div>`;
+          }
+          const timeLabel = loc.captured_at ? fmtTime(loc.captured_at) : '--:--';
+          return `<div style="font-size:11px;color:var(--text-sec);">📍 ${loc.latitude.toFixed(4)}, ${loc.longitude.toFixed(4)} (±${Math.round(loc.accuracy)}m) ${loc._dirty ? '⏳' : '✓'} à ${timeLabel}</div>`;
+        };
+        return `
+        <div style="margin:16px 16px 0;padding:12px;background:white;border-radius:12px;border:1px solid var(--border);">
+          <div style="font-weight:700;font-size:13px;color:var(--navy);margin-bottom:8px;">Horaires et Lieux de service (F3)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <div style="font-weight:600;font-size:11px;">Prise de service : ${locs.start_location ? fmtTime(locs.start_location.clock_time) : '--:--'}</div>
+              ${renderLoc(locs.start_location, 'prise')}
+            </div>
+            <div>
+              <div style="font-weight:600;font-size:11px;">Fin de service : ${locs.end_location ? fmtTime(locs.end_location.clock_time) : '--:--'}</div>
+              ${renderLoc(locs.end_location, 'fin')}
+            </div>
+          </div>
+        </div>
+        <div style="margin:0 16px;">
+          ${vehiclesHtml}
+        </div>`;
+      })()}
+
+      ${!isSigned ? `
+      ${!canSignFeuillet(window.currentUserId, empId, dateStr) ? (getMissingOdometerUsage(window.currentUserId, empId, dateStr) ? `
+      <div style="margin:16px;padding:16px;background:#FFF3E0;border-radius:12px;border:1px solid #FFB74D;color:#E65100;font-size:13px;text-align:center;">
+        <div style="font-weight:bold;margin-bottom:6px;">Kilométrage de fin manquant</div>
+        L'utilisation du véhicule <strong>${getMissingOdometerUsage(window.currentUserId, empId, dateStr).plate_snapshot}</strong> nécessite un kilométrage de fin.<br>
+        <button class="btn-primary" onclick="openOdometerEnd(getMissingOdometerUsage(window.currentUserId, '${empId}', '${dateStr}'), km => { if(km !== undefined){ const u = getMissingOdometerUsage(window.currentUserId, '${empId}', '${dateStr}'); u.ended_at = new Date().toISOString(); u.odometer_end = km; S2W.update('vehicle_usages', u.id, u); queueSyncAction('SAVE_VEHICLE_USAGE', u); renderFeuilletView('${dateStr}'); } })" style="margin-top:10px; width:100%;">Saisir le kilométrage</button>
+      </div>
+      ` : ((() => {
+        const l = getFeuilletLocations(window.currentUserId, empId, dateStr);
+        if (!l.start_location || l.start_location.status !== 'CAPTURED' || !l.end_location || l.end_location.status !== 'CAPTURED') {
+          return `
+      <div style="margin:16px;padding:16px;background:#FFF3E0;border-radius:12px;border:1px solid #FFB74D;color:#E65100;font-size:13px;text-align:center;">
+        <div style="font-weight:bold;margin-bottom:6px;">Lieux de service incomplets</div>
+        Le lieu de prise ou de fin de service n'a pas pu être géolocalisé.<br>
+        <strong>La signature du feuillet est bloquée.</strong>
+      </div>`;
+        }
+        if (l.start_location._dirty || l.end_location._dirty) {
+          return `
+      <div style="margin:16px;padding:16px;background:#E3F2FD;border-radius:12px;border:1px solid #90CAF9;color:#1565C0;font-size:13px;text-align:center;">
+        <div style="font-weight:bold;margin-bottom:6px;">Synchronisation des lieux en cours</div>
+        En attente de la confirmation serveur des données de géolocalisation.<br>
+        <strong>Veuillez patienter...</strong>
+      </div>`;
+        }
+        return `
+      <div style="margin:16px;padding:16px;background:#FFF3E0;border-radius:12px;border:1px solid #FFB74D;color:#E65100;font-size:13px;text-align:center;">
+        <div style="font-weight:bold;margin-bottom:6px;">Finalisation en attente</div>
+        La journée métier n'est pas encore clôturée (minuit non passé) ou des synchronisations de segments sont en cours.<br>
+        <strong>La signature sera possible une fois la journée validée.</strong>
+      </div>`;
+      })())) : `
       <div class="signature-section" style="margin: 16px; padding: 16px; background: #f9f9f9; border-radius: 12px; border: 1px dashed #ccc;">
         <div class="sig-title" style="font-weight:700;color:var(--navy);font-size:13px;margin-bottom:12px;text-align:center;">Signature de fin de journée (au choix)</div>
         
@@ -4738,16 +5905,30 @@
 
         <button class="btn-sign" onclick="signFeuillet('${dateStr}')" style="width:100%;height:40px;background:var(--navy);color:white;font-weight:bold;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Signer et Verrouiller le Feuillet</button>
       </div>
-      ` : `
-      <div style="margin:10px 16px 0;padding:10px 14px;background:var(--success-bg);border-radius:8px;font-size:13px;color:var(--success);font-weight:600;">
-        ✓ Feuillet signé et verrouillé
+      `}` : `
+      <div style="margin:16px;padding:16px;background:white;border:1px solid var(--success);border-radius:12px;text-align:center;">
+        <div style="font-size:14px;color:var(--success);font-weight:bold;margin-bottom:8px;">
+          Document verrouillé
+        </div>
+        <div style="font-size:12px;color:var(--text-sec);margin-bottom:12px;">
+          Feuillet signé le ${f && f.signed_at ? S2WUtils.fmtDateLong(f.signed_at) + ' à ' + fmtTime(f.signed_at) : ''}
+          <br>Signataire : <strong>${empName}</strong>
+          ${f && f.signature_method ? `<br>Méthode : <strong>${f.signature_method}</strong>` : ''}
+        </div>
+        ${f && f.signature_path ? `
+          <div style="border:1px dashed #ccc;padding:8px;border-radius:8px;display:inline-block;background:#fafafa;max-width:100%;overflow:hidden;">
+            <svg viewBox="0 0 300 100" width="300" height="100" style="max-width:100%;height:auto;display:block;">
+              <path d="${f.signature_path}" fill="none" stroke="#0D2242" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        ` : ''}
       </div>
       `}
       <button class="btn-export-feuillet" onclick="exportFeuillet('${dateStr}')">
         ↓ Exporter ce feuillet en PDF
       </button>`;
 
-    if (!data.signed) {
+    if (!isSigned && canSignFeuillet(window.currentUserId, empId, dateStr)) {
       setTimeout(initSignatureCanvas, 100);
     }
   }
@@ -4841,7 +6022,26 @@
         showMobToast('Le code PIN doit comporter 4 chiffres');
         return;
       }
-      pinCode = pin;
+      
+      try {
+        const res = await fetch('/api/auth/verify-pin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('sessionToken')
+          },
+          body: JSON.stringify({ pin })
+        });
+        if (!res.ok) {
+           showMobToast('Code PIN incorrect');
+           return;
+        }
+      } catch(e) {
+        showMobToast('Erreur serveur lors de la vérification du PIN');
+        return;
+      }
+
+      pinCode = 'VERIFIED';
       method = 'PIN';
     }
 
@@ -4862,7 +6062,7 @@
       if (f) {
         f.signed_at = new Date().toISOString();
         f.signature_path = signatureStr || null;
-        f.pin_code = pinCode || null;
+        f.pin_code = null; // PIN is never stored in clear
         f.signature_method = method;
         f.integrity_hash = combinedSeal;
         S2W.update('feuillets', f.id, f);
@@ -4878,8 +6078,8 @@
     setTimeout(() => renderFeuillet(dateStr), 500);
   }
 
-  function exportFeuillet(dateStr) {
-    showMobToast('Export PDF simulé — Disponible en production');
+  function exportFeuillet(dateStr) { alert("Export individuel désactivé. Veuillez générer le livret mensuel complet."); return;
+    handleBookletGeneration(dateStr);
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -5000,33 +6200,94 @@
     }
   }
 
+  
+  async function handleDocAction(docId, hasFile) {
+    if (hasFile) {
+      window.open(`/api/documents/${docId}/file?token=` + localStorage.getItem('sessionToken'), '_blank');
+      return;
+    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,image/*';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        showMobToast('Fichier trop volumineux (Max 10Mo)');
+        return;
+      }
+      
+      const ext = file.name.split('.').pop();
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          showMobToast('Envoi en cours...', 'info');
+          const res = await fetch(`/api/documents/${docId}/file`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + localStorage.getItem('sessionToken')
+            },
+            body: JSON.stringify({ fileData: ev.target.result, ext })
+          });
+          if (res.ok) {
+            showMobToast('Document envoyé !', 'success');
+            const doc = S2W.find('documents', docId);
+            if (doc) {
+              doc.file_reference = docId + '.' + ext;
+              doc.file_ext = ext;
+              doc.file_status = 'UPLOADED';
+              S2W.update('documents', docId, doc);
+              renderArchDocs();
+            }
+          } else {
+            showMobToast('Erreur lors de l\'envoi');
+          }
+        } catch(err) {
+          showMobToast('Erreur réseau');
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
   function renderArchDocs() {
     const container = document.getElementById('arch-docs-list-container');
     if (!container) return;
     
     const user = S2W.find('users', window.currentUserId);
-    const docs = S2W.findWhere('documents', 'owner_id', window.currentUserId) || [];
-    const isVL = ['B', 'B1', 'BE'].includes(user?.license_category);
-    const visibleDocs = docs.filter(d => !(isVL && d.type === 'fco_fimo'));
+    const docs = S2W.findWhere('documents', 'owner_user_id', window.currentUserId) || [];
+    const isVL = ['B', 'B1', 'BE'].includes(user?.driver_profile?.professional_vehicle_class) || user?.driver_profile?.professional_vehicle_class === 'VL';
+    const visibleDocs = docs.filter(d => !(isVL && d.document_type === 'fimo_fco'));
     
     const docTypeLabels = {
       permis: 'Permis de conduire',
-      fco_fimo: 'FCO/FIMO',
+      cni: 'Carte d\'identité',
+      fimo_fco: 'FCO/FIMO',
+      adr: 'ADR',
       visite_medicale: 'Visite médicale'
     };
 
-    container.innerHTML = visibleDocs.map(d => `
+    container.innerHTML = visibleDocs.map(d => {
+      const sideText = d.side ? ` (${d.side})` : '';
+      const docLabel = (docTypeLabels[d.document_type] || d.document_type) + sideText;
+      const statusIcon = d.verification_status === 'VERIFIED' ? '✅' : (d.verification_status === 'EXPIRED' ? '🔴' : '🟠');
+      
+      return `
       <div class="profil-row" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0">
-        <div>
-          <div style="font-weight:600;font-size:13px;color:var(--navy)">${docTypeLabels[d.type] || d.type}</div>
-          <div style="font-size:11px;color:var(--text-sec)">Expire le ${S2WUtils.fmtDateShort(d.expires_at)}</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:24px">${statusIcon}</div>
+          <div>
+            <div style="font-weight:600;font-size:14px">${docLabel}</div>
+            <div style="font-size:12px;color:var(--text-light)">Expir: ${d.expiry_date || 'N/A'}</div>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${S2WUtils.badgeExpiry(d.expires_at)}
-          <button onclick="showMobToast('Téléchargement du document lancé')" style="background:none;border:none;color:var(--navy);font-size:16px;cursor:pointer;padding:4px">📥</button>
-        </div>
+        <button style="padding:6px 12px;border-radius:16px;border:none;background:#e9f2ff;color:var(--navy);font-weight:600;font-size:12px" onclick="handleDocAction('${d.id}', ${!!d.file_reference})">
+          ${d.file_reference ? 'Voir' : 'Ajouter'}
+        </button>
       </div>
-    `).join('');
+    `}).join('');
   }
 
   async function generateMobDrealReport() {
@@ -5455,8 +6716,374 @@
     showMobToast('Partage du document initié.');
   }
 
-  function exportLocalFeuillet(dateStr) {
-    showMobToast('Export PDF du feuillet lancé.');
+  function exportLocalFeuillet(dateStr) { alert("Export individuel désactivé. Veuillez générer le livret mensuel complet."); return;
+    handleBookletGeneration(dateStr);
+  }
+
+  // --- MOTEUR LIVRET LIC (F5A) ---
+  let currentBookletToQualify = null;
+
+  function handleBookletGeneration(dateStr) {
+    if (!window.currentUserId || !window.currentEmploymentId) {
+      showMobToast("Identifiant ou contrat introuvable.");
+      return;
+    }
+    const parts = dateStr.split('-');
+    if (parts.length < 2) return;
+    const year = parts[0];
+    const month = parts[1];
+    
+    if (!window.S2WUtils || !S2WUtils.buildMonthlyLICBooklet) {
+       showMobToast("Erreur: S2WUtils non chargé.");
+       return;
+    }
+
+    const booklet = S2WUtils.buildMonthlyLICBooklet(window.currentUserId, window.currentEmploymentId, year, month);
+    if (!booklet) {
+      showMobToast("Impossible de générer le livret mensuel.");
+      return;
+    }
+    
+    if (booklet.bookletReady) {
+      showMobToast(`Le livret LIC complet de ${month}/${year} a été généré avec succès. (PDF simulé)`, 'success');
+    } else {
+      openBookletModal(booklet);
+    }
+  }
+
+  function openBookletModal(booklet) {
+    currentBookletToQualify = booklet;
+    const container = document.getElementById('booklet-unresolved-days');
+    if (!container) return;
+    
+    let html = '';
+    const unresolvedDays = booklet.days.filter(d => d.dayType === 'UNRESOLVED_DAY');
+    
+    for (const d of unresolvedDays) {
+      const dayLabel = new Date(d.date + 'T12:00:00Z').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+      html += `
+        <div class="unresolved-day-card" style="background:#f9f9f9; padding:12px; border-radius:8px; border:1px solid #e0e0e0;">
+          <div style="font-weight:600; color:var(--navy); margin-bottom:8px;">${dayLabel}</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+              <input type="radio" name="qual_${d.date}" value="REST_DAY"> Journée de repos
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+              <input type="radio" name="qual_${d.date}" value="LEAVE_DAY"> Congé
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+              <input type="radio" name="qual_${d.date}" value="ABSENCE_DAY"> Absence
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+              <input type="radio" name="qual_${d.date}" value="OTHER_NON_WORK_DAY"> Autre journée non travaillée
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+              <input type="radio" name="qual_${d.date}" value="UNRECORDED_WORK_DAY"> Activité professionnelle non enregistrée
+            </label>
+            <input type="text" id="note_${d.date}" placeholder="Commentaire optionnel..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12px; margin-top:4px;">
+          </div>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = html;
+    document.getElementById('booklet-qualification-modal').classList.add('open');
+  }
+
+  window.renderMonthlyLICBooklet = function(booklet) {
+    const users = S2W.table('users') || [];
+    const empUser = users.find(u => u.id === booklet.userId) || {first_name: 'Inconnu', last_name: ''};
+    const fullName = empUser.first_name + ' ' + empUser.last_name;
+    
+    const companies = S2W.table('companies') || [];
+    const comp = companies.find(c => c.id === booklet.companyId) || {name: 'Inconnue', timezone: 'Europe/Paris'};
+    
+    let pages = [];
+    
+    // COVER OPENING
+    pages.push(`
+      <div class="booklet-page" id="booklet-page-0" style="padding:20px; text-align:center; background:white; min-height:400px; border:1px solid #ccc; margin-bottom:20px;">
+        <h2>START2WAY</h2>
+        <h3>LIVRET INDIVIDUEL DE CONTRÔLE</h3>
+        <p><strong>Salarié :</strong> ${fullName}</p>
+        <p><strong>Entreprise :</strong> ${comp.name}</p>
+        <p><strong>Période :</strong> ${booklet.month}/${booklet.year}</p>
+        <p><strong>Employment :</strong> ${booklet.employmentId}</p>
+        <p><strong>Fuseau métier :</strong> ${comp.timezone || 'Europe/Paris'}</p>
+        <p><strong>Nombre de feuillets journaliers :</strong> ${booklet.days.length}</p>
+        <p><strong>Date de génération :</strong> ${new Date().toLocaleDateString('fr-FR')}</p>
+      </div>
+    `);
+    
+    let activeDaysCount = 0;
+    let inactiveQualCount = 0;
+    let notLivedCount = 0;
+    
+    let hiddenContainer = document.getElementById('feuillet-content');
+    let needsCleanup = false;
+    if (!hiddenContainer) {
+      hiddenContainer = document.createElement('div');
+      hiddenContainer.id = 'feuillet-content';
+      hiddenContainer.style.display = 'none';
+      document.body.appendChild(hiddenContainer);
+      needsCleanup = true;
+    }
+    
+    const origUserId = window.currentUserId;
+    const origEmpId = window.currentEmploymentId;
+    window.currentUserId = booklet.userId;
+    window.currentEmploymentId = booklet.employmentId;
+    
+    for (let i = 0; i < booklet.days.length; i++) {
+      const d = booklet.days[i];
+      const dateLabel = new Date(d.date + 'T12:00:00Z').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+      
+      let pageContent = '';
+      
+      if (d.dayType === 'WORK_DAY') {
+        activeDaysCount++;
+        if (typeof renderFeuillet === 'function') {
+          renderFeuillet(d.date);
+          pageContent = hiddenContainer.innerHTML;
+          hiddenContainer.innerHTML = '';
+        } else {
+          pageContent = '<p>F4 FEUILLET EMBEDDED</p>';
+        }
+      } else {
+        let msg = '';
+        if (d.dayType === 'REST_DAY') { msg = 'JOURNÉE DE REPOS'; inactiveQualCount++; }
+        else if (d.dayType === 'LEAVE_DAY') { msg = 'CONGÉ'; inactiveQualCount++; }
+        else if (d.dayType === 'ABSENCE_DAY') { msg = 'ABSENCE'; inactiveQualCount++; }
+        else if (d.dayType === 'OTHER_NON_WORK_DAY') { 
+          msg = 'AUTRE JOURNÉE NON TRAVAILLÉE'; 
+          if (d.meta && d.meta.reason_note) msg += '<br><small>' + d.meta.reason_note + '</small>';
+          inactiveQualCount++; 
+        }
+        else if (d.dayType === 'UNRECORDED_WORK_DAY') { msg = 'ACTIVITÉ PROFESSIONNELLE NON ENREGISTRÉE DANS START2WAY'; inactiveQualCount++; }
+        else if (d.dayType === 'FUTURE_DAY') { msg = 'JOURNÉE NON VÉCUE'; notLivedCount++; }
+        else if (d.dayType === 'OUTSIDE_EMPLOYMENT') { msg = "HORS PÉRIODE D'EMPLOI"; }
+        else if (d.dayType === 'UNRESOLVED_DAY') { 
+          msg = 'JOURNÉE À QUALIFIER<br><small style="color:red;">Cette journée doit être renseignée avant génération du livret.</small>'; 
+        }
+        else { msg = d.dayType; }
+        
+        pageContent = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; background:#f5f5f5; color:#666;">
+            <h3 style="margin-bottom:10px; text-align:center;">${msg}</h3>
+          </div>
+        `;
+      }
+      
+      pages.push(`
+        <div class="booklet-page booklet-day-page" id="booklet-page-${i+1}" data-date="${d.date}" style="padding:20px; background:white; min-height:400px; border:1px solid #ccc; margin-bottom:20px;">
+          <h2 style="text-align:center; color:var(--navy); margin-bottom:20px;">${dateLabel}</h2>
+          ${pageContent}
+        </div>
+      `);
+    }
+    
+    window.currentUserId = origUserId;
+    window.currentEmploymentId = origEmpId;
+    if (needsCleanup) {
+      hiddenContainer.remove();
+    }
+    
+    // COVER CLOSING
+    pages.push(`
+      <div class="booklet-page" id="booklet-page-${pages.length}" style="padding:20px; text-align:center; background:white; min-height:400px; border:1px solid #ccc; margin-bottom:20px;">
+        <h2>START2WAY</h2>
+        <h3>FIN DU LIVRET</h3>
+        <p><strong>Salarié :</strong> ${fullName}</p>
+        <p><strong>Entreprise :</strong> ${comp.name}</p>
+        <p><strong>Période :</strong> ${booklet.month}/${booklet.year}</p>
+        <p><strong>Nombre de journées :</strong> ${booklet.days.length}</p>
+        <p><strong>Nombre de journées avec activité :</strong> ${activeDaysCount}</p>
+        <p><strong>Nombre de journées sans activité qualifiées :</strong> ${inactiveQualCount}</p>
+        <p><strong>Nombre de journées non vécues :</strong> ${notLivedCount}</p>
+      </div>
+    `);
+    
+    return `<div class="s2w-booklet-viewer">
+      <div class="booklet-pages-container" style="display:flex; flex-direction:column; gap:20px;">
+        ${pages.join('')}
+      </div>
+    </div>`;
+  };
+
+  window.exportMonthlyLICBookletPDF = async function(booklet) {
+    if (!booklet.bookletReady || booklet.days.some(d => d.dayType === 'UNRESOLVED_DAY')) {
+      alert("Une ou plusieurs journées doivent être qualifiées avant de générer le livret.");
+      return;
+    }
+    const htmlStr = window.renderMonthlyLICBooklet(booklet);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlStr;
+    const pages = tempDiv.querySelectorAll('.booklet-page');
+    pages.forEach(p => { p.style.pageBreakAfter = 'always'; p.classList.add('html2pdf__page-break'); });
+
+    const companies = S2W.table('companies') || [];
+    const comp = companies.find(c => c.id === booklet.companyId) || {name: 'ENTREPRISE'};
+    const users = S2W.table('users') || [];
+    const empUser = users.find(u => u.id === booklet.userId) || {last_name: 'USER'};
+    const compNameClean = comp.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const userNameClean = empUser.last_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const monthStr = booklet.month.toString().padStart(2, '0');
+    const filename = `START2WAY_LIVRET_${booklet.year}-${monthStr}_${userNameClean}_${compNameClean}.pdf`;
+
+    const opt = {
+      margin:       10,
+      filename:     filename,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: ['css', 'legacy'] }
+    };
+    if (typeof html2pdf === 'function') {
+      await html2pdf().set(opt).from(tempDiv).save();
+    } else {
+      console.warn("html2pdf is not loaded");
+    }
+  };
+
+  window.exportMonthlyLICBookletXLSX = function(booklet) {
+    if (!booklet.bookletReady || booklet.days.some(d => d.dayType === 'UNRESOLVED_DAY')) {
+      alert("Une ou plusieurs journées doivent être qualifiées avant de générer le livret.");
+      return;
+    }
+    const users = S2W.table('users') || [];
+    const empUser = users.find(u => u.id === booklet.userId) || {first_name: 'Inconnu', last_name: ''};
+    const fullName = empUser.first_name + ' ' + empUser.last_name;
+    const companies = S2W.table('companies') || [];
+    const comp = companies.find(c => c.id === booklet.companyId) || {name: 'Inconnue', timezone: 'Europe/Paris'};
+    
+    if (typeof XLSX === 'undefined') {
+      console.warn("XLSX is not loaded");
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const wsLivret = XLSX.utils.aoa_to_sheet([
+      ["Propriété", "Valeur"],
+      ["Salarié", fullName],
+      ["Entreprise", comp.name],
+      ["Employment", booklet.employmentId],
+      ["Mois", booklet.month],
+      ["Année", booklet.year],
+      ["Timezone", comp.timezone],
+      ["Nombre de jours", booklet.days.length],
+      ["Date de génération", new Date().toLocaleDateString('fr-FR')]
+    ]);
+    XLSX.utils.book_append_sheet(wb, wsLivret, "LIVRET");
+    
+    const vehUsages = S2W.table('vehicle_usages') || [];
+    const segments = S2W.table('segments') || [];
+    
+    let jourData = [["date", "day_type", "prise_service", "fin_service", "lieu_prise", "lieu_fin", "total_A", "total_B", "total_C", "total_D", "signed", "signed_at", "signature_method"]];
+    let segData = [["business_date", "category", "started_at", "ended_at", "duration", "employment_id"]];
+    let vehData = [["business_date", "plate_snapshot", "started_at", "ended_at", "odometer_start", "odometer_end", "employment_id"]];
+    
+    booklet.days.forEach(d => {
+      let dayRow = [d.date, d.dayType, "", "", "", "", "", "", "", "", "", "", ""];
+      if (d.dayType === 'WORK_DAY' && d.meta && d.meta.feuillet) {
+        const f = d.meta.feuillet;
+        const metrics = f.metrics || {};
+        dayRow[2] = f.started_at || "";
+        dayRow[3] = f.ended_at || "";
+        dayRow[4] = f.start_location || "";
+        dayRow[5] = f.end_location || "";
+        dayRow[6] = metrics.total_A || 0;
+        dayRow[7] = metrics.total_B || 0;
+        dayRow[8] = metrics.total_C || 0;
+        dayRow[9] = metrics.total_D || 0;
+        dayRow[10] = f.signed ? true : false;
+        dayRow[11] = f.signed_at || "";
+        dayRow[12] = f.signature_method || "";
+        
+        const daySegs = segments.filter(s => s.business_date === d.date && s.employment_id === booklet.employmentId);
+        daySegs.forEach(s => {
+          let dur = s.ended_at ? Math.round((new Date(s.ended_at) - new Date(s.started_at)) / 1000) : 0;
+          segData.push([s.business_date, s.category, s.started_at, s.ended_at, dur, s.employment_id]);
+        });
+        
+        const dayVehs = vehUsages.filter(v => v.business_date === d.date && v.employment_id === booklet.employmentId);
+        dayVehs.forEach(v => {
+          vehData.push([v.business_date, v.plate_snapshot, v.started_at, v.ended_at, v.odometer_start, v.odometer_end, v.employment_id]);
+        });
+      }
+      jourData.push(dayRow);
+    });
+    
+    const wsJour = XLSX.utils.aoa_to_sheet(jourData);
+    XLSX.utils.book_append_sheet(wb, wsJour, "JOURNEES");
+    const wsSeg = XLSX.utils.aoa_to_sheet(segData);
+    XLSX.utils.book_append_sheet(wb, wsSeg, "SEGMENTS");
+    const wsVeh = XLSX.utils.aoa_to_sheet(vehData);
+    XLSX.utils.book_append_sheet(wb, wsVeh, "VEHICULES");
+    
+    const compNameClean = comp.name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const userNameClean = empUser.last_name.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const monthStr = booklet.month.toString().padStart(2, '0');
+    const filename = `START2WAY_LIVRET_${booklet.year}-${monthStr}_${userNameClean}_${compNameClean}.xlsx`;
+    XLSX.writeFile(wb, filename);
+  };
+
+  function closeBookletModal() {
+    document.getElementById('booklet-qualification-modal').classList.remove('open');
+    currentBookletToQualify = null;
+  }
+
+  function submitBookletQualifications() {
+    if (!currentBookletToQualify) return;
+    
+    const unresolvedDays = currentBookletToQualify.days.filter(d => d.dayType === 'UNRESOLVED_DAY');
+    
+    // Validate first
+    for (const d of unresolvedDays) {
+      const radios = document.getElementsByName(`qual_${d.date}`);
+      let isSelected = false;
+      for (const r of radios) {
+        if (r.checked) isSelected = true;
+      }
+      if (!isSelected) {
+        alert('Veuillez renseigner toutes les journées.');
+        return;
+      }
+    }
+    
+    for (const d of unresolvedDays) {
+      const radios = document.getElementsByName(`qual_${d.date}`);
+      let selectedType = null;
+      for (const r of radios) {
+        if (r.checked) {
+          selectedType = r.value;
+          break;
+        }
+      }
+      
+      const noteInput = document.getElementById(`note_${d.date}`);
+      const note = noteInput ? noteInput.value.trim() : '';
+      
+      const decl = {
+        id: 'day_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+        user_id: window.currentUserId,
+        employment_id: window.currentEmploymentId,
+        business_date: d.date,
+        day_type: selectedType,
+        declared_at: new Date().toISOString(),
+        declared_by: window.currentUserId,
+        reason_note: note
+      };
+      
+      // Save locally
+      S2W.push('day_declarations', decl, { silent: true });
+      
+      // Queue for online sync
+      if (typeof queueSyncAction === 'function') {
+        queueSyncAction('CREATE_DECLARATION', decl);
+      }
+    }
+    
+    closeBookletModal();
+    showMobToast('Qualifications enregistrées. Export PDF simulé en cours...', 'success');
   }
 
   function deleteLocalFeuillet(feuilletId) {
@@ -5706,7 +7333,7 @@
     initMobNotifications();
     initVehicleUI(user);
     
-    if (!user.company_id) {
+    if (!(function(u) { const emps = window.S2W ? window.S2W.table('employments') || [] : []; return emps.some(e => e.user_id === u.id && e.status === 'active'); })(user)) {
       applyLimitedMode();
       switchTab('profil');
     } else {
@@ -5716,20 +7343,104 @@
     S2WUtils.showToast('Connexion réussie', 'success');
   }
 
+
+  let professional_vehicle_class = 'VL';
+  
   function showSignupModal() {
+    document.getElementById('signup-preform').style.display = 'flex';
+  }
+
+  function closePreForm() {
+    document.getElementById('signup-preform').style.display = 'none';
+  }
+
+  function startSignupFlow(vehicleClass) {
+    professional_vehicle_class = vehicleClass;
+    document.getElementById('signup-preform').style.display = 'none';
     document.getElementById('signup-modal').classList.add('open');
-    if (!mobileStepper) {
-      mobileStepper = new S2WStepper({
-        formId: 'signup-form',
-        maxSteps: 4,
-        labels: ['Infos perso', 'Permis', 'Sécurité', 'Activation']
-      });
-      mobileStepper.init();
+    
+    const isPL = (vehicleClass === 'PL');
+    
+    document.querySelectorAll('.pl-only').forEach(el => el.style.display = isPL ? '' : 'none');
+    document.querySelectorAll('.vl-only').forEach(el => el.style.display = isPL ? 'none' : '');
+    
+    const stepsCount = isPL ? 7 : 6;
+    
+    const step5 = document.getElementById('emp-s5');
+    if (!isPL) {
+        step5.classList.remove('s2w-step-content');
+        step5.style.display = 'none';
+    } else {
+        step5.classList.add('s2w-step-content');
     }
+    
+    mobileStepper = new S2WStepper({
+        formId: 'signup-form',
+        maxSteps: stepsCount,
+        labels: isPL ? 
+          ['Identité', 'Profil', 'Permis', 'Documents', 'Qualifs.', 'Outils', 'Compte'] : 
+          ['Identité', 'Profil', 'Permis', 'Documents', 'Outils', 'Compte']
+    });
+    mobileStepper.init();
+    document.getElementById('permit-details-container').innerHTML = '';
+  }
+  
+  function toggleEmployerFields() {
+    const s = document.getElementById('su-statut').value;
+    document.getElementById('su-statut-autre-group').style.display = (s === 'Autre') ? 'block' : 'none';
+    document.getElementById('employer-fields').style.display = (s === 'Salarié' || s === 'Intérimaire') ? 'flex' : 'none';
+  }
+
+  function togglePermitDetails(cat) {
+    const cont = document.getElementById('permit-details-container');
+    const cb = document.getElementById('cat-PL-' + cat) || document.getElementById('cat-' + cat);
+    const isChecked = cb ? cb.checked : false;
+    
+    const divId = 'permit-detail-' + cat;
+    let div = document.getElementById(divId);
+    
+    if (isChecked) {
+        if (!div) {
+            div = document.createElement('div');
+            div.id = divId;
+            div.style.background = 'var(--bg-main)';
+            div.style.padding = '16px';
+            div.style.borderRadius = '8px';
+            div.style.marginBottom = '12px';
+            div.innerHTML = `
+              <strong style="display:block;margin-bottom:12px;">Détails Permis ${cat}</strong>
+              <div class="form-group"><label class="form-label">Numéro de permis</label><input type="text" id="permit-num-${cat}" class="input-field"></div>
+              <div style="display:flex;gap:12px;">
+                <div class="form-group" style="flex:1"><label class="form-label">Obtention</label><input type="date" id="permit-obt-${cat}" class="input-field"></div>
+                <div class="form-group" style="flex:1"><label class="form-label">Expiration</label><input type="date" id="permit-exp-${cat}" class="input-field"></div>
+              </div>
+              <div class="form-group"><label class="form-label">Pays de délivrance</label><input type="text" id="permit-pays-${cat}" class="input-field" value="France"></div>
+            `;
+            cont.appendChild(div);
+        }
+        div.style.display = 'block';
+    } else {
+        if (div) div.style.display = 'none';
+    }
+  }
+
+  function toggleFimoFields() {
+    const t = document.getElementById('su-fimo-type').value;
+    document.getElementById('fimo-fields').style.display = t ? 'block' : 'none';
+  }
+  
+  function toggleAdrFields() {
+    const t = document.getElementById('su-adr-has').value;
+    document.getElementById('adr-fields').style.display = (t === 'Oui') ? 'block' : 'none';
   }
 
   function closeSignupModal() {
     document.getElementById('signup-modal').classList.remove('open');
+  }
+
+  function toggleRegulatedActivity() {
+    const val = document.getElementById('su-regulated-activity').value;
+    document.getElementById('su-regulated-activity-autre-group').style.display = (val === 'Autre activité concernée') ? 'block' : 'none';
   }
 
   function togglePLFields() {
@@ -5745,6 +7456,7 @@
     el.className = res.cls;
   }
 
+
   function gatherSignupData() {
     const pwd = document.getElementById('su-mdp').value;
     const pwdConf = document.getElementById('su-mdp-conf').value;
@@ -5755,71 +7467,196 @@
     const pin = document.getElementById('su-pin').value;
     const pinConf = document.getElementById('su-pin-conf').value;
     if (pin !== pinConf || !/^\d{4}$/.test(pin)) {
-      S2WUtils.showToast('Le code PIN doit comporter 4 chiffres identiques', 'error');
+      S2WUtils.showToast('Le code PIN doit comporter 4 chiffres', 'error');
       return null;
     }
+    if (!document.getElementById('chk-exactitude').checked || !document.getElementById('chk-cgu').checked || !document.getElementById('chk-rgpd').checked) {
+      S2WUtils.showToast('Veuillez cocher les cases obligatoires de validation', 'error');
+      return null;
+    }
+    
+    const userId = S2WUtils.uid('usr');
+    const isPL = professional_vehicle_class === 'PL';
+    
+    let driver_profile = {
+        professional_vehicle_class: professional_vehicle_class,
+        declared_regulated_transport_activity: document.getElementById('su-regulated-activity').value,
+        declared_regulated_transport_activity_other: document.getElementById('su-regulated-activity-autre').value,
+        birth_place: isPL ? document.getElementById('su-lieu-naiss').value : null,
+        nationality: isPL ? document.getElementById('su-nationalite').value : null,
+        address: isPL ? document.getElementById('su-adresse').value : null,
+        address_comp: isPL ? document.getElementById('su-adresse-comp').value : null,
+        postal_code: isPL ? document.getElementById('su-cp').value : null,
+        city: isPL ? document.getElementById('su-ville').value : null,
+        country: isPL ? document.getElementById('su-pays').value : null,
+        emergency_contact: isPL ? document.getElementById('su-urgence').value : null,
+        preferred_contact: isPL ? document.getElementById('su-pref-contact').value : null,
+        professional_status: document.getElementById('su-statut').value,
+        professional_status_other: document.getElementById('su-statut-autre').value,
+        declared_employer: {
+            name: document.getElementById('su-emp-nom').value,
+            siret: document.getElementById('su-emp-siret').value,
+            position: document.getElementById('su-emp-poste').value,
+            start_date: document.getElementById('su-emp-debut').value,
+            contract_type: document.getElementById('su-emp-contrat').value
+        },
+        tools: {
+            gps_pl: isPL ? document.getElementById('tool-gps-pl').checked : false,
+            chronotachygraphe: isPL ? document.getElementById('tool-chrono').checked : false,
+            carte_conducteur: isPL ? document.getElementById('tool-carte').checked : false,
+            app_tournee: document.getElementById('tool-app-tournee').checked,
+            app_livraison: document.getElementById('tool-app-livraison').checked,
+            tms: document.getElementById('tool-tms').checked,
+            pda: document.getElementById('tool-pda').checked,
+            other: document.getElementById('su-tool-autre').value
+        },
+        conformity_status: document.getElementById('su-conformite').value,
+        marketing_opt_in: document.getElementById('chk-comm').checked
+    };
+    
+    let licenses = [];
+    const licenseCats = ['B', 'BE', 'PL-C', 'PL-CE', 'PL-C1', 'PL-C1E', 'PL-D', 'PL-DE'];
+    licenseCats.forEach(cat => {
+        if (document.getElementById(`cat-${cat}`) && document.getElementById(`cat-${cat}`).checked) {
+            licenses.push({
+                type: cat,
+                number: document.getElementById(`num-${cat}`) ? document.getElementById(`num-${cat}`).value : null,
+                obtained_at: document.getElementById(`obt-${cat}`) ? document.getElementById(`obt-${cat}`).value : null,
+                expires_at: document.getElementById(`exp-${cat}`) ? document.getElementById(`exp-${cat}`).value : null,
+                country: document.getElementById(`pays-${cat}`) ? document.getElementById(`pays-${cat}`).value : null
+            });
+        }
+    });
+    driver_profile.licenses = licenses;
 
+    let documents = [];
+    documents.push({ id: S2WUtils.uid('doc'), document_type: 'permis', side: 'recto', verification_status: 'TO_VERIFY', scope: 'PROFESSIONAL' });
+    documents.push({ id: S2WUtils.uid('doc'), document_type: 'permis', side: 'verso', verification_status: 'TO_VERIFY', scope: 'PROFESSIONAL' });
+    documents.push({ id: S2WUtils.uid('doc'), document_type: 'cni', side: 'recto', verification_status: 'TO_VERIFY', scope: 'PERSONAL' });
+    documents.push({ id: S2WUtils.uid('doc'), document_type: 'cni', side: 'verso', verification_status: 'TO_VERIFY', scope: 'PERSONAL' });
+    
+    if (isPL) {
+        const fimoType = document.getElementById('su-fimo-type').value;
+        if (fimoType) {
+            documents.push({
+                id: S2WUtils.uid('doc'), document_type: 'fimo_fco', fimo_type: fimoType,
+                issue_date: document.getElementById('su-fimo-obtention').value,
+                expiry_date: document.getElementById('su-fimo-exp').value,
+                organization: document.getElementById('su-fimo-org').value,
+                verification_status: 'TO_VERIFY', scope: 'PROFESSIONAL'
+            });
+        }
+        if (document.getElementById('su-adr-has').value === 'Oui') {
+            documents.push({
+                id: S2WUtils.uid('doc'), document_type: 'adr',
+                adr_base: document.getElementById('adr-base').checked,
+                adr_colis: document.getElementById('adr-colis').checked,
+                adr_citerne: document.getElementById('adr-citerne').checked,
+                classes: document.getElementById('su-adr-classes').value,
+                expiry_date: document.getElementById('su-adr-exp').value,
+                verification_status: 'TO_VERIFY', scope: 'PROFESSIONAL'
+            });
+        }
+    }
+    
     return {
-      id: S2WUtils.uid('usr'),
-      first_name: document.getElementById('su-prenom').value.trim(),
-      last_name: document.getElementById('su-nom').value.trim().toUpperCase(),
-      email: document.getElementById('su-email').value.trim(),
-      phone: document.getElementById('su-tel').value.trim(),
-      birth_date: document.getElementById('su-dob').value,
-      license_category: document.getElementById('su-permis-type').value,
-      license_number: document.getElementById('su-permis-num').value.trim(),
-      fco_expiration: document.getElementById('su-fco').value,
-      medical_expiration: document.getElementById('su-visite').value,
-      emergency_contact: document.getElementById('su-urgence').value.trim(),
-      // SIMULATION DÉMO — en production, le hachage de mot de passe doit être effectué côté serveur avec bcrypt ou argon2, jamais côté client avec SHA-256 (trop rapide, vulnérable aux attaques par force brute).
-      password: pwd,
-      pin_code: pin,
-      company_id: null,
-      status: 'actif',
-      created_at: new Date().toISOString()
+      user: {
+          id: userId,
+          first_name: document.getElementById('su-prenom').value.trim(),
+          last_name: document.getElementById('su-nom').value.trim().toUpperCase(),
+          usage_name: document.getElementById('su-nom-usage').value.trim(),
+          email: document.getElementById('su-email').value.trim(),
+          phone: document.getElementById('su-tel').value.trim(),
+          birth_date: document.getElementById('su-dob').value,
+          driver_profile: driver_profile,
+          password: pwd,
+          pin_code: pin,
+          company_id: null,
+          status: 'actif',
+          created_at: new Date().toISOString()
+      },
+      documents: documents
     };
   }
-
+  
   function submitSignup() {
-    const user = gatherSignupData();
-    if (!user) return;
+    const data = gatherSignupData();
+    if (!data) return;
+    const { user, documents } = data;
 
     const code = document.getElementById('su-inv-code').value.trim().toUpperCase();
-    if (!code) {
-      S2WUtils.showToast('Veuillez saisir un code d\'invitation', 'error');
-      return;
+    let employmentObj = null;
+    
+    if (code) {
+        const invitations = S2W.table('invitations') || [];
+        const inv = invitations.find(i => i.code.toUpperCase() === code);
+        if (!inv || inv.type !== 'invitation' || inv.status !== 'pending') {
+          S2WUtils.showToast('Code invalide, déjà utilisé ou expiré.', 'error');
+          return;
+        }
+        inv.status = 'used';
+        inv.used_at = new Date().toISOString();
+        inv.used_by_user_id = user.id;
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const expDate = new Date();
+        expDate.setDate(expDate.getDate() + daysInMonth);
+        inv.expires_at = expDate.toISOString();
+        S2W.update('invitations', inv.id, inv);
+        
+        employmentObj = {
+            id: S2WUtils.uid('emp'),
+            user_id: user.id,
+            company_id: inv.company_id,
+            status: 'active',
+            created_at: new Date().toISOString()
+        };
+        S2W.push('employments', employmentObj);
     }
 
-    const invitations = S2W.table('invitations') || [];
-    const inv = invitations.find(i => i.code.toUpperCase() === code);
+    S2W.update('users', user.id, user);
     
-    if (!inv || inv.type !== 'invitation' || inv.status !== 'pending') {
-      S2WUtils.showToast('Code invalide, déjà utilisé ou expiré.', 'error');
-      return;
-    }
-
-    // Activate token
-    inv.status = 'used';
-    inv.used_at = new Date().toISOString();
-    inv.used_by_user_id = user.id;
+    documents.forEach(doc => {
+        doc.owner_user_id = user.id;
+        if (employmentObj && doc.scope === 'PROFESSIONAL') {
+            doc.employment_id = employmentObj.id;
+            doc.company_id = employmentObj.company_id;
+        }
+        doc.created_at = new Date().toISOString();
+        doc.status_sync = 'pending';
+        S2W.push('documents', doc);
+        
+        if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
+            window.enqueueSyncOperation('event_logs', doc.id, 'CREATE', {
+                id: S2WUtils.uid('evt'),
+                type: 'DRIVER_DOCUMENT_CREATED',
+                user_id: user.id,
+                document_id: doc.id,
+                document_type: doc.document_type,
+                employment_id: doc.employment_id || null,
+                company_id: doc.company_id || null,
+                timestamp: new Date().toISOString()
+            });
+        }
+    });
     
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const expDate = new Date();
-    expDate.setDate(expDate.getDate() + daysInMonth);
-    inv.expires_at = expDate.toISOString();
+    const auditObj = {
+        id: S2WUtils.uid('evt'),
+        type: 'DRIVER_PROFILE_CREATED',
+        user_id: user.id,
+        timestamp: new Date().toISOString(),
+        details: { vehicle_class: professional_vehicle_class }
+    };
+    S2W.push('event_logs', auditObj);
     
-    S2W.update('invitations', inv.id, inv);
-
-    user.company_id = inv.company_id;
-    finalizeSignup(user);
-    S2WUtils.showToast('Compte créé et activé avec succès !', 'success');
+    document.getElementById('signup-modal').classList.remove('open');
+    S2WUtils.showToast('Inscription terminée avec succès', 'success');
   }
 
   function skipActivation() {
-    const user = gatherSignupData();
-    if (!user) return;
-    finalizeSignup(user);
+    const data = gatherSignupData();
+    if (!data) return;
+    finalizeSignup(data.user);
     S2WUtils.showToast('Compte créé en mode limité.', 'info');
   }
 
@@ -5834,7 +7671,7 @@
     initMobNotifications();
     initVehicleUI(user);
     
-    if (!user.company_id) {
+    if (!(function(u) { const emps = window.S2W ? window.S2W.table('employments') || [] : []; return emps.some(e => e.user_id === u.id && e.status === 'active'); })(user)) {
       applyLimitedMode();
       switchTab('profil');
     } else {
@@ -5874,7 +7711,7 @@
   const originalSwitchTab = switchTab;
   switchTab = function(tabId) {
     const user = S2WUtils.getLoggedInUser();
-    if (user && !user.company_id) {
+    if (user && !(function(u) { const emps = window.S2W ? window.S2W.table('employments') || [] : []; return emps.some(e => e.user_id === u.id && e.status === 'active'); })(user)) {
       if (tabId !== 'profil' && tabId !== 'chatbot') {
         S2WUtils.showToast('Vous devez d\'abord activer votre compte avec un Code Invitation.', 'warning');
         return; // blocked
@@ -5885,6 +7722,24 @@
 
 </script>
 
+<!-- MODAL QUALIFICATION LIVRET -->
+    <div id="booklet-qualification-modal" class="modal-overlay">
+      <div class="modal-content" style="max-height:80vh; overflow-y:auto; width:90%; max-width:400px; padding:20px; border-radius:12px; background:white; position:relative;">
+        <h3 style="margin-top:0; color:var(--navy); font-size:18px;">Qualification du Livret</h3>
+        <p style="font-size:14px; color:#555; margin-bottom:16px;">
+          Certaines journées n'ont pas d'activité enregistrée. Veuillez les qualifier pour clôturer ce livret.
+        </p>
+        
+        <div id="booklet-unresolved-days" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px;">
+          <!-- Injecté en JS -->
+        </div>
+        
+        <div style="display:flex; justify-content:flex-end; gap:12px;">
+          <button class="btn btn-secondary" onclick="closeBookletModal()">Annuler</button>
+          <button class="btn btn-primary" onclick="submitBookletQualifications()">Valider et Générer</button>
+        </div>
+      </div>
+    </div>
     </div>
 </body>
 </html>

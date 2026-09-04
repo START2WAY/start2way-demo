@@ -143,6 +143,65 @@ const S2WUtils = {
   isValidEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); },
   isValidPhone(v) { return /^[\d\s\+\-\.]{8,15}$/.test(v.trim()); },
 
+  /* ─── VALIDATION TOKEN CIRCUIT ─── */
+  
+  /* ─── VALIDATION TOKEN INVITATION ─── */
+  async validateInvitationToken(code, userId) {
+    if (!code) return { success: false, message: 'Veuillez saisir un code d\'invitation.' };
+    
+    try {
+      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+      const res = await fetch(`${API_URL}/invitations/resolve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-type': (typeof window !== 'undefined' && window.START2WAY_CLIENT_TYPE) ? window.START2WAY_CLIENT_TYPE : 'UNKNOWN',
+          'x-user-id': userId
+        },
+        body: JSON.stringify({ code: code.toUpperCase() })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === 'INVALID_INVITATION_CODE') return { success: false, message: 'Code invalide, inconnu ou déjà utilisé.' };
+        if (data.error === 'WRONG_WORKFLOW_FOR_CIRCUIT') return { success: false, message: 'Ce code est un code Circuit. Veuillez l\'utiliser dans la section correspondante.' };
+        return { success: false, message: 'Erreur lors de la validation du code.' };
+      }
+      
+      return { success: true, message: data.message, invitationId: data.invitation_id, companyId: data.company_id };
+    } catch (e) {
+      console.error('[S2W] Erreur validation invitation:', e);
+      return { success: false, message: 'Erreur réseau.' };
+    }
+  },
+async validateCircuitToken(code, userId = 'usr_001') {
+    if (!code) return { success: false, message: 'Veuillez saisir un code d\'activation.' };
+    
+    try {
+      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
+      const res = await fetch(`${API_URL}/circuits/resolve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-type': (typeof window !== 'undefined' && window.START2WAY_CLIENT_TYPE) ? window.START2WAY_CLIENT_TYPE : 'UNKNOWN',
+          'x-user-id': userId
+        },
+        body: JSON.stringify({ code: code.toUpperCase() })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error === 'INVITATION_INVALID') return { success: false, message: 'Code invalide, inconnu ou déjà utilisé.' };
+        return { success: false, message: 'Erreur lors de la validation du code.' };
+      }
+      
+      return { success: true, message: data.message, invitationId: data.invitation_id, companyId: data.company_id };
+    } catch (e) {
+      console.error('[S2W] Erreur validation circuit:', e);
+      return { success: false, message: 'Erreur réseau.' };
+    }
+  },
+
   /* Score de force mot de passe */
   passwordStrength(pwd) {
     const tests = [/.{8,}/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/];
@@ -178,7 +237,235 @@ const S2WUtils = {
     toast.textContent = msg;
     container.appendChild(toast);
     setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 3000);
+  },
+
+  /* ─── GESTION DE SESSION (CLIENT-SIDE) ─── */
+  login(userId) {
+    localStorage.setItem('s2w_current_user_id', userId);
+    window.currentUserId = userId;
+  },
+  logout() {
+    localStorage.removeItem('s2w_current_user_id');
+    window.currentUserId = null;
+  },
+  getLoggedInUserId() {
+    if (window.currentUserId) return window.currentUserId;
+    const stored = localStorage.getItem('s2w_current_user_id');
+    if (stored) {
+      window.currentUserId = stored;
+      return stored;
+    }
+    return null;
+  },
+  getLoggedInUser() {
+    const uid = this.getLoggedInUserId();
+    if (!uid) return null;
+    return window.S2W ? window.S2W.find('users', uid) : null;
+  },
+
+  /* ─── EMPLOYMENT (MULTI-TENANCY) ─── */
+  getUserEmployments(userId) {
+    if (!window.S2W) return [];
+    return window.S2W.table('employments').filter(e => e.user_id === userId);
+  },
+  getActiveEmployments(userId) {
+    return this.getUserEmployments(userId).filter(e => e.status === 'active');
+  },
+  getEmployment(userId, companyId) {
+    return this.getUserEmployments(userId).find(e => e.company_id === companyId) || null;
+  },
+  createEmployment(userId, companyId, invitationId = null) {
+    if (!window.S2W) return null;
+    let emp = this.getEmployment(userId, companyId);
+    if (!emp) {
+      emp = {
+        id: 'emp_' + Math.random().toString(36).substr(2, 9),
+        user_id: userId,
+        company_id: companyId,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        depart_at: null,
+        created_via_invitation_id: invitationId
+      };
+      window.S2W.push('employments', emp);
+    } else if (emp.status === 'depart') {
+      // Re-activate if they rejoin
+      window.S2W.update('employments', emp.id, {
+        status: 'active',
+        depart_at: null,
+        created_via_invitation_id: invitationId || emp.created_via_invitation_id
+      });
+    }
+    return emp;
+  },
+  endEmployment(userId, companyId) {
+    if (!window.S2W) return null;
+    let emp = this.getEmployment(userId, companyId);
+    if (emp && emp.status !== 'depart') {
+      window.S2W.update('employments', emp.id, {
+        status: 'depart',
+        depart_at: new Date().toISOString()
+      });
+    }
+    return emp;
+  },
+
+  getEmploymentBusinessTimezone(employmentId, strict = false) {
+    if (!window.S2W) {
+      if (strict) throw new Error("S2W not initialized");
+      return 'Europe/Paris';
+    }
+    const employments = window.S2W.table('employments') || [];
+    const companies = window.S2W.table('companies') || [];
+    const emp = employments.find(e => e.id === employmentId);
+    if (!emp || !emp.company_id) {
+      if (strict) throw new Error("Employment or company_id missing");
+      return 'Europe/Paris';
+    }
+    const comp = companies.find(c => c.id === emp.company_id);
+    const tz = (comp && comp.timezone) ? comp.timezone : null;
+    
+    if (!tz) {
+      if (strict) throw new Error("Timezone missing from company");
+      return 'Europe/Paris';
+    }
+    
+    try {
+      new Intl.DateTimeFormat(undefined, { timeZone: tz });
+    } catch (e) {
+      if (strict) throw new Error("Invalid IANA timezone: " + tz);
+      return 'Europe/Paris';
+    }
+    
+    return tz;
+  },
+
+  getBusinessDate(isoStr, timezone) {
+    try {
+      const d = new Date(isoStr);
+      if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+      const formatter = new Intl.DateTimeFormat('en-CA', { // en-CA donne YYYY-MM-DD
+        timeZone: timezone,
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      });
+      return formatter.format(d);
+    } catch (e) {
+      console.error("[S2WUtils] Erreur timezone:", e);
+      return new Date(isoStr).toISOString().slice(0, 10);
+    }
+  },
+
+  getMidnightUTC(dateStr, timezone) {
+    try {
+      let guess = new Date(dateStr + 'T00:00:00Z').getTime();
+      let step = 60 * 60 * 1000;
+      for (let i = -14; i <= 14; i++) {
+        let t = guess + i * step;
+        let ds = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(t));
+        if (ds === dateStr) {
+          let minuteGuess = t - step;
+          for (let j = 0; j <= 60; j++) {
+            let mt = minuteGuess + j * 60 * 1000;
+            let mds = new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(mt));
+            if (mds === dateStr) {
+               return new Date(mt).toISOString();
+            }
+          }
+        }
+      }
+      throw new Error(`Unable to resolve midnight for ${dateStr} in ${timezone}`);
+    } catch (e) {
+      console.error("[S2WUtils] Erreur getMidnightUTC:", e);
+      throw e; // Fail closed, ne pas silencieusement transformer en T00:00:00.000Z
+    }
+  },
+  /* ─── MOTEUR LIVRET LIC MENSUEL (F5A) ─────────────────────────────────── */
+  buildMonthlyLICBooklet(userId, employmentId, year, month) {
+    if (!userId || !employmentId || !year || !month) return null;
+    
+    // Convert string year/month to numbers
+    const y = parseInt(year, 10);
+    const m = parseInt(month, 10);
+    
+    // Get employment to check boundaries
+    const emp = window.S2W ? window.S2W.find('employments', employmentId) : null;
+    if (!emp || emp.user_id !== userId) return null;
+    
+    const empStart = new Date(emp.start_date);
+    empStart.setHours(0,0,0,0);
+    const empEnd = emp.end_date ? new Date(emp.end_date) : new Date('2099-12-31');
+    empEnd.setHours(23,59,59,999);
+    
+    const daysInMonth = new Date(y, m, 0).getDate();
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    // Fetch all feuillets for this employment for the month
+    const monthPrefix = `${y}-${m.toString().padStart(2, '0')}`;
+    const allFeuillets = window.S2W ? window.S2W.table('feuillets').filter(f => f.employment_id === employmentId && f.date.startsWith(monthPrefix) && f.status !== 'supprime') : [];
+    // Fetch all segments for this employment for the month to prove real activity
+    const allSegments = window.S2W ? window.S2W.table('segments').filter(s => s.employment_id === employmentId && s.business_date && s.business_date.startsWith(monthPrefix)) : [];
+    
+    // Fetch day declarations
+    const allDeclarations = window.S2W ? window.S2W.table('day_declarations').filter(d => d.employment_id === employmentId && d.business_date.startsWith(monthPrefix)) : [];
+    
+    let bookletReady = true;
+    const days = [];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStr = `${monthPrefix}-${day.toString().padStart(2, '0')}`;
+      const currentDate = new Date(`${dayStr}T12:00:00Z`); // use 12:00 to avoid timezone issues
+      currentDate.setHours(0,0,0,0);
+      
+      let dayType = 'UNRESOLVED_DAY';
+      let meta = null;
+      
+      // 1. Check if outside employment scope
+      if (currentDate < empStart || currentDate > empEnd) {
+        dayType = 'OUTSIDE_EMPLOYMENT';
+      }
+      // 2. Check if future day
+      else if (currentDate > today) {
+        dayType = 'FUTURE_DAY';
+      }
+      else {
+        // 3. Check for existing activity (segments prove real work)
+        const daySegments = allSegments.filter(s => s.business_date === dayStr);
+        if (daySegments.length > 0) {
+          dayType = 'WORK_DAY';
+          meta = { source: 'segments', count: daySegments.length };
+        } else {
+          // 4. Check for day declarations
+          const decls = allDeclarations.filter(d => d.business_date === dayStr).sort((a,b) => new Date(b.declared_at) - new Date(a.declared_at));
+          if (decls.length > 0) {
+            dayType = decls[0].day_type;
+            meta = { reason_note: decls[0].reason_note };
+          } else {
+            // Nothing found and it's a past/current date inside employment scope
+            dayType = 'UNRESOLVED_DAY';
+            bookletReady = false;
+          }
+        }
+      }
+      
+      days.push({
+        date: dayStr,
+        dayType: dayType,
+        meta: meta
+      });
+    }
+    
+    return {
+      userId,
+      employmentId,
+      year: y,
+      month: m,
+      companyId: emp.company_id,
+      bookletReady,
+      days
+    };
   }
+
 };
 
 /* ─── EXPORT GLOBAL ─────────────────────────────────────────────────────── */
