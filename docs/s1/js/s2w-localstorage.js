@@ -17,7 +17,7 @@ const S2W = {
   // En production, toutes les requêtes Airtable doivent transiter par un serveur backend sécurisé.
   // CONFIGURATION AIRTABLE — SUPPRIMÉE LORS DE LA MIGRATION D2B
   // Le client s'adresse uniquement au serveur local (façade Legacy Airtable)
-  TABLES_LIST: ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'day_declarations'],
+  TABLES_LIST: ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'day_declarations', 'expeditions', 'expedition_events', 'expedition_anomalies', 'expedition_vehicle_usages', 'service_entitlements', 'circuit_runs', 'circuit_stops', 'circuit_stop_events'],
 
   /* Lecture complète du cache local */
   get() {
@@ -44,16 +44,7 @@ const S2W = {
     d[name].push(record);
     this.set(d);
     
-    // Si l'option silent est activée, on n'enqueue pas la synchro
-    if (!options.silent) {
-      if (name !== 'feuillets' && name !== 'employments' && name !== 'day_declarations') {
-        this.insertToAirtable(name, record);
-      } else {
-        if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
-          window.enqueueSyncOperation(name, record.id, 'CREATE', record);
-        }
-      }
-    }
+
     
     return record;
   },
@@ -67,15 +58,7 @@ const S2W = {
     d[name][idx] = { ...d[name][idx], ...patch };
     this.set(d);
     
-    if (!options.silent) {
-      if (name !== 'feuillets' && name !== 'employments' && name !== 'day_declarations') {
-        this.updateInAirtable(name, id, patch);
-      } else {
-        if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
-          window.enqueueSyncOperation(name, id, 'UPDATE', patch);
-        }
-      }
-    }
+
     
     return d[name][idx];
   },
@@ -231,316 +214,19 @@ const S2W = {
     return this.sha256(payload);
   },
 
-  /* ─── COMMUNICATIONS ET SYNCHRONISATION AIRTABLE ─── */
-
-  _credentialsPromise: null,
-
-  _credentialsPromise: null,
-
-  async ensureCredentials() {
-    // Phase D2B: Les credentials frontend sont supprimés. 
-    // Le serveur s'occupe de l'authentification Airtable de manière centralisée.
-    return true;
-  },
-
-  _serializeFields(record) {
-    const fields = {};
-    for (const [k, v] of Object.entries(record)) {
-      if (k.startsWith('_')) continue;
-      if (v === null || v === undefined) continue;
-      
-      // Serialize arrays or objects to JSON string for Airtable multilineText fields
-      if (typeof v === 'object') {
-        fields[k] = JSON.stringify(v);
-      } else {
-        fields[k] = v;
-      }
-    }
-    return fields;
-  },
-
-  _getLegacyHeaders() {
-    const headers = {
-      'Content-Type': 'application/json',
-      'x-client-type': (typeof window !== 'undefined' && window.START2WAY_CLIENT_TYPE) ? window.START2WAY_CLIENT_TYPE : 'UNKNOWN'
-    };
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('sessionToken');
-      if (token) {
-        headers['Authorization'] = 'Bearer ' + token;
-      }
-      // Keep x-user-id for backwards compatibility or fallback during signup
-      if (window.currentUserId) headers['x-user-id'] = window.currentUserId;
-      if (window.currentCompanyId) headers['x-company-id'] = window.currentCompanyId;
-    }
-    return headers;
-  },,
-
-
-  _deserializeFields(fields) {
-    const item = { ...fields };
-    const jsonKeys = ['signature_path', 'maintenance_thresholds', 'docs', 'included_dates', 'all_dates', 'stops'];
-    for (const key of jsonKeys) {
-      if (typeof item[key] === 'string' && item[key].trim().startsWith('[')) {
-        try {
-          item[key] = JSON.parse(item[key]);
-        } catch (e) {
-          console.warn(`[S2W] Failed to parse JSON field ${key}:`, e);
-        }
-      } else if (typeof item[key] === 'string' && item[key].trim().startsWith('{')) {
-        try {
-          item[key] = JSON.parse(item[key]);
-        } catch (e) {
-          console.warn(`[S2W] Failed to parse JSON field ${key}:`, e);
-        }
-      }
-    }
-    return item;
-  },
-
-  async insertToAirtable(tableName, record) {
-    await this.ensureCredentials();
-    try {
-      const fields = this._serializeFields(record);
-      
-      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
-      const res = await fetch(`${API_URL}/legacy/${tableName}`, {
-        method: 'POST',
-        headers: this._getLegacyHeaders(),
-        body: JSON.stringify({ fields })
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        record._airtable_id = data.id;
-        
-        // Mettre à jour le cache local avec l'ID Airtable obtenu
-        const cache = this.get();
-        if (cache[tableName]) {
-          const idx = cache[tableName].findIndex(r => r.id === record.id);
-          if (idx !== -1) {
-            cache[tableName][idx]._airtable_id = data.id;
-            this.set(cache);
-          }
-        }
-        console.log(`[S2W] Enregistrement ${record.id} synchronisé dans Airtable (${data.id})`);
-      } else {
-        console.error(`[S2W] Échec d'écriture dans Airtable pour ${tableName} :`, await res.text());
-      }
-    } catch (e) {
-      console.error(`[S2W] Erreur lors du push Airtable (${tableName}) :`, e);
-    }
-  },
-
-  async updateInAirtable(tableName, id, patch) {
-    await this.ensureCredentials();
-    try {
-      const cache = this.get();
-      const records = cache[tableName] || [];
-      const record = records.find(r => r.id === id || r.code === id);
-      if (!record || !record._airtable_id) {
-        console.warn(`[S2W] Impossible de mettre à jour ${id} sur Airtable : pas encore d'ID distant.`);
-        return;
-      }
-
-      const fields = this._serializeFields(patch);
-
-      const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
-      const res = await fetch(`${API_URL}/legacy/${tableName}/${record._airtable_id}`, {
-        method: 'PATCH',
-        headers: this._getLegacyHeaders(),
-        body: JSON.stringify({ fields })
-      });
-      
-      if (res.ok) {
-        console.log(`[S2W] Enregistrement Airtable ${record._airtable_id} mis à jour.`);
-      } else {
-        const text = await res.text();
-        console.error(`[S2W] Échec de mise à jour Airtable pour ${tableName}/${record._airtable_id} :`, text);
-        try {
-          const body = JSON.parse(text);
-          if (res.status === 409 && body.error === 'VERSION_CONFLICT' && body.conflict_id) {
-            console.warn('[S2W] VERSION_CONFLICT intercepté en direct (Company). Appel au recheck...');
-            
-            // Notification UI if available
-            if (typeof window !== 'undefined' && window.showToast) {
-              window.showToast('Conflit détecté, vérification de la résolution...', 'error');
-            }
-
-            const recheckRes = await fetch(`${API_URL}/sync/conflicts/${body.conflict_id}/recheck`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-client-type': 'COMPANY_PANEL',
-                'x-company-id': this.get().session?.company_id || ''
-              }
-            });
-
-            if (recheckRes.ok) {
-              const recheckBody = await recheckRes.json();
-              if (recheckBody.status === 'RESOLVED_ALREADY_APPLIED') {
-                console.log('[S2W] Conflit Company résolu (ALREADY_APPLIED). Application locale.');
-                if (recheckBody.central_state && recheckBody.central_state.payload) {
-                  const centralPayload = typeof recheckBody.central_state.payload === 'string'
-                    ? JSON.parse(recheckBody.central_state.payload)
-                    : recheckBody.central_state.payload;
-                  
-                  const currentData = this.get();
-                  if (currentData[tableName]) {
-                    const idx = currentData[tableName].findIndex(r => r.id === id);
-                    if (idx >= 0) {
-                      currentData[tableName][idx] = { ...currentData[tableName][idx], ...centralPayload };
-                      this.set(currentData);
-                    }
-                  }
-                }
-                if (typeof window !== 'undefined' && window.showToast) {
-                  window.showToast('Conflit résolu. Affichage rafraîchi.', 'success');
-                }
-                return; // Treated as success
-              } else if (recheckBody.status === 'OPEN') {
-                console.warn('[S2W] Conflit Company resté OPEN. Mutation bloquée.');
-                if (typeof window !== 'undefined' && window.showToast) {
-                  window.showToast('Conflit non résoluble. Veuillez recharger la page.', 'error');
-                }
-              }
-            } else {
-              console.error('[S2W] Recheck Company a échoué avec status', recheckRes.status);
-            }
-          }
-        } catch(e) {
-          // Ignore parse error
-        }
-      }
-    } catch (e) {
-      console.error(`[S2W] Erreur lors du patch Airtable (${tableName}) :`, e);
-    }
-  },
-
-  async fetchAllFromAirtable(tableName) {
-    await this.ensureCredentials();
-    let allRecords = [];
-    let offset = '';
-    try {
-      do {
-        const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
-        const url = `${API_URL}/legacy/${tableName}${offset ? `?offset=${offset}` : ''}`;
-        
-        // Remove Content-Type for GET requests, although fetch usually ignores it or handles it fine.
-        // We'll just pass _getLegacyHeaders() which has it, that's harmless.
-        const headers = this._getLegacyHeaders();
-        const res = await fetch(url, { headers });
-        if (!res.ok) {
-          console.error(`[S2W] Erreur de récupération ${tableName} :`, await res.text());
-          break;
-        }
-        const data = await res.json();
-        allRecords = [...allRecords, ...(data.records || [])];
-        offset = data.offset;
-      } while (offset);
-    } catch (e) {
-      console.error(`[S2W] Erreur de connexion Airtable (${tableName}) :`, e);
-    }
-    console.log(`[S2W] fetchAllFromAirtable(${tableName}) returned ${allRecords.length} records`);
-    return allRecords;
-  },
-
-  async syncFromAirtable() {
-    await this.ensureCredentials();
-    console.log('[S2W] Synchronisation depuis Airtable en cours...');
-    const cache = this.get();
-    
-    // 1. Fetch remote data first to avoid duplicate insertions
-    const remoteData = {};
-    for (const tableName of this.TABLES_LIST) {
-      remoteData[tableName] = await this.fetchAllFromAirtable(tableName);
-    }
-    
-    // 2. Upload missing local records (insert) or link them to existing remote records
-    for (const tableName of this.TABLES_LIST) {
-      const localRecords = cache[tableName] || [];
-      
-      const remoteMap = {};
-      remoteData[tableName].forEach(r => {
-        if (r.fields && r.fields.id) remoteMap[r.fields.id] = r.id;
-      });
-
-      for (const r of localRecords) {
-        if (!r._airtable_id && remoteMap[r.id]) {
-          // Exists remotely, just associate it locally
-          r._airtable_id = remoteMap[r.id];
-        } else if (!r._airtable_id) {
-          // Truly new, post to Airtable
-          await this.insertToAirtable(tableName, r);
-        }
-      }
-    }
-    
-    // 3. Download and merge the latest remote records
-    const updatedCache = this.get(); // Re-read cache to get any new _airtable_id
-    for (const tableName of this.TABLES_LIST) {
-      // Re-fetch to include the ones we just inserted
-      const records = await this.fetchAllFromAirtable(tableName);
-      updatedCache[tableName] = records.map(r => {
-        const item = this._deserializeFields({ ...r.fields, _airtable_id: r.id });
-        if (tableName === 'messages' && item.is_read === undefined) item.is_read = false;
-        if (tableName === 'alerts' && item.acknowledged === undefined) item.acknowledged = false;
-        if (tableName === 'documents' && item.validated_by_employer === undefined) item.validated_by_employer = false;
-        return item;
-      });
-    }
-    this.set(updatedCache);
-    console.log('[S2W] Synchronisation Airtable terminée ✓');
-  },
-
-  async clearAirtableTables() {
-    await this.ensureCredentials();
-    console.log('[S2W] Nettoyage complet des tables distantes Airtable...');
-    for (const tableName of this.TABLES_LIST) {
-      const records = await this.fetchAllFromAirtable(tableName);
-      if (records.length === 0) continue;
-      const ids = records.map(r => r.id);
-      for (let i = 0; i < ids.length; i += 10) {
-        const batch = ids.slice(i, i + 10);
-        const query = batch.map(id => `records[]=${id}`).join('&');
-        const API_URL = (typeof window !== 'undefined' && window.START2WAY_API_BASE_URL) ? window.START2WAY_API_BASE_URL : 'http://localhost:3000/api';
-        await fetch(`${API_URL}/legacy/${tableName}?${query}`, {
-          method: 'DELETE',
-          headers: {
-            'x-client-type': 'START2WAY_TECH_PANEL',
-            'x-user-id': 'tech_admin',
-            'x-company-id': 'tech_admin'
-          }
-        });
-      }
-      console.log(`[S2W] Table "${tableName}" vidée sur Airtable.`);
-    }
-  },
-
   /* ─── INITIALISATION ─── */
   async init() {
-    await this.ensureCredentials();
     console.log('[S2W] Initialisation du cache de données...');
     const existing = this.get();
     
-    // Si déjà initialisé localement, faire un pull rapide pour rester synchrone
     if (existing._initialized) {
-      await this.syncFromAirtable();
       await this.migrateEmployments();
       return;
     }
     
-    // Premier chargement : vider localement et charger les tables distantes Airtable
     const cache = {};
     for (const tableName of this.TABLES_LIST) {
-      const records = await this.fetchAllFromAirtable(tableName);
-      cache[tableName] = records.map(r => {
-        const item = this._deserializeFields({ ...r.fields, _airtable_id: r.id });
-        if (tableName === 'messages' && item.is_read === undefined) item.is_read = false;
-        if (tableName === 'alerts' && item.acknowledged === undefined) item.acknowledged = false;
-        if (tableName === 'documents' && item.validated_by_employer === undefined) item.validated_by_employer = false;
-        return item;
-      });
+      cache[tableName] = [];
     }
     
     cache._initialized = true;
@@ -548,7 +234,7 @@ const S2W = {
     cache._created_at = new Date().toISOString();
     this.set(cache);
     await this.migrateEmployments();
-    console.log('[S2W] Cache initialisé avec succès depuis Airtable (base propre).');
+    console.log('[S2W] Cache initialisé localement.');
   },
 
   async migrateEmployments() {

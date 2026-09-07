@@ -1,7 +1,26 @@
+const fs = require("fs");
+const path = require("path");
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
 const crypto = require('crypto');
+const PlateOCRService = require('./agents/license-plate/PlateOCRService');
+const LicensePlateAgentService = require('./agents/license-plate/LicensePlateAgentService');
+
+
+const multer = require('multer');
+const xlsx = require('xlsx');
+const CircuitOCRProvider = require('./services/CircuitOCRProvider');
+const CircuitSpeechProvider = require('./services/CircuitSpeechProvider');
+const CircuitGeocodingProvider = require('./services/CircuitGeocodingProvider');
+const CircuitRouteMatrixProvider = require('./services/CircuitRouteMatrixProvider');
+const CircuitOptimizationProvider = require('./services/CircuitOptimizationProvider');
+const CircuitAgentWrapper = require('./services/CircuitAgentWrapper');
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 const app = express();
 app.use(cors());
@@ -296,7 +315,7 @@ function uuidv4() {
 }
 
 // Sanitization functions
-const ALLOWED_ENTITIES = ['employments', 'feuillets', 'segments', 'vehicle_usages', 'event_logs', 'day_declarations', 'documents'];
+const ALLOWED_ENTITIES = ['employments', 'feuillets', 'segments', 'vehicle_usages', 'event_logs', 'day_declarations', 'documents', 'vehicles', 'vehicle_maintenance_events', 'sessions'];
 
 function sanitizeForEmployee(entityType, payload) {
   if (!payload) return payload;
@@ -614,7 +633,40 @@ const applyMutation = db.transaction((reqData) => {
     }
   }
 
-  if (entity === 'feuillets' || entity === 'segments' || entity === 'vehicle_usages' || entity === 'event_logs') {
+  if (entity === 'vehicles') {
+    if (!reqData.companyId) {
+      recordFailedOperation(reqData, 'COMPANY_AUTH_REQUIRED_FOR_VEHICLE');
+      return { error: 'COMPANY_AUTH_REQUIRED_FOR_VEHICLE', status: 403 };
+    }
+
+    if (payload && payload.status) {
+      payload.status = payload.status.toUpperCase();
+    }
+    
+    // SECURITY — VEHICLE MUTATE COMPANY AUTHORITY
+    if (payload && payload.company_id && reqData.companyId && payload.company_id !== reqData.companyId) {
+      payload.company_id = reqData.companyId;
+    } else if (payload && !payload.company_id && reqData.companyId) {
+      payload.company_id = reqData.companyId;
+    }
+    
+    if (existingEntity && existingEntity.company_id && reqData.companyId && existingEntity.company_id !== reqData.companyId) {
+      recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
+      return { error: 'VEHICLE_COMPANY_SCOPE_MISMATCH', status: 403 };
+    }
+    
+    // SECURITY — ARCHIVE ACTIVE VEHICLE SERVER-SIDE
+    if (payload && payload.status && payload.status.toUpperCase() === 'ARCHIVED') {
+      const activeUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.vehicle_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', entity_id);
+      console.log('VEHICLE ARCHIVE CHECK:', entity_id, 'Active usages found:', activeUsages.length, activeUsages);
+      if (activeUsages.length > 0) {
+        recordFailedOperation(reqData, 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE');
+        return { error: 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE', status: 403 };
+      }
+    }
+  }
+
+  if (entity === 'feuillets' || entity === 'segments' || entity === 'vehicle_usages' || entity === 'event_logs' || entity === 'sessions' || entity === 'day_declarations') {
     if (!payload || !payload.employment_id) {
       recordFailedOperation(reqData, 'MISSING_EMPLOYMENT_ID');
       return { error: 'MISSING_EMPLOYMENT_ID', status: 403 };
@@ -629,6 +681,7 @@ const applyMutation = db.transaction((reqData) => {
       return { error: 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH', status: 403 };
     }
     if (payload.user_id && payload.user_id !== employment.user_id) {
+      console.log(`EMPLOYMENT_USER_SCOPE_MISMATCH: payload.user_id=${payload.user_id}, employment.user_id=${employment.user_id}`);
       recordFailedOperation(reqData, 'EMPLOYMENT_USER_SCOPE_MISMATCH');
       return { error: 'EMPLOYMENT_USER_SCOPE_MISMATCH', status: 403 };
     }
@@ -681,6 +734,49 @@ const applyMutation = db.transaction((reqData) => {
     }
     
     if (entity === 'vehicle_usages') {
+      console.log(`[applyMutation] Inside vehicle_usages for entity_id=${entity_id}`);
+      if (!existingEntity && payload.ended_at == null) {
+        if (payload.user_id !== reqData.userId) {
+          recordFailedOperation(reqData, 'USER_ID_MISMATCH');
+          return { error: 'USER_ID_MISMATCH', status: 403 };
+        }
+        const emp = getEntityStmt.get('employments', payload.employment_id);
+        if (emp) {
+          let empPayload = {};
+          try { empPayload = JSON.parse(emp.payload); } catch(e){}
+          if (empPayload.status !== 'active' || emp.user_id !== reqData.userId) {
+            recordFailedOperation(reqData, 'EMPLOYMENT_NOT_ACTIVE_OR_UNOWNED');
+            return { error: 'EMPLOYMENT_NOT_ACTIVE_OR_UNOWNED', status: 403 };
+          }
+          const veh = getEntityStmt.get('vehicles', payload.vehicle_id);
+          if (!veh) {
+            recordFailedOperation(reqData, 'VEHICLE_NOT_FOUND');
+            return { error: 'VEHICLE_NOT_FOUND', status: 403 };
+          }
+          let vehPayload = {};
+          try { vehPayload = JSON.parse(veh.payload); } catch(e){}
+          console.log(`CHECKING VEHICLE ${veh.entity_id}: veh.company_id=${veh.company_id}, emp.company_id=${emp.company_id}, vehPayload.status=${vehPayload.status}`);
+          if (veh.company_id !== emp.company_id) {
+            recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
+            return { error: 'VEHICLE_COMPANY_SCOPE_MISMATCH', status: 403 };
+          }
+          if (vehPayload.status !== 'ACTIVE' && vehPayload.status !== 'active') {
+            recordFailedOperation(reqData, 'VEHICLE_STATUS_NOT_ACTIVE');
+            return { error: 'VEHICLE_STATUS_NOT_ACTIVE', status: 403 };
+          }
+          const activeUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.vehicle_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', payload.vehicle_id);
+          if (activeUsages.length > 0) {
+            recordFailedOperation(reqData, 'VEHICLE_ALREADY_IN_USE');
+            return { error: 'VEHICLE_ALREADY_IN_USE', status: 403 };
+          }
+          const userActiveUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.user_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', payload.user_id);
+          if (userActiveUsages.length > 0) {
+            recordFailedOperation(reqData, 'USER_ALREADY_USING_VEHICLE');
+            return { error: 'USER_ALREADY_USING_VEHICLE', status: 403 };
+          }
+        }
+      }
+
       if (existingEntity) {
         let currentPayload = null;
         try { currentPayload = JSON.parse(existingEntity.payload); } catch(e){}
@@ -702,8 +798,8 @@ const applyMutation = db.transaction((reqData) => {
         }
       }
       
-      if (payload.ended_at != null || payload.odometer_end != null) {
-        if (!payload.ended_at || payload.odometer_end == null) {
+      if (payload.ended_at != null || payload.odometer_end != null || payload.rollover_type === 'MIDNIGHT') {
+        if (!payload.ended_at || (payload.odometer_end == null && payload.rollover_type !== 'MIDNIGHT')) {
           recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_CLOSURE');
           return { error: 'INVALID_VEHICLE_USAGE_CLOSURE', status: 400 };
         }
@@ -714,7 +810,7 @@ const applyMutation = db.transaction((reqData) => {
           recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_TIMESTAMPS');
           return { error: 'INVALID_VEHICLE_USAGE_TIMESTAMPS', status: 400 };
         }
-        if (payload.odometer_end < payload.odometer_start) {
+        if (payload.odometer_end != null && payload.odometer_start != null && payload.odometer_end < payload.odometer_start) {
           recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_ODOMETER');
           return { error: 'INVALID_VEHICLE_USAGE_ODOMETER', status: 400 };
         }
@@ -868,9 +964,151 @@ const applyMutation = db.transaction((reqData) => {
 // Endpoints
 app.get('/health', (req, res) => res.send('OK'));
 
-// ----------------------------------------------------
-// AUTH ENDPOINTS
-// ----------------------------------------------------
+// ==========================================
+// EMPLOYEE LICENSE PLATE SCANNER V1
+// ==========================================
+const scanRateLimits = new Map();
+app.post('/api/employee/plate-scan', async (req, res) => {
+  try {
+    const auth = getUserAuth(req);
+    if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
+    req.user = { id: auth.user_id };
+
+    // Basic rate limit (max 5 requests per minute per user)
+    const now = Date.now();
+    const userLimit = scanRateLimits.get(req.user.id) || { count: 0, resetTime: now + 60000 };
+    if (now > userLimit.resetTime) {
+      userLimit.count = 0;
+      userLimit.resetTime = now + 60000;
+    }
+    if (userLimit.count >= 5) {
+      return res.status(429).json({ error: 'RATE_LIMIT_EXCEEDED', message: 'Too many scans. Try again in 1 minute.' });
+    }
+    userLimit.count++;
+    scanRateLimits.set(req.user.id, userLimit);
+
+    const { image, employment_id } = req.body;
+    if (!image) return res.status(400).json({ error: "Missing image" });
+    if (!employment_id) return res.status(400).json({ error: "Missing employment_id" });
+
+    // Verify employment
+    const empRow = getEntityStmt.get('employments', employment_id);
+    if (!empRow) return res.status(404).json({ error: "Employment not found" });
+    const employment = JSON.parse(empRow.payload);
+    
+    if (employment.user_id !== req.user.id || employment.status !== 'ACTIVE') {
+      return res.status(403).json({ error: "Invalid employment" });
+    }
+
+    // Call OCR
+    const ocrResult = await PlateOCRService.recognize(image);
+    
+    // Call AI Agent
+    const agentResult = await LicensePlateAgentService.analyze(image, ocrResult);
+
+    // Safety: don't store raw image permanently
+    // Return structured candidate
+    res.json(agentResult);
+  } catch (error) {
+    console.error("[PlateScan] Error:", error);
+    res.status(500).json({ error: "Internal server error during plate scan" });
+  }
+});
+
+app.post('/api/employee/plate-confirm', async (req, res) => {
+  try {
+    const auth = getUserAuth(req);
+    if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
+    req.user = { id: auth.user_id };
+
+    const { employment_id, normalized_plate, plate_country } = req.body;
+    
+    if (!employment_id || !normalized_plate || !plate_country) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Verify employment
+    const empRow = getEntityStmt.get('employments', employment_id);
+    if (!empRow) return res.status(404).json({ error: "Employment not found" });
+    const employment = JSON.parse(empRow.payload);
+    
+    if (employment.user_id !== req.user.id || employment.status !== 'ACTIVE') {
+      return res.status(403).json({ error: "Invalid employment" });
+    }
+
+    const companyId = employment.company_id;
+
+    // Search existing vehicle in the active company
+    const allVehiclesRows = db.prepare("SELECT payload FROM entities WHERE entity = 'vehicles'").all();
+    let existingVehicle = null;
+    for (const r of allVehiclesRows) {
+      const v = JSON.parse(r.payload);
+      if (v.company_id === companyId && v.plate_normalized === normalized_plate) {
+        existingVehicle = v;
+        break;
+      }
+    }
+
+    if (existingVehicle) {
+      return res.json({ vehicle: existingVehicle, is_new: false });
+    }
+
+    // Create minimal vehicle
+    const vehicleId = 'veh_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
+    const now = new Date().toISOString();
+    
+    const newVehicle = {
+      id: vehicleId,
+      company_id: companyId, // Strictly scoped to employment's company
+      plate: normalized_plate,
+      plate_normalized: normalized_plate,
+      plate_country: plate_country,
+      status: 'ACTIVE', // Operational
+      profile_completion_status: 'PENDING_COMPANY_REVIEW', // Administrative
+      creation_source: 'EMPLOYEE_PLATE_SCAN',
+      created_by_user_id: req.user.id,
+      created_via_employment_id: employment_id,
+      created_at: now,
+      updated_at: now
+    };
+
+    // Insert entity
+    insertEntityStmt.run(
+      'vehicles',
+      vehicleId,
+      1,
+      JSON.stringify(newVehicle),
+      companyId,
+      req.user.id,
+      now
+    );
+
+    // Add to changelog
+    insertChangelogStmt.run(
+      'op_' + Date.now(),
+      'op_' + Date.now(),
+      'vehicles',
+      vehicleId,
+      'CREATE',
+      1,
+      now,
+      'user',
+      req.user.id,
+      req.user.id,
+      companyId,
+      JSON.stringify(newVehicle)
+    );
+
+    return res.json({ vehicle: newVehicle, is_new: true });
+  } catch (error) {
+    console.error("[PlateConfirm] Error:", error);
+    res.status(500).json({ error: "Internal server error during plate confirmation" });
+  }
+});
+
+// ==========================================
+// AI CHAT ENDPOINTS
+// ==========================================----------------------------------------------------
 app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'MISSING_CREDENTIALS' });
@@ -934,8 +1172,6 @@ app.post('/api/auth/login', (req, res) => {
 // ----------------------------------------------------
 // BINARY DOCUMENT STORAGE
 // ----------------------------------------------------
-const fs = require('fs');
-const path = require('path');
 const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -1049,7 +1285,7 @@ app.post('/api/auth/verify-pin', (req, res) => {
 
 const getConflictStmt = db.prepare('SELECT * FROM sync_conflicts WHERE conflict_id = ?');
 
-app.post('/api/sync/conflicts/:id/recheck', (req, res) => {
+const mutateHandler = (req, res) => {
   const auth = getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (clientType === 'START2WAY_TECH_PANEL') {
@@ -1057,6 +1293,8 @@ app.post('/api/sync/conflicts/:id/recheck', (req, res) => {
   }
 
   const { operation_id, entity, entity_id, version, operation, payload, company_id, user_id } = req.body;
+  console.log(`[mutateHandler] Received request for entity: ${entity}, entity_id: ${entity_id}`);
+  
   const actorId = auth ? auth.user_id || auth.company_id : 'UNKNOWN';
   
   // Verify that the requested identity matches the session
@@ -1114,7 +1352,149 @@ app.post('/api/sync/conflicts/:id/recheck', (req, res) => {
     console.error('Mutate error:', err);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
-});
+};
+
+app.post('/api/sync/conflicts/:id/recheck', mutateHandler);
+app.post('/api/sync/mutate', mutateHandler);
+
+// --- FLEET AI SERVICE ---
+
+const FleetAIService = {
+  getSystemPrompt() {
+    try {
+      const agentsDir = path.join(__dirname, 'agents', 'fleet');
+      const identity = fs.readFileSync(path.join(agentsDir, 'IDENTITY.md'), 'utf-8');
+      const scope = fs.readFileSync(path.join(agentsDir, 'SCOPE.md'), 'utf-8');
+      const dataAccess = fs.readFileSync(path.join(agentsDir, 'DATA_ACCESS.md'), 'utf-8');
+      
+      let emailRules = '';
+      try {
+        emailRules = fs.readFileSync(path.join(agentsDir, 'EMAIL_RULES.md'), 'utf-8');
+      } catch(e) {}
+      
+      let safety = '';
+      try {
+        safety = fs.readFileSync(path.join(agentsDir, 'SAFETY.md'), 'utf-8');
+      } catch(e) {}
+
+      return `${identity}\n\n${scope}\n\n${dataAccess}\n\n${emailRules}\n\n${safety}`;
+    } catch (e) {
+      console.warn('Failed to load AI config from .md files:', e);
+      return "Tu es l'Assistant Flotte de START2WAY. Tu ne dois jamais inventer d'informations. Tu ne peux faire que de la LECTURE.";
+    }
+  },
+
+  async handleChat(req, res) {
+    try {
+      const auth = getUserAuth(req);
+      if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
+
+      // FORCE COMPANY ID FROM AUTHENTICATION - NO CLIENT TRUST
+      const company_id = auth.company_id; 
+      
+      const { message, history, vehicle_id } = req.body;
+      
+      if (!company_id || !vehicle_id) {
+        return res.status(400).json({ error: 'Missing company_id or vehicle_id context' });
+      }
+
+      // 1. Get vehicle data and verify company isolation strictly
+      const vehicle = getFleetVehicle(company_id, vehicle_id);
+      if (!vehicle) {
+        return res.status(403).json({ error: 'Vehicle not found or cross-company access denied' });
+      }
+
+      // Format vehicle context
+      const vehicleContext = `
+Contexte du véhicule sélectionné (STRICTEMENT RÉEL) :
+- ID: ${vehicle.id || 'N/A'}
+- Immatriculation : ${vehicle.plate_number || 'Non renseignée'}
+- Marque/Modèle : ${vehicle.brand || ''} ${vehicle.model || ''}
+- VIN : ${vehicle.vin || 'Non renseigné'}
+- Kilométrage initial entreprise : ${vehicle.initial_company_odometer || 'Inconnu'} km
+- Kilométrage actuel : ${vehicle.last_known_km || 'Inconnu'} km
+- Date CT : ${vehicle.technical_inspection_date || 'Inconnue'} (Expire le ${vehicle.technical_inspection_expiry_date || 'Inconnue'})
+- Assurance : Du ${vehicle.insurance_start_date || 'Inconnue'} au ${vehicle.insurance_expiry_date || 'Inconnue'}
+- En location : ${vehicle.is_leased ? 'OUI (' + (vehicle.lessor_name || '') + ')' : 'NON'}
+
+Historique de maintenance récent :
+${(vehicle.maintenance_history || []).slice(-3).map(m => `- ${m.date}: ${m.type} à ${m.odometer}km (${m.description || ''})`).join('\n')}
+
+IMPORTANT : Si l'utilisateur demande à rédiger un email, réponds TOUJOURS en terminant par :
+"Voici l'e-mail que vous pouvez envoyer avec votre propre service de messagerie."
+Suivi du brouillon avec "Objet : ..." et "Message : ...".
+`;
+
+      const systemPrompt = FleetAIService.getSystemPrompt() + '\n\n' + vehicleContext;
+
+      // 3. Call Cloud AI API 
+      const apiKey = process.env.FLEET_AI_API_KEY;
+      if (!apiKey) {
+        // En prod, si la clé est absente, on ne fake pas le succès
+        return res.status(503).json({ error: 'AI_KEY_MISSING' });
+      }
+
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...(history || []).map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: message }
+      ];
+
+      const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: messages,
+          temperature: 0.2
+        })
+      });
+
+      if (!aiRes.ok) {
+        throw new Error('AI Provider error');
+      }
+
+      const aiData = await aiRes.json();
+      const aiReply = aiData.choices[0].message.content;
+
+      // 4. Audit Log
+      db.prepare("INSERT INTO changelog (id, operation_id, entity, entity_id, operation, version, occurred_at, actor_type, actor_id, company_id, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+        crypto.randomUUID(),
+        crypto.randomUUID(),
+        'event_logs',
+        crypto.randomUUID(),
+        'CREATE',
+        1,
+        new Date().toISOString(),
+        'system',
+        'fleet_ai',
+        company_id,
+        JSON.stringify({ event: 'FLEET_AI_EMAIL_DRAFT_CREATED', vehicle_id })
+      );
+
+      return res.json({ reply: aiReply });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ error: 'AI Assistant temporarily unavailable' });
+    }
+  }
+};
+
+function getFleetVehicle(companyId, vehicleId) {
+  const row = db.prepare("SELECT payload, company_id FROM entities WHERE entity='vehicles' AND entity_id=?").get(vehicleId);
+  if (!row) return null;
+  if (row.company_id !== companyId) {
+    return null; 
+  }
+  return JSON.parse(row.payload);
+}
+// --- END FLEET AI SERVICE ---
+
+app.post('/api/fleet/ai/chat', FleetAIService.handleChat);
+
 
 app.get('/api/sync/changes', (req, res) => {
   const after = parseInt(req.query.after) || 0;
@@ -1369,74 +1749,119 @@ app.get('/api/tech/state', (req, res) => {
   }
 });
 
-app.post('/api/legacy/consume_token', async (req, res) => {
-  const { code, target_entity, target_id } = req.body;
-  if (!code) return res.status(400).json({ error: 'MISSING_CODE' });
 
-  let expectedType = '';
-  if (code.startsWith('INV-')) expectedType = 'invitation';
-  else if (code.startsWith('CIR-')) expectedType = 'circuit';
-  else if (code.startsWith('REP-')) expectedType = 'reprise';
-  else return res.status(400).json({ error: 'UNKNOWN_PREFIX' });
-
-  if (expectedType === 'reprise') {
-    return res.status(403).json({ error: 'REPRISE_NOT_ALLOWED_HERE' }); 
+// ----------------------------------------------------------------------------
+// CIRCUIT API
+// ----------------------------------------------------------------------------
+app.post('/api/circuits/resolve', (req, res) => {
+  const userId = req.headers['x-user-id'];
+  if (!userId) {
+    return res.status(401).json({ error: 'UNAUTHORIZED' });
   }
 
-  if (!process.env.AIRTABLE_PAT || !process.env.AIRTABLE_BASE_ID) {
-    return res.status(503).json({ error: 'AIRTABLE_NOT_CONFIGURED' });
+  const { code } = req.body;
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'INVALID_TOKEN' });
   }
 
+  const normalizedCode = code.trim().toUpperCase();
+  
   try {
-    const airtableApiUrl = process.env.AIRTABLE_API_URL || 'https://api.airtable.com/v0';
-    const searchUrl = `${airtableApiUrl}/${process.env.AIRTABLE_BASE_ID}/invitations?filterByFormula={code}='${code}'`;
-    const searchRes = await fetch(searchUrl, {
-      headers: { 'Authorization': `Bearer ${process.env.AIRTABLE_PAT}` }
-    });
-    const searchData = await searchRes.json();
-    if (!searchData.records || searchData.records.length === 0) {
-      return res.status(404).json({ error: 'TOKEN_NOT_FOUND' });
+    // 1. Check if token is already used in service_entitlements
+    const existingEntitlements = db.prepare(`SELECT * FROM entities WHERE entity = 'service_entitlements'`).all();
+    let foundEntitlement = null;
+    
+    for (const ent of existingEntitlements) {
+      let p;
+      try { p = JSON.parse(ent.payload); } catch(e) {}
+      if (p && p.activation_token_id === normalizedCode) {
+        foundEntitlement = p;
+        break;
+      }
     }
 
-    const record = searchData.records[0];
-    const airtableId = record.id;
-    const tokenType = record.fields.type || 'invitation';
-
-    if (tokenType !== expectedType) {
-      return res.status(403).json({ error: 'TOKEN_TYPE_MISMATCH' });
+    if (foundEntitlement) {
+      if (foundEntitlement.user_id !== userId) {
+        return res.status(403).json({ error: 'BLOCKED' }); // Cross-user reuse blocked
+      }
+      // Idempotent retry: return existing
+      return res.json({
+        success: true,
+        message: 'Abonnement Circuit déjà actif.',
+        entitlement: foundEntitlement
+      });
     }
 
-    const now = new Date().toISOString();
-    const patchFields = {
-      status: 'used',
-      used_at: now
+    // 2. Migration Check: is it in legacy invitations?
+    const existingInvitations = db.prepare(`SELECT * FROM entities WHERE entity = 'invitations'`).all();
+    let legacyInv = null;
+    for (const inv of existingInvitations) {
+      let p;
+      try { p = JSON.parse(inv.payload); } catch(e) {}
+      if (p && (p.id === normalizedCode || p.code === normalizedCode)) {
+        legacyInv = p;
+        break;
+      }
+    }
+
+    if (legacyInv) {
+      if (legacyInv.used_by_user_id && legacyInv.used_by_user_id !== userId) {
+        return res.status(403).json({ error: 'BLOCKED' });
+      }
+    } else {
+      // If it's a completely new token, we just check format (e.g. CIR-XXXX)
+      if (!normalizedCode.startsWith('CIR-')) {
+        return res.status(400).json({ error: 'INVALID_TOKEN' });
+      }
+    }
+
+    // 3. Token is valid and unused. Create new entitlement.
+    const activatedAt = new Date();
+    // Calculate calendar month duration
+    const year = activatedAt.getUTCFullYear();
+    const month = activatedAt.getUTCMonth() + 1; // 1-12
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    const expiresAt = new Date(activatedAt.getTime() + (daysInMonth * 24 * 60 * 60 * 1000));
+
+    const entitlementId = 'ent_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    
+    const entitlementPayload = {
+      id: entitlementId,
+      user_id: userId,
+      service_code: 'CIRCUIT',
+      status: 'ACTIVE',
+      activated_at: activatedAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      activation_token_id: normalizedCode,
+      activation_source: legacyInv ? 'LEGACY_INVITATION' : 'TOKEN',
+      activation_duration_days: daysInMonth,
+      created_at: activatedAt.toISOString(),
+      updated_at: activatedAt.toISOString()
     };
 
+    // Insert into DB
+    db.prepare(`
+      INSERT INTO entities (entity, entity_id, version, payload, user_id, updated_at) 
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(
+      'service_entitlements', 
+      entitlementId, 
+      1, 
+      JSON.stringify(entitlementPayload), 
+      userId, 
+      entitlementPayload.updated_at
+    );
 
-    const patchRes = await fetch(`${airtableApiUrl}/${process.env.AIRTABLE_BASE_ID}/invitations/${airtableId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${process.env.AIRTABLE_PAT}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ fields: patchFields })
+    return res.json({
+      success: true,
+      message: 'Abonnement Circuit activé avec succès.',
+      entitlement: entitlementPayload
     });
 
-    if (expectedType === 'circuit') {
-       return res.json({ status: 'ok', type: 'circuit', message: 'Token consumed, no employment created.' });
-    } else if (expectedType === 'invitation') {
-       const empId = 'emp_auto_' + Math.random().toString(36).substr(2, 9);
-       const payloadStr = JSON.stringify({
-         id: empId,
-         company_id: record.fields.company_id || 'unknown',
-         user_id: target_id || 'unknown',
-         status: 'active'
-       });
-       insertEntityStmt.run('employments', empId, 1, payloadStr, record.fields.company_id || 'unknown', target_id || 'unknown', now);
-       return res.json({ status: 'ok', type: 'invitation', employment_id: empId });
-    }
   } catch (err) {
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+    console.error('Circuit resolve error:', err);
+    res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 
@@ -1575,4 +2000,88 @@ setInterval(() => {
 }, 5000);
 
 const port = process.env.PORT || 3000;
+
+// --- CIRCUIT V1 COMMERCIAL ENDPOINTS ---
+
+app.post('/api/circuit/parse-file', upload.single('file'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file provided' });
+    
+    let rows = [];
+    if (req.file.originalname.endsWith('.csv')) {
+      const text = req.file.buffer.toString('utf-8');
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        const vals = lines[i].split(',').map(v => v.trim());
+        rows.push({
+          source_row_id: 'row_' + i,
+          recipient_raw: vals[0] || '',
+          address_raw: vals[1] || '',
+          other_raw_text: lines[i]
+        });
+      }
+    } else if (req.file.originalname.endsWith('.xlsx')) {
+      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+      for (let i = 1; i < data.length; i++) {
+        if (!data[i] || data[i].length === 0) continue;
+        rows.push({
+          source_row_id: 'row_' + i,
+          recipient_raw: data[i][0] || '',
+          address_raw: data[i][1] || '',
+          other_raw_text: data[i].join(',')
+        });
+      }
+    } else {
+      return res.status(400).json({ error: 'Unsupported file format. Use CSV or XLSX.' });
+    }
+    
+    res.json({ rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/circuit/ocr', upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No image provided' });
+  const result = await CircuitOCRProvider.extract(req.file.buffer);
+  res.json(result);
+});
+
+app.post('/api/circuit/speech', upload.single('audio'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No audio provided' });
+  const result = await CircuitSpeechProvider.transcribe(req.file.buffer);
+  res.json(result);
+});
+
+app.post('/api/circuit/quality-control', async (req, res) => {
+  const result = await CircuitAgentWrapper.auditInput(req.body.rows, req.body.input_method);
+  res.json(result);
+});
+
+app.post('/api/circuit/geocode', async (req, res) => {
+  const result = await CircuitGeocodingProvider.geocode(req.body.address);
+  res.json(result);
+});
+
+app.post('/api/circuit/route-matrix', async (req, res) => {
+  const result = await CircuitRouteMatrixProvider.computeMatrix(req.body.origins, req.body.destinations);
+  res.json(result);
+});
+
+app.post('/api/circuit/optimize', async (req, res) => {
+  const result = await CircuitOptimizationProvider.optimize(req.body.stops, req.body.constraints);
+  res.json(result);
+});
+
+app.post('/api/circuit/audit-optimization', async (req, res) => {
+  const result = await CircuitAgentWrapper.auditOptimization(req.body.stops, req.body.optimizedOrder);
+  res.json(result);
+});
+
+// --- END CIRCUIT V1 COMMERCIAL ENDPOINTS ---
+
 app.listen(port, () => console.log(`Recovery server running on port ${port}`));

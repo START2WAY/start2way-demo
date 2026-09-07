@@ -8,6 +8,16 @@
 
 /* ─── FORMATAGE DURÉES ──────────────────────────────────────────────────── */
 const S2WUtils = {
+  getAuthCompanyId: function() {
+    try {
+      const token = localStorage.getItem('sessionToken');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.company_id || null;
+    } catch(e) {
+      return null;
+    }
+  },
 
   /* Secondes → "Xh YYmin" */
   fmtDuration(sec) {
@@ -464,6 +474,81 @@ async validateCircuitToken(code, userId = 'usr_001') {
       bookletReady,
       days
     };
+  },
+
+  // --- FLEET UTILITIES ---
+  isVehicleCurrentlyInUse(vehicleId) {
+    const usages = window.S2W.table('vehicle_usages') || [];
+    return usages.some(u => u.vehicle_id === vehicleId && u.ended_at === null);
+  },
+
+  isOdometerCoherent(vehicleId, enteredKm) {
+    const vehicle = window.S2W.find('vehicles', vehicleId);
+    if (!vehicle) return true; // Can't verify
+    
+    // Convert to numbers just in case
+    const current = Number(enteredKm);
+    if (isNaN(current)) return false;
+
+    let lastKm = vehicle.last_known_km;
+    if (lastKm === undefined || lastKm === null) {
+      lastKm = vehicle.initial_company_odometer;
+    }
+
+    if (lastKm !== undefined && lastKm !== null) {
+      if (current < Number(lastKm)) {
+        return false; // Incoherent
+      }
+    }
+    return true; // Coherent
+  },
+
+  getVehicleNextCriticalDeadline(vehicle) {
+    if (!vehicle) return null;
+    const now = new Date().getTime();
+    let criticalDeadline = null;
+    
+    const checkDeadline = (dateStr, type, label) => {
+      if (!dateStr) return;
+      const t = new Date(dateStr).getTime();
+      const diffDays = (t - now) / (1000 * 3600 * 24);
+      
+      let status = 'OK';
+      if (diffDays < 0) status = 'EXPIRED';
+      else if (diffDays <= 30) status = 'SOON';
+
+      if (criticalDeadline === null || diffDays < criticalDeadline.diffDays) {
+        criticalDeadline = { type, label, diffDays, dateStr, status };
+      }
+    };
+
+    checkDeadline(vehicle.technical_inspection_expiry_date, 'CT', 'Contrôle technique');
+    checkDeadline(vehicle.insurance_expiry_date, 'INSURANCE', 'Assurance');
+    
+    if (vehicle.is_leased && vehicle.lease_end_date) {
+      checkDeadline(vehicle.lease_end_date, 'LEASE', 'Fin de location');
+    }
+    
+    if (vehicle.maintenance_next_date) {
+      checkDeadline(vehicle.maintenance_next_date, 'MAINTENANCE_DATE', 'Entretien (date)');
+    }
+
+    // Check kilometer deadline
+    if (vehicle.maintenance_next_km && vehicle.last_known_km) {
+      const kmDiff = Number(vehicle.maintenance_next_km) - Number(vehicle.last_known_km);
+      let status = 'OK';
+      if (kmDiff < 0) status = 'EXPIRED';
+      else if (kmDiff <= 1500) status = 'SOON';
+      
+      // Artificial diffDays mapping for sorting priority (EXPIRED km < EXPIRED date)
+      const virtualDiffDays = kmDiff < 0 ? -1 : (kmDiff / 100); 
+      
+      if (criticalDeadline === null || virtualDiffDays < criticalDeadline.diffDays) {
+        criticalDeadline = { type: 'MAINTENANCE_KM', label: 'Entretien (km)', diffDays: virtualDiffDays, kmDiff, status };
+      }
+    }
+    
+    return criticalDeadline;
   }
 
 };

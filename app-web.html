@@ -797,6 +797,41 @@
     }
     .circuit-detail-stop-badge.success { background: var(--success); }
     .circuit-detail-stop-badge.failed { background: var(--danger); }
+
+    /* --- FLEET V1 --- */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(7,22,43,0.55);
+      z-index: 200; display: none;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: -400px; width: 400px; bottom: 0;
+      background: var(--white); box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+      z-index: 201; transition: right 0.3s ease; display: flex; flex-direction: column;
+    }
+    .drawer.open { right: 0; }
+    @media (max-width: 500px) { .drawer { width: 100%; right: -100%; } }
+    .drawer-header {
+      padding: 20px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--surface);
+    }
+    .drawer-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--navy); }
+    .drawer-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-sec); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .drawer-footer { padding: 20px; border-top: 1px solid var(--border); background: var(--surface); }
+
+    /* Chat Messages */
+    .chat-msg { margin-bottom: 16px; font-size: 13px; line-height: 1.5; padding: 12px 16px; border-radius: var(--radius); width: 85%; }
+    .chat-msg.assistant { background: var(--surface); border: 1px solid var(--border); color: var(--text-main); margin-right: auto; border-bottom-left-radius: 4px; }
+    .chat-msg.user { background: var(--navy); color: var(--white); margin-left: auto; border-bottom-right-radius: 4px; }
+    .chat-input-wrap { display: flex; gap: 8px; }
+    .chat-input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; }
+    
+    .synthetic-counter { display: inline-flex; flex-direction: column; background: var(--navy-dark); color: var(--white); padding: 10px 14px; border-radius: var(--radius-sm); align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .synthetic-counter .sc-val { font-family: var(--font-head); font-size: 24px; font-weight: 700; color: var(--brand-green); }
+    .synthetic-counter .sc-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+
 </style>
 </head>
 <body>
@@ -1196,7 +1231,7 @@
         txt.textContent = 'Sync... ⏳';
       }
 
-      await S2W.syncFromAirtable();
+
 
       setTimeout(() => {
         const builders = {
@@ -3004,62 +3039,784 @@
     renderDocTab(_docTab);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════════
-     PAGE : FLOTTE
+/* ═══════════════════════════════════════════════════════════════════════
+     PAGE : FLOTTE (V1 FINAL CORRECTION)
      ═══════════════════════════════════════════════════════════════════════ */
-  function buildFlotte(el) {
-    const vehicles = S2W.table('vehicles');
-    const company = S2W.table('companies')[0] || { legal_name: 'AMT Transport' };
-    el.innerHTML = `
-      <div class="page-header">
-        <div>
-          <h1 class="page-title">Gestion de la flotte</h1>
-          <p class="page-subtitle">${vehicles.length} véhicules — ${company.legal_name || 'AMT Transport'}</p>
+  
+  let _fleetFilter = 'tous';
+  let _fleetSearch = '';
+
+  function renderFleetCards() {
+    const activeCompanyId = S2WUtils.getAuthCompanyId();
+    const container = document.getElementById('fleet-cards-container');
+    if (!container) return;
+    
+    let vehicles = (S2W.table('vehicles') || []).filter(v => v.company_id === activeCompanyId);
+    
+    // Apply status filter
+    if (_fleetFilter === 'tous') {
+      vehicles = vehicles.filter(v => (v.status || '').toUpperCase() !== 'ARCHIVED');
+    } else if (_fleetFilter === 'active') {
+      vehicles = vehicles.filter(v => (v.status || 'ACTIVE').toUpperCase() === 'ACTIVE');
+    } else if (_fleetFilter === 'maintenance') {
+      vehicles = vehicles.filter(v => (v.status || '').toUpperCase() === 'MAINTENANCE');
+    } else if (_fleetFilter === 'unavailable') {
+      vehicles = vehicles.filter(v => (v.status || '').toUpperCase() === 'UNAVAILABLE');
+    } else if (_fleetFilter === 'archives') {
+      vehicles = vehicles.filter(v => (v.status || '').toUpperCase() === 'ARCHIVED');
+    } else if (_fleetFilter === 'in_use') {
+      vehicles = vehicles.filter(v => S2WUtils.isVehicleCurrentlyInUse(v.id));
+    } else if (_fleetFilter === 'alerts') {
+      vehicles = vehicles.filter(v => {
+        const deadline = S2WUtils.getVehicleNextCriticalDeadline(v);
+        return deadline && (deadline.status === 'SOON' || deadline.status === 'EXPIRED');
+      });
+    }
+
+    // Apply search filter
+    if (_fleetSearch) {
+      const q = _fleetSearch.toLowerCase();
+      vehicles = vehicles.filter(v => 
+        (v.plate_number && v.plate_number.toLowerCase().includes(q)) ||
+        (v.brand && v.brand.toLowerCase().includes(q)) ||
+        (v.model && v.model.toLowerCase().includes(q))
+      );
+    }
+
+    if (vehicles.length === 0) {
+      container.innerHTML = '<div class="empty-state"><span class="empty-icon">🚚</span>Aucun véhicule trouvé.</div>';
+      return;
+    }
+
+    container.innerHTML = vehicles.map(v => {
+      const deadline = S2WUtils.getVehicleNextCriticalDeadline(v);
+      let badgeHtml = '';
+      if (deadline) {
+        if (deadline.status === 'EXPIRED') badgeHtml = `<span class="badge" style="background:#FFEBEB;color:#D92D20;border:1px solid #FDA29B">⚠️ ${deadline.label} expiré</span>`;
+        else if (deadline.status === 'SOON') badgeHtml = `<span class="badge" style="background:#FEF0C7;color:#B54708;border:1px solid #FEC84B">⚠️ ${deadline.label} proche</span>`;
+        else badgeHtml = `<span class="badge" style="background:#ECFDF3;color:#027A48;border:1px solid #6CE9A6">✅ ${deadline.label} OK</span>`;
+      }
+      
+      const inUse = S2WUtils.isVehicleCurrentlyInUse(v.id);
+      let statBadge = `<span class="badge" style="background:#f1f3f5;color:#495057">${(v.status || 'active').toUpperCase()}</span>`;
+      if (inUse) statBadge = `<span class="badge" style="background:#E0F2FE;color:#026AA2">EN CIRCULATION</span>`;
+      
+      return `
+        <div class="card vehicle-card">
+          <div class="card-header">
+            <h3 class="card-title" onclick="showVehicleDetails('${v.id}')" style="cursor:pointer; color:var(--navy); font-size:16px;">
+              ${v.plate_number || 'Sans plaque'}
+            </h3>
+            ${statBadge}
+          </div>
+          <div class="card-body">
+            <div style="font-size:13px; color:var(--text-sec); margin-bottom:12px;">
+              ${v.brand || ''} ${v.model || ''}
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:12px;">
+              <span style="display:flex; align-items:center; gap:4px; color:var(--text-main);">
+                <span>📍</span> ${v.last_known_km || v.initial_company_odometer || 0} km
+              </span>
+              ${badgeHtml}
+            </div>
+          </div>
+          <div class="card-footer" style="display:flex; gap:8px; border-top:1px solid var(--border); padding-top:12px; margin-top:12px;">
+            <button class="btn" style="flex:1; background:#f4f5f6; color:var(--navy); font-size:12px;" onclick="openFleetAIDrawer('${v.id}')">✉️ Assistant IA</button>
+            <button class="btn" style="padding:8px 12px; background:#f4f5f6; color:var(--text-main); font-size:12px;" onclick="showVehicleForm('${v.id}')">✏️ Modifier</button>
+            <button class="btn" style="padding:8px 12px; background:#FFEBEB; color:var(--danger); font-size:12px;" onclick="confirmArchiveVehicle('${v.id}')">❌ Retirer</button>
+          </div>
         </div>
-        <button class="btn btn-brand-green" onclick="showToast('Formulaire ajout véhicule — Disponible en production')">+ Ajouter un véhicule</button>
-      </div>
-      <div class="cards-grid">
-        ${vehicles.map(v => {
-          const ct = v.documents?.controle_technique;
-          const ctDiff = ct?.expires_at ? (new Date(ct.expires_at)-new Date())/86400000 : 999;
-          const ctCls = ctDiff < 0 ? 'badge-danger' : ctDiff < 30 ? 'badge-warning' : 'badge-success';
-          const ctLabel = ctDiff < 0 ? 'CT Expiré' : ctDiff < 30 ? `CT dans ${Math.ceil(ctDiff)}j` : 'CT Valide';
-          return `
-          <div class="vehicle-card" onclick="showVehicleDetail('${v.id}')"
-            role="button" tabindex="0" aria-label="Voir la fiche ${v.plate_number}"
-            onkeydown="if(event.key==='Enter')showVehicleDetail('${v.id}')">
-            <div class="vc-header">
-              <span class="vc-plate">${v.plate_number}</span>
-              <span class="badge ${ctCls}">${ctLabel}</span>
-            </div>
-            <div class="vc-model">${v.brand_model} — ${(v.max_weight_kg/1000).toFixed(1)}t</div>
-            <div class="vc-meta">
-              <span class="vc-meta-item">${v.tachograph_equipped ? '🕐 Tachygraphe' : '— Sans tachy'}</span>
-              <span class="vc-meta-item">📍 ${v.last_known_km.toLocaleString('fr-FR')} km</span>
-            </div>
-            <div class="vc-docs">
-              <div class="vc-doc-row">
-                <span class="vc-doc-label">Carte grise</span>
-                <span class="badge badge-success">Valide</span>
-              </div>
-              <div class="vc-doc-row">
-                <span class="vc-doc-label">Assurance</span>
-                ${S2WUtils.badgeExpiry(v.documents?.assurance?.expires_at)}
-              </div>
-              <div class="vc-doc-row">
-                <span class="vc-doc-label">Contrôle technique</span>
-                ${S2WUtils.badgeExpiry(v.documents?.controle_technique?.expires_at)}
-              </div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`;
+      `;
+    }).join('');
+    
+    // Update synthetic counters
+    const all = (S2W.table('vehicles') || []).filter(v => v.company_id === activeCompanyId && (v.status || '').toUpperCase() !== 'ARCHIVED');
+    document.getElementById('fleet-count-total').textContent = all.length;
+    document.getElementById('fleet-count-inuse').textContent = all.filter(v => S2WUtils.isVehicleCurrentlyInUse(v.id)).length;
   }
 
-  function showVehicleDetail(id) {
-    const v = S2W.find('vehicles', id);
+  function setFleetFilter(filter, btn) {
+    _fleetFilter = filter;
+    document.querySelectorAll('.fleet-filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderFleetCards();
+  }
+
+  function searchFleet(q) {
+    _fleetSearch = q;
+    renderFleetCards();
+  }
+
+  function buildFlotte(el) {
+    _fleetFilter = 'tous';
+    _fleetSearch = '';
+    
+    el.innerHTML = `
+      <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <h1 class="page-title">Gestion de la Flotte</h1>
+          <p class="page-subtitle">Suivi administratif, technique et kilométrique de vos véhicules.</p>
+        </div>
+        <button class="btn btn-brand-green" onclick="showVehicleForm()">+ Ajouter un véhicule</button>
+      </div>
+
+      <div class="stats-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-title">Véhicules actifs</div>
+          <div class="stat-value" id="fleet-count-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">En circulation</div>
+          <div class="stat-value" style="color:var(--brand-green)" id="fleet-count-inuse">0</div>
+        </div>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;">
+          <button class="fleet-filter-chip active" onclick="setFleetFilter('tous', this)">Tous</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('active', this)">Disponibles</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('in_use', this)">En circulation</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('maintenance', this)">Maintenance</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('unavailable', this)">Indisponibles</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('alerts', this)">Alertes</button>
+          <button class="fleet-filter-chip" onclick="setFleetFilter('archives', this)">Archivés</button>
+        </div>
+        <div style="position:relative;">
+          <span style="position:absolute; left:12px; top:10px; color:#999; font-size:14px;">🔍</span>
+          <input type="text" class="form-control" placeholder="Rechercher..." onkeyup="searchFleet(this.value)" style="padding-left:36px; width:250px;">
+        </div>
+      </div>
+
+      <div id="fleet-cards-container" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;"></div>
+    `;
+    
+    if (!document.getElementById('fleet-css')) {
+      const style = document.createElement('style');
+      style.id = 'fleet-css';
+      style.innerHTML = `
+        .fleet-filter-chip { padding:6px 14px; border-radius:16px; border:1px solid var(--border); background:#fff; color:var(--text-sec); font-size:13px; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+        .fleet-filter-chip:hover { border-color:var(--brand-green); color:var(--brand-green); }
+        .fleet-filter-chip.active { background:var(--brand-green); color:#fff; border-color:var(--brand-green); }
+        
+        .ai-drawer { position:fixed; top:0; right:-400px; width:400px; height:100vh; background:#fff; box-shadow:-4px 0 24px rgba(0,0,0,0.1); z-index:9999; transition:right 0.3s ease; display:flex; flex-direction:column; }
+        .ai-drawer.open { right:0; }
+        .ai-drawer-header { padding:20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:#f8f9fa; }
+        .ai-drawer-body { flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; background:#fbfcfd; }
+        .ai-drawer-footer { padding:16px; border-top:1px solid var(--border); background:#fff; }
+        .chat-msg { max-width:85%; padding:12px 16px; border-radius:12px; font-size:13px; line-height:1.5; white-space:pre-wrap; word-wrap: break-word; }
+        .chat-msg.user { background:var(--brand-green); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+        .chat-msg.ai { background:#fff; color:var(--text-main); border:1px solid var(--border); align-self:flex-start; border-bottom-left-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+        
+        .timeline-card { background:#fff; border:1px solid #eee; border-radius:8px; padding:12px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; }
+        .timeline-date { font-weight:600; font-size:13px; color:var(--navy); }
+        .timeline-kms { font-size:14px; font-family:monospace; background:#f8f9fa; padding:4px 8px; border-radius:4px; display:inline-block; }
+        .timeline-diff { font-weight:600; color:var(--brand-green); font-size:13px; }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    renderFleetCards();
+  }
+
+  function showVehicleForm(vehicleId = null) {
+    const v = vehicleId ? S2W.find('vehicles', vehicleId) : {};
+    const title = vehicleId ? 'Modifier le véhicule' : 'Nouveau véhicule';
+    
+    showModal(`
+      <div class="modal-header">
+        <div class="modal-title">${title}</div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+        
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Identification</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">Immatriculation *</label>
+            <input type="text" id="v-plate" class="form-control" value="${v.plate_number || ''}">
+          </div>
+          <div>
+            <label class="form-label">Marque *</label>
+            <input type="text" id="v-brand" class="form-control" value="${v.brand || ''}">
+          </div>
+          <div>
+            <label class="form-label">Modèle *</label>
+            <input type="text" id="v-model" class="form-control" value="${v.model || ''}">
+          </div>
+          <div>
+            <label class="form-label">VIN</label>
+            <input type="text" id="v-vin" class="form-control" value="${v.vin || ''}">
+          </div>
+          <div>
+            <label class="form-label">Type *</label>
+            <select id="v-type" class="form-control" onchange="document.getElementById('v-type-other').style.display = this.value==='AUTRE'?'block':'none'">
+              <option value="VL" ${v.vehicle_type==='VL'?'selected':''}>VL (Véhicule Léger)</option>
+              <option value="VUL" ${v.vehicle_type==='VUL'?'selected':''}>VUL (Utilitaire)</option>
+              <option value="PL_PORTEUR" ${v.vehicle_type==='PL_PORTEUR'?'selected':''}>PL Porteur</option>
+              <option value="PL_TRACTEUR" ${v.vehicle_type==='PL_TRACTEUR'?'selected':''}>PL Tracteur</option>
+              <option value="SEMI_REMORQUE" ${v.vehicle_type==='SEMI_REMORQUE'?'selected':''}>Semi-remorque</option>
+              <option value="REMORQUE" ${v.vehicle_type==='REMORQUE'?'selected':''}>Remorque</option>
+              <option value="BUS" ${v.vehicle_type==='BUS'?'selected':''}>Bus</option>
+              <option value="CAR" ${v.vehicle_type==='CAR'?'selected':''}>Car</option>
+              <option value="AUTRE" ${v.vehicle_type==='AUTRE'?'selected':''}>Autre</option>
+            </select>
+            <input type="text" id="v-type-other" class="form-control" style="margin-top:8px; display:${v.vehicle_type==='AUTRE'?'block':'none'};" placeholder="Précisez le type" value="${v.vehicle_type_other || ''}">
+          </div>
+          <div>
+            <label class="form-label">1ère mise en circulation</label>
+            <input type="date" id="v-first-reg" class="form-control" value="${v.first_registration_date ? v.first_registration_date.substring(0,10) : ''}">
+          </div>
+        </div>
+
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Technique & Mensurations</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">PTAC (kg)</label>
+            <input type="number" id="v-ptac" class="form-control" value="${v.ptac || ''}">
+          </div>
+          <div>
+            <label class="form-label">PTRA (kg)</label>
+            <input type="number" id="v-ptra" class="form-control" value="${v.ptra || ''}">
+          </div>
+          <div>
+            <label class="form-label">Poids à vide (kg)</label>
+            <input type="number" id="v-empty-weight" class="form-control" value="${v.empty_weight || ''}">
+          </div>
+          <div>
+            <label class="form-label">Charge utile (kg)</label>
+            <input type="number" id="v-payload" class="form-control" value="${v.payload || ''}">
+          </div>
+          <div>
+            <label class="form-label">Nombre d'essieux</label>
+            <input type="number" id="v-axles" class="form-control" value="${v.axles || ''}" min="1">
+          </div>
+          <div>
+            <label class="form-label">Énergie / Carburant</label>
+            <input type="text" id="v-energy" class="form-control" value="${v.energy || ''}">
+          </div>
+          <div>
+            <label class="form-label">Chronotachygraphe</label>
+            <select id="v-tacho" class="form-control">
+              <option value="non" ${v.has_tachograph===false?'selected':''}>Non</option>
+              <option value="oui" ${v.has_tachograph===true?'selected':''}>Oui</option>
+            </select>
+          </div>
+          <div><label class="form-label">Longueur (m)</label><input type="number" step="0.1" id="v-length" class="form-control" value="${v.length || ''}"></div>
+          <div><label class="form-label">Largeur (m)</label><input type="number" step="0.1" id="v-width" class="form-control" value="${v.width || ''}"></div>
+          <div><label class="form-label">Hauteur (m)</label><input type="number" step="0.1" id="v-height" class="form-control" value="${v.height || ''}"></div>
+          <div><label class="form-label">Volume utile (m³)</label><input type="number" step="0.1" id="v-volume" class="form-control" value="${v.volume || ''}"></div>
+        </div>
+        
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Kilométrage</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">Kilométrage au début d'activité *</label>
+            <input type="number" id="v-initial-km" class="form-control" value="${v.initial_company_odometer !== undefined ? v.initial_company_odometer : ''}" ${v.initial_company_odometer !== undefined ? 'readonly style="background:#f1f3f5"' : ''}>
+          </div>
+          <div>
+            <label class="form-label">Dernier kilométrage connu</label>
+            <input type="number" class="form-control" value="${v.last_known_km !== undefined ? v.last_known_km : ''}" readonly style="background:#f1f3f5">
+          </div>
+        </div>
+        
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Contrôle technique</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">Date dernier passage</label>
+            <input type="date" id="v-ct-last" class="form-control" value="${v.technical_inspection_date ? v.technical_inspection_date.substring(0,10) : ''}">
+          </div>
+          <div>
+            <label class="form-label">Date fin validité</label>
+            <input type="date" id="v-ct-exp" class="form-control" value="${v.technical_inspection_expiry_date ? v.technical_inspection_expiry_date.substring(0,10) : ''}">
+          </div>
+        </div>
+
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Assurance</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">Prise d'effet</label>
+            <input type="date" id="v-ins-start" class="form-control" value="${v.insurance_start_date ? v.insurance_start_date.substring(0,10) : ''}">
+          </div>
+          <div>
+            <label class="form-label">Fin validité</label>
+            <input type="date" id="v-ins-exp" class="form-control" value="${v.insurance_expiry_date ? v.insurance_expiry_date.substring(0,10) : ''}">
+          </div>
+        </div>
+        
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Location</h4>
+        <label class="form-label" style="display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="v-is-leased" onchange="document.getElementById('lease-fields').style.display = this.checked ? 'grid' : 'none'" ${v.is_leased ? 'checked' : ''}>
+          Véhicule loué
+        </label>
+        <div id="lease-fields" style="display:${v.is_leased ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; margin-top:12px;">
+          <div>
+            <label class="form-label">Nom du loueur</label>
+            <input type="text" id="v-lessor" class="form-control" value="${v.lessor_name || ''}">
+          </div>
+          <div>
+            <label class="form-label">Réf. Contrat</label>
+            <input type="text" id="v-lease-ref" class="form-control" value="${v.lease_ref || ''}">
+          </div>
+          <div>
+            <label class="form-label">Date début contrat</label>
+            <input type="date" id="v-lease-start" class="form-control" value="${v.lease_start_date ? v.lease_start_date.substring(0,10) : ''}">
+          </div>
+          <div>
+            <label class="form-label">Date fin contrat</label>
+            <input type="date" id="v-lease-end" class="form-control" value="${v.lease_end_date ? v.lease_end_date.substring(0,10) : ''}">
+          </div>
+        </div>
+        
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Entretien / Maintenance</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+          <div>
+            <label class="form-label">Date dernière vidange</label>
+            <input type="date" id="v-maint-last-date" class="form-control" value="${v.maintenance_last_date ? v.maintenance_last_date.substring(0,10) : ''}">
+          </div>
+          <div>
+            <label class="form-label">Km dernière vidange</label>
+            <input type="number" id="v-maint-last-km" class="form-control" value="${v.maintenance_last_km || ''}">
+          </div>
+          <div>
+            <label class="form-label">Date prochain entretien</label>
+            <input type="date" id="v-maint-next-date" class="form-control" value="${v.maintenance_next_date ? v.maintenance_next_date.substring(0,10) : ''}">
+          </div>
+          <div>
+            <label class="form-label">Km prochain entretien</label>
+            <input type="number" id="v-maint-next-km" class="form-control" value="${v.maintenance_next_km || ''}">
+          </div>
+        </div>
+
+        <h4 style="margin:0 0 12px 0; color:var(--navy); font-size:14px; border-bottom:1px solid #eee; padding-bottom:8px;">Statut</h4>
+        <div style="margin-bottom:24px;">
+          <select id="v-status" class="form-control">
+            <option value="ACTIVE" ${(v.status||'').toUpperCase() === 'ACTIVE' || !v.status ? 'selected' : ''}>ACTIVE</option>
+            <option value="MAINTENANCE" ${(v.status||'').toUpperCase() === 'MAINTENANCE' ? 'selected' : ''}>MAINTENANCE</option>
+            <option value="UNAVAILABLE" ${(v.status||'').toUpperCase() === 'UNAVAILABLE' ? 'selected' : ''}>UNAVAILABLE</option>
+          </select>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-brand-green" onclick="saveVehicle('${vehicleId || ''}')">Enregistrer</button>
+      </div>
+    `);
+  }
+
+  async function saveVehicle(vehicleId) {
+    const activeCompanyId = S2WUtils.getAuthCompanyId();
+    if (!activeCompanyId) { showToast('Erreur session', 'error'); return; }
+    
+    const plate = document.getElementById('v-plate').value.trim();
+    const brand = document.getElementById('v-brand').value.trim();
+    const model = document.getElementById('v-model').value.trim();
+    const type = document.getElementById('v-type').value;
+    const initialKmStr = document.getElementById('v-initial-km').value;
+    
+    if (!plate || !brand || !model || !type || !initialKmStr) {
+      showToast('Immatriculation, marque, modèle, type et kilométrage initial sont requis.', 'error');
+      return;
+    }
+    
+    const initialKm = parseInt(initialKmStr, 10);
+    if (isNaN(initialKm) || initialKm < 0) {
+      showToast('Le kilométrage initial est invalide.', 'error');
+      return;
+    }
+    
+    const axlesStr = document.getElementById('v-axles').value;
+    let axles = null;
+    if (axlesStr) {
+      axles = parseInt(axlesStr, 10);
+      if (isNaN(axles) || axles < 1) {
+        showToast('Le nombre d\'essieux doit être supérieur ou égal à 1.', 'error');
+        return;
+      }
+    }
+
+    const isLeased = document.getElementById('v-is-leased').checked;
+    
+    let v = vehicleId ? S2W.find('vehicles', vehicleId) : {
+      id: S2WUtils.uid('veh'),
+      company_id: activeCompanyId,
+      created_at: new Date().toISOString()
+    };
+    
+    if (!vehicleId) {
+      v.initial_company_odometer = initialKm;
+      v.last_known_km = initialKm;
+    }
+
+    v.status = document.getElementById('v-status').value;
+    v.plate_number = plate;
+    v.brand = brand;
+    v.model = model;
+    v.vin = document.getElementById('v-vin').value.trim();
+    v.vehicle_type = type;
+    if (type === 'AUTRE') v.vehicle_type_other = document.getElementById('v-type-other').value.trim();
+    
+    v.first_registration_date = document.getElementById('v-first-reg').value || null;
+    v.ptac = document.getElementById('v-ptac').value || null;
+    v.ptra = document.getElementById('v-ptra').value || null;
+    v.empty_weight = document.getElementById('v-empty-weight').value || null;
+    v.payload = document.getElementById('v-payload').value || null;
+    v.axles = axles;
+    v.energy = document.getElementById('v-energy').value || null;
+    v.has_tachograph = document.getElementById('v-tacho').value === 'oui';
+    
+    v.length = document.getElementById('v-length').value || null;
+    v.width = document.getElementById('v-width').value || null;
+    v.height = document.getElementById('v-height').value || null;
+    v.volume = document.getElementById('v-volume').value || null;
+    
+    v.technical_inspection_date = document.getElementById('v-ct-last').value || null;
+    v.technical_inspection_expiry_date = document.getElementById('v-ct-exp').value || null;
+    v.insurance_start_date = document.getElementById('v-ins-start').value || null;
+    v.insurance_expiry_date = document.getElementById('v-ins-exp').value || null;
+    
+    v.is_leased = isLeased;
+    if (isLeased) {
+      v.lessor_name = document.getElementById('v-lessor').value || null;
+      v.lease_ref = document.getElementById('v-lease-ref').value || null;
+      v.lease_start_date = document.getElementById('v-lease-start').value || null;
+      v.lease_end_date = document.getElementById('v-lease-end').value || null;
+    } else {
+      v.lessor_name = null; v.lease_ref = null; v.lease_start_date = null; v.lease_end_date = null;
+    }
+    
+    v.maintenance_last_date = document.getElementById('v-maint-last-date').value || null;
+    v.maintenance_last_km = document.getElementById('v-maint-last-km').value || null;
+    v.maintenance_next_date = document.getElementById('v-maint-next-date').value || null;
+    v.maintenance_next_km = document.getElementById('v-maint-next-km').value || null;
+
+    try {
+      await S2W.mutate('vehicles', v);
+      closeModal();
+      showToast('Véhicule enregistré avec succès', 'success');
+      renderFleetCards();
+    } catch(err) {
+      showToast('Erreur serveur: ' + (err.message || ''), 'error');
+    }
+  }
+
+  function confirmArchiveVehicle(vehicleId) {
+    if (S2WUtils.isVehicleCurrentlyInUse(vehicleId)) {
+      showModal(`
+        <div class="modal-header">
+          <div class="modal-title">Action impossible</div>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Impossible de retirer ce véhicule, un salarié est en cours d'utilisation dessus.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+        </div>
+      `);
+      return;
+    }
+    
+    showModal(`
+      <div class="modal-header">
+        <div class="modal-title">Confirmation requise</div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment retirer ce véhicule de votre flotte ?</p>
+        <p style="font-size:12px; color:var(--text-sec); margin-top:8px;">Le véhicule sera archivé et ne sera plus disponible pour les salariés. L'historique et les documents seront conservés.</p>
+      </div>
+      <div class="modal-footer" style="display:flex; justify-content:space-between;">
+        <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button class="btn" style="background:var(--danger); color:#fff;" onclick="archiveVehicle('${vehicleId}')">Retirer le véhicule</button>
+      </div>
+    `);
+  }
+
+  async function archiveVehicle(vehicleId) {
+    const v = S2W.find('vehicles', vehicleId);
     if (!v) return;
-    showToast(`Fiche ${v.plate_number} — ${v.last_known_km.toLocaleString('fr-FR')} km — ${v.brand_model}`);
+    
+    v.status = 'ARCHIVED';
+    v.archived_at = new Date().toISOString();
+    
+    try {
+      await S2W.mutate('vehicles', v);
+      closeModal();
+      showToast('Véhicule retiré de la flotte', 'success');
+      renderFleetCards();
+    } catch(e) {
+      if (e.message.includes('VEHICLE_ARCHIVE_FORBIDDEN')) {
+         showToast('Refusé par le serveur: Véhicule actif', 'error');
+      } else {
+         showToast('Erreur lors du retrait', 'error');
+      }
+    }
+  }
+
+  function showVehicleDetails(vehicleId) {
+    const v = S2W.find('vehicles', vehicleId);
+    if (!v) return;
+    
+    const companyId = S2WUtils.getAuthCompanyId();
+    
+    // Extract history
+    const allUsages = S2W.table('vehicle_usages') || [];
+    const usages = allUsages.filter(u => u.vehicle_id === vehicleId).sort((a,b) => {
+      const aDate = new Date(a.business_date || a.started_at || a.created_at);
+      const bDate = new Date(b.business_date || b.started_at || b.created_at);
+      return bDate - aDate;
+    });
+    
+    // Extract documents
+    const allDocs = S2W.table('documents') || [];
+    const vDocs = allDocs.filter(d => d.scope === 'COMPANY' && d.company_id === companyId && d.owner_type === 'vehicle' && d.owner_id === vehicleId && !d.hidden_at);
+    
+    // Extract maintenance events
+    const allMaint = S2W.table('vehicle_maintenance_events') || [];
+    const maintEvents = allMaint.filter(m => m.vehicle_id === vehicleId).sort((a,b) => new Date(b.date) - new Date(a.date));
+    
+    showModal(`
+      <div class="modal-header">
+        <div class="modal-title">${v.plate_number} - ${v.brand} ${v.model}</div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body" style="padding:0; max-height:75vh; overflow-y:auto; background:#f4f5f6;">
+        
+        <div style="padding:16px; background:#fff; border-bottom:1px solid #eee; margin-bottom:12px;">
+          <h4 style="margin:0 0 12px 0; font-size:14px;">Informations clés</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:13px;">
+            <div><strong>Type :</strong> ${v.vehicle_type || 'N/A'}</div>
+            <div><strong>VIN :</strong> ${v.vin || 'N/A'}</div>
+            <div><strong>PTAC :</strong> ${v.ptac ? v.ptac + ' kg' : 'N/A'}</div>
+            <div><strong>Essieux :</strong> ${v.axles || 'N/A'}</div>
+            <div><strong>Énergie :</strong> ${v.energy || 'N/A'}</div>
+            <div><strong>CT :</strong> ${v.technical_inspection_expiry_date || 'N/A'}</div>
+            <div><strong>Assurance :</strong> ${v.insurance_expiry_date || 'N/A'}</div>
+          </div>
+        </div>
+
+        <div style="padding:16px; background:#fff; border-bottom:1px solid #eee; margin-bottom:12px;">
+          <h4 style="margin:0 0 12px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+            Documents
+          </h4>
+          ${vDocs.length === 0 ? '<div style="font-size:12px; color:#666; font-style:italic;">Aucun document.</div>' : 
+            '<ul style="margin:0; padding-left:20px; font-size:13px;">' + vDocs.map(d => `<li><a href="/api/documents/${d.id}/file?token=${localStorage.getItem('sessionToken')}" target="_blank">${d.name} (${d.doc_type})</a></li>`).join('') + '</ul>'
+          }
+        </div>
+
+        <div style="padding:16px; background:#fff; border-bottom:1px solid #eee; margin-bottom:12px;">
+          <h4 style="margin:0 0 12px 0; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+            Événements de Maintenance
+            <button class="btn btn-sm" style="background:#f4f5f6; font-size:12px;" onclick="addMaintenanceEvent('${vehicleId}')">+ Ajouter</button>
+          </h4>
+          ${maintEvents.length === 0 ? '<div style="font-size:12px; color:#666; font-style:italic;">Aucun entretien consigné.</div>' : 
+            '<div style="display:flex; flex-direction:column; gap:8px;">' + maintEvents.map(m => `
+              <div class="timeline-card">
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="timeline-date">${m.date}</span>
+                  <span class="timeline-kms" style="background:#e8f4fd;">${m.type}</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-sec);">${m.description||''}</div>
+                <div style="font-size:12px; display:flex; gap:16px; margin-top:4px;">
+                  <span>📍 ${m.odometer||'-'} km</span>
+                  <span>💶 ${m.amount ? m.amount+' €' : '-'}</span>
+                  <span>🏢 ${m.provider||'-'}</span>
+                </div>
+              </div>
+            `).join('') + '</div>'
+          }
+        </div>
+
+        <div style="padding:16px; background:#fff; border-bottom:1px solid #eee;">
+          <h4 style="margin:0 0 12px 0; font-size:14px;">Historique Kilométrique</h4>
+          ${usages.length === 0 ? '<div style="font-size:12px; color:#666; font-style:italic;">Aucun trajet enregistré.</div>' : 
+            '<div style="display:flex; flex-direction:column; gap:8px;">' + usages.map(u => {
+              const uDate = u.business_date || u.started_at ? (u.business_date || u.started_at).substring(0,10) : new Date(u.created_at).toLocaleDateString();
+              const dist = (u.odometer_end != null && u.odometer_start != null) ? (u.odometer_end - u.odometer_start) : null;
+              return `
+              <div class="timeline-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <span class="timeline-date">${uDate}</span>
+                  ${dist !== null ? `<span class="timeline-diff">+${dist} km</span>` : '<span class="timeline-diff" style="color:#999;">? km</span>'}
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-main);">
+                  <span class="timeline-kms">${u.odometer_start != null ? u.odometer_start : '?'}</span>
+                  <span style="color:#ccc;">→</span>
+                  <span class="timeline-kms">${u.odometer_end != null ? u.odometer_end : '?'}</span>
+                </div>
+              </div>
+              `;
+            }).join('') + '</div>'
+          }
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      </div>
+    `);
+  }
+
+  function addMaintenanceEvent(vehicleId) {
+    // Storing current vehicle details modal content to revert if needed, but for simplicity we can just close and open a new one
+    closeModal();
+    setTimeout(() => {
+      showModal(`
+        <div class="modal-header">
+          <div class="modal-title">Nouvel entretien</div>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div style="display:grid; gap:16px;">
+            <div><label class="form-label">Type (Ex: Vidange, Pneus, Réparation)</label><input type="text" id="m-type" class="form-control"></div>
+            <div><label class="form-label">Date</label><input type="date" id="m-date" class="form-control"></div>
+            <div><label class="form-label">Kilométrage</label><input type="number" id="m-odo" class="form-control"></div>
+            <div><label class="form-label">Description</label><textarea id="m-desc" class="form-control" rows="3"></textarea></div>
+            <div><label class="form-label">Prestataire / Garage</label><input type="text" id="m-prov" class="form-control"></div>
+            <div><label class="form-label">Montant (€)</label><input type="number" step="0.01" id="m-amt" class="form-control"></div>
+          </div>
+        </div>
+        <div class="modal-footer" style="display:flex; justify-content:space-between;">
+          <button class="btn btn-secondary" onclick="showVehicleDetails('${vehicleId}')">Annuler</button>
+          <button class="btn btn-brand-green" onclick="saveMaintenanceEvent('${vehicleId}')">Ajouter</button>
+        </div>
+      `);
+    }, 300);
+  }
+
+  async function saveMaintenanceEvent(vehicleId) {
+    const type = document.getElementById('m-type').value.trim();
+    const date = document.getElementById('m-date').value;
+    if(!type || !date) { showToast('Type et Date requis', 'error'); return; }
+    
+    const event = {
+      id: S2WUtils.uid('evt'),
+      vehicle_id: vehicleId,
+      company_id: S2WUtils.getAuthCompanyId(),
+      type: type,
+      date: date,
+      odometer: document.getElementById('m-odo').value || null,
+      description: document.getElementById('m-desc').value || null,
+      provider: document.getElementById('m-prov').value || null,
+      amount: document.getElementById('m-amt').value || null,
+      created_at: new Date().toISOString()
+    };
+    
+    try {
+      await S2W.mutate('vehicle_maintenance_events', event);
+      showToast('Entretien ajouté', 'success');
+      showVehicleDetails(vehicleId); // re-open the details modal
+    } catch(err) {
+      showToast('Erreur lors de l\'ajout', 'error');
+    }
+  }
+
+  // AI Drawer
+  let currentAIVehicleId = null;
+  let currentAIHistory = [];
+
+  function openFleetAIDrawer(vehicleId) {
+    currentAIVehicleId = vehicleId;
+    currentAIHistory = [];
+    
+    const v = S2W.find('vehicles', vehicleId);
+    
+    let drawer = document.getElementById('fleet-ai-drawer');
+    if (!drawer) {
+      drawer = document.createElement('div');
+      drawer.id = 'fleet-ai-drawer';
+      drawer.className = 'ai-drawer';
+      drawer.innerHTML = `
+        <div class="ai-drawer-header">
+          <div style="font-weight:600; font-family:var(--font-head); color:var(--navy); font-size:15px;" id="ai-drawer-title">Assistant IA</div>
+          <button style="background:none; border:none; font-size:18px; cursor:pointer; color:#999;" onclick="closeFleetAIDrawer()">×</button>
+        </div>
+        <div class="ai-drawer-body" id="ai-chat-history">
+          <div class="chat-msg ai" id="ai-welcome-msg">Bonjour, je suis l'assistant Flotte START2WAY. Je peux vous aider à rédiger des courriels administratifs, de relance de contrôle technique, d'assurance ou d'entretien. Comment puis-je vous aider ?</div>
+        </div>
+        <div class="ai-drawer-footer" style="display:flex; gap:8px;">
+          <input type="text" id="ai-chat-input" class="form-control" placeholder="Demander à rédiger un e-mail..." style="flex:1" onkeypress="if(event.key==='Enter') sendFleetAIMessage()">
+          <button class="btn btn-brand-green" onclick="sendFleetAIMessage()">Envoyer</button>
+        </div>
+      `;
+      document.body.appendChild(drawer);
+    }
+    
+    document.getElementById('ai-drawer-title').textContent = `Assistant IA — ${v.plate_number}`;
+    const histDiv = document.getElementById('ai-chat-history');
+    histDiv.innerHTML = '<div class="chat-msg ai">Bonjour, comment puis-je vous aider ?</div>';
+    document.getElementById('ai-chat-input').value = '';
+    
+    setTimeout(() => drawer.classList.add('open'), 10);
+  }
+
+  function closeFleetAIDrawer() {
+    const drawer = document.getElementById('fleet-ai-drawer');
+    if (drawer) {
+      drawer.classList.remove('open');
+      setTimeout(() => drawer.remove(), 300);
+    }
+  }
+
+  async function sendFleetAIMessage() {
+    const input = document.getElementById('ai-chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    input.value = '';
+    const histDiv = document.getElementById('ai-chat-history');
+    
+    // SAFE DOM CREATION FOR XSS PREVENTION (User Content)
+    const userDiv = document.createElement('div');
+    userDiv.className = 'chat-msg user';
+    userDiv.textContent = text;
+    histDiv.appendChild(userDiv);
+    histDiv.scrollTop = histDiv.scrollHeight;
+    
+    try {
+      const res = await fetch('/api/fleet/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('sessionToken')}`
+        },
+        body: JSON.stringify({
+          message: text,
+          history: currentAIHistory,
+          vehicle_id: currentAIVehicleId
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (res.status === 503 && data.error === 'AI_KEY_MISSING') {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'chat-msg ai';
+        aiDiv.textContent = "L'Assistant Flotte est temporairement indisponible. Vous pouvez continuer à gérer votre flotte normalement.";
+        aiDiv.style.color = 'var(--danger)';
+        histDiv.appendChild(aiDiv);
+      } else if (!res.ok || data.error) {
+        throw new Error(data.error || 'Erreur inconnue');
+      } else {
+        // SAFE DOM CREATION FOR XSS PREVENTION (AI Content)
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'chat-msg ai';
+        aiDiv.textContent = data.reply;
+        histDiv.appendChild(aiDiv);
+        
+        currentAIHistory.push({ role: 'user', content: text });
+        currentAIHistory.push({ role: 'assistant', content: data.reply });
+      }
+      
+    } catch(err) {
+      const aiDiv = document.createElement('div');
+      aiDiv.className = 'chat-msg ai';
+      aiDiv.textContent = '❌ Erreur de communication avec l\'IA.';
+      aiDiv.style.color = 'var(--danger)';
+      histDiv.appendChild(aiDiv);
+    }
+    
+    histDiv.scrollTop = histDiv.scrollHeight;
   }
 
   /* ═══════════════════════════════════════════════════════════════════════
@@ -3471,7 +4228,42 @@
             .page { width: 210mm; min-height: 297mm; border: 1px solid #d3d3d3; box-shadow: 0 4px 10px rgba(0,0,0,0.3); background: white; margin-bottom: 20px; position: relative; box-sizing: border-box; }
             .no-print-bar { width: 210mm; background: #333; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; color: white; font-family: sans-serif; box-sizing: border-box; }
             .btn { background: #FFB300; border: none; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: pointer; color: #0D2242; }
-          </style>
+          
+    /* --- FLEET V1 --- */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(7,22,43,0.55);
+      z-index: 200; display: none;
+    }
+    .drawer-overlay.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: -400px; width: 400px; bottom: 0;
+      background: var(--white); box-shadow: -5px 0 20px rgba(0,0,0,0.1);
+      z-index: 201; transition: right 0.3s ease; display: flex; flex-direction: column;
+    }
+    .drawer.open { right: 0; }
+    @media (max-width: 500px) { .drawer { width: 100%; right: -100%; } }
+    .drawer-header {
+      padding: 20px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--surface);
+    }
+    .drawer-title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--navy); }
+    .drawer-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-sec); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .drawer-footer { padding: 20px; border-top: 1px solid var(--border); background: var(--surface); }
+
+    /* Chat Messages */
+    .chat-msg { margin-bottom: 16px; font-size: 13px; line-height: 1.5; padding: 12px 16px; border-radius: var(--radius); width: 85%; }
+    .chat-msg.assistant { background: var(--surface); border: 1px solid var(--border); color: var(--text-main); margin-right: auto; border-bottom-left-radius: 4px; }
+    .chat-msg.user { background: var(--navy); color: var(--white); margin-left: auto; border-bottom-right-radius: 4px; }
+    .chat-input-wrap { display: flex; gap: 8px; }
+    .chat-input { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 13px; }
+    
+    .synthetic-counter { display: inline-flex; flex-direction: column; background: var(--navy-dark); color: var(--white); padding: 10px 14px; border-radius: var(--radius-sm); align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: var(--shadow); }
+    .synthetic-counter .sc-val { font-family: var(--font-head); font-size: 24px; font-weight: 700; color: var(--brand-green); }
+    .synthetic-counter .sc-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+
+</style>
         </head>
         <body>
           <div class="no-print-bar no-print">
@@ -4097,11 +4889,7 @@
         diff: diff
       };
       // Send a traceability event to the central server using the V5 engine
-      if (typeof window !== 'undefined' && window.enqueueSyncOperation) {
-        window.enqueueSyncOperation('company_profile_changes', logId, 'CREATE', logData);
-      } else {
         S2W.push('company_profile_changes', logData);
-      }
     }
     
     showToast('Fiche entreprise mise à jour avec succès (Patch partiel).', 'success');

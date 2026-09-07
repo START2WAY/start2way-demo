@@ -1,0 +1,25 @@
+.env
+*.env
+
+node_modules/
+
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+*.log
+*.pid
+*.bak
+
+scratch/
+
+server/data/uploads/*
+!server/data/uploads/.gitkeep
+
+# Test files — local only
+bad.xlsx
+test_random.xlsx
+backend_test_results.txt
