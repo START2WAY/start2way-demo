@@ -2,179 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const express = require('express');
 const cors = require('cors');
-const Database = require('better-sqlite3');
-const crypto = require('crypto');
-const PlateOCRService = require('./agents/license-plate/PlateOCRService');
-const LicensePlateAgentService = require('./agents/license-plate/LicensePlateAgentService');
+const { initDB, runInTransaction, dal } = require('./db');
 
-
-const multer = require('multer');
-const xlsx = require('xlsx');
-const CircuitOCRProvider = require('./services/CircuitOCRProvider');
-const CircuitSpeechProvider = require('./services/CircuitSpeechProvider');
-const CircuitGeocodingProvider = require('./services/CircuitGeocodingProvider');
-const CircuitRouteMatrixProvider = require('./services/CircuitRouteMatrixProvider');
-const CircuitOptimizationProvider = require('./services/CircuitOptimizationProvider');
-const CircuitAgentWrapper = require('./services/CircuitAgentWrapper');
-
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
-});
-
-const app = express();
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-
-// Database initialization
-let dbPath = process.env.DB_PATH;
-if (process.env.NODE_ENV === 'production' && !dbPath) {
-  console.error("FATAL: DB_PATH must be provided in production.");
-  process.exit(1);
-}
-if (!dbPath) {
-  dbPath = 's2w_recovery.db';
-}
-const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-
-// 1. Schema setup
-db.exec(`
-  
-  CREATE TABLE IF NOT EXISTS sessions (
-    token TEXT PRIMARY KEY,
-    user_id TEXT,
-    company_id TEXT,
-    role TEXT,
-    created_at TEXT,
-    expires_at TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS entities (
-    entity TEXT,
-    entity_id TEXT,
-    version INTEGER,
-    payload TEXT,
-    company_id TEXT,
-    user_id TEXT,
-    updated_at TEXT,
-    PRIMARY KEY (entity, entity_id)
-  );
-
-  CREATE TABLE IF NOT EXISTS changelog (
-    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
-    id TEXT,
-    operation_id TEXT,
-    entity TEXT,
-    entity_id TEXT,
-    operation TEXT,
-    version INTEGER,
-    occurred_at TEXT,
-    actor_type TEXT,
-    actor_id TEXT,
-    user_id TEXT,
-    company_id TEXT,
-    payload TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS processed_operations (
-    operation_id TEXT PRIMARY KEY,
-    status TEXT,
-    entity TEXT,
-    entity_id TEXT,
-    version INTEGER,
-    sequence INTEGER,
-    timestamp TEXT,
-    request_fingerprint TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS sync_conflicts (
-    conflict_id TEXT PRIMARY KEY,
-    operation_id TEXT UNIQUE,
-    entity TEXT,
-    entity_id TEXT,
-    client_base_version INTEGER,
-    server_version_at_conflict INTEGER,
-    client_payload TEXT,
-    server_payload TEXT,
-    actor_type TEXT,
-    actor_id TEXT,
-    user_id TEXT,
-    company_id TEXT,
-    employment_id TEXT,
-    status TEXT,
-    reason TEXT,
-    created_at TEXT,
-    updated_at TEXT,
-    resolved_at TEXT,
-    resolution_type TEXT,
-    resolution_operation_id TEXT
-  );
-
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_sync_conflicts_op_id ON sync_conflicts(operation_id);
-
-  CREATE TABLE IF NOT EXISTS failed_operations (
-    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
-
-    operation_id TEXT,
-    entity TEXT,
-    entity_id TEXT,
-    reason TEXT,
-    occurred_at TEXT,
-    actor_type TEXT,
-    actor_id TEXT,
-    user_id TEXT,
-    company_id TEXT,
-    payload TEXT
-  );
-
-  CREATE TABLE IF NOT EXISTS airtable_mirror_status (
-    entity TEXT,
-    entity_id TEXT,
-    central_version INTEGER,
-    status TEXT,
-    retry_count INTEGER DEFAULT 0,
-    last_error TEXT,
-    next_attempt_at TEXT,
-    updated_at TEXT,
-    PRIMARY KEY (entity, entity_id)
-  );
-`);
-
-// 2. Idempotent Migrations
-const migrations = [
-  "ALTER TABLE sync_conflicts ADD COLUMN company_id TEXT;",
-  "ALTER TABLE sync_conflicts ADD COLUMN employment_id TEXT;",
-  "ALTER TABLE sync_conflicts ADD COLUMN status TEXT;",
-  "ALTER TABLE sync_conflicts ADD COLUMN reason TEXT;",
-  "ALTER TABLE sync_conflicts ADD COLUMN request_fingerprint TEXT;",
-  "ALTER TABLE sync_conflicts ADD COLUMN resolution_from_server_version INTEGER;",
-  "ALTER TABLE sync_conflicts ADD COLUMN resolution_to_server_version INTEGER;"
-];
-for (let sql of migrations) {
-  try { db.exec(sql); } catch (e) { /* ignore if column exists */ }
-}
-
-// Prepared statements
-const getEntityStmt = db.prepare('SELECT * FROM entities WHERE entity = ? AND entity_id = ?');
-const insertEntityStmt = db.prepare('INSERT INTO entities (entity, entity_id, version, payload, company_id, user_id, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
-const updateEntityStmt = db.prepare('UPDATE entities SET version = ?, payload = ?, company_id = ?, user_id = ?, updated_at = ? WHERE entity = ? AND entity_id = ?');
-const insertChangelogStmt = db.prepare(`
-  INSERT INTO changelog (id, operation_id, entity, entity_id, operation, version, occurred_at, actor_type, actor_id, user_id, company_id, payload)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-const getOpStmt = db.prepare('SELECT * FROM processed_operations WHERE operation_id = ?');
-const insertOpStmt = db.prepare('INSERT INTO processed_operations (operation_id, status, entity, entity_id, version, sequence, timestamp, request_fingerprint) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-const insertConflictStmt = db.prepare(`
-  INSERT INTO sync_conflicts (conflict_id, operation_id, entity, entity_id, client_base_version, server_version_at_conflict, client_payload, server_payload, actor_type, actor_id, user_id, company_id, employment_id, status, reason, request_fingerprint, created_at, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
-const getConflictByOpStmt = db.prepare('SELECT * FROM sync_conflicts WHERE operation_id = ?');
-
-const insertFailedOpStmt = db.prepare(`
-  INSERT INTO failed_operations (operation_id, entity, entity_id, reason, occurred_at, actor_type, actor_id, user_id, company_id, payload)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-`);
+const dbPath = process.env.DB_PATH || 's2w_recovery.db';
+initDB(dbPath);
 
 function recordFailedOperation(reqData, reason) {
   const { operation_id, entity, entity_id, payload, clientType, actorId, userId, companyId } = reqData;
@@ -303,7 +134,7 @@ function getUserAuth(req) {
   }
   
   if (token) {
-    const session = db.prepare('SELECT * FROM sessions WHERE token = ? AND expires_at > ?').get(token, new Date().toISOString());
+    const session = dal.sessions.getValidSession(token, new Date().toISOString());
     if (session) return session;
   }
   return null;
@@ -553,7 +384,7 @@ function sanitizePayload(entityType, payload, clientType) {
 }
 
 // Apply mutation
-const applyMutation = db.transaction((reqData) => {
+const applyMutation = runInTransaction((reqData) => {
   let { operation_id, entity, entity_id, version, operation, payload, clientType, actorId, userId, companyId, requestFingerprint } = reqData;
 
   // 1. Idempotency Check
@@ -657,7 +488,7 @@ const applyMutation = db.transaction((reqData) => {
     
     // SECURITY — ARCHIVE ACTIVE VEHICLE SERVER-SIDE
     if (payload && payload.status && payload.status.toUpperCase() === 'ARCHIVED') {
-      const activeUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.vehicle_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', entity_id);
+      const activeUsages = dal.entities.getActiveUsagesByVehicle(entity_id);
       console.log('VEHICLE ARCHIVE CHECK:', entity_id, 'Active usages found:', activeUsages.length, activeUsages);
       if (activeUsages.length > 0) {
         recordFailedOperation(reqData, 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE');
@@ -764,12 +595,12 @@ const applyMutation = db.transaction((reqData) => {
             recordFailedOperation(reqData, 'VEHICLE_STATUS_NOT_ACTIVE');
             return { error: 'VEHICLE_STATUS_NOT_ACTIVE', status: 403 };
           }
-          const activeUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.vehicle_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', payload.vehicle_id);
+          const activeUsages = dal.entities.getActiveUsagesByVehicle(payload.vehicle_id);
           if (activeUsages.length > 0) {
             recordFailedOperation(reqData, 'VEHICLE_ALREADY_IN_USE');
             return { error: 'VEHICLE_ALREADY_IN_USE', status: 403 };
           }
-          const userActiveUsages = db.prepare("SELECT entity_id FROM entities WHERE entity = ? AND json_extract(payload, '$.user_id') = ? AND json_extract(payload, '$.ended_at') IS NULL").all('vehicle_usages', payload.user_id);
+          const userActiveUsages = dal.entities.getActiveUsagesByUser(payload.user_id);
           if (userActiveUsages.length > 0) {
             recordFailedOperation(reqData, 'USER_ALREADY_USING_VEHICLE');
             return { error: 'USER_ALREADY_USING_VEHICLE', status: 403 };
@@ -945,15 +776,7 @@ const applyMutation = db.transaction((reqData) => {
   insertOpStmt.run(operation_id, 'COMPLETED', entity, entity_id, newVersion, sequence, now, requestFingerprint);
 
   if (entity === 'employments' || entity === 'feuillets' || entity === 'segments') {
-    db.prepare(`
-      INSERT INTO airtable_mirror_status (entity, entity_id, central_version, status, updated_at)
-      VALUES (?, ?, ?, 'PENDING', ?)
-      ON CONFLICT(entity, entity_id) DO UPDATE SET 
-        central_version = excluded.central_version,
-        status = 'PENDING',
-        retry_count = 0,
-        last_error = NULL,
-        next_attempt_at = NULL,
+    dal.airtable.upsertStatus(entity, entityId, newVersion, 'PENDING', now);
         updated_at = excluded.updated_at
     `).run(entity, entity_id, newVersion, now);
   }
@@ -1039,7 +862,7 @@ app.post('/api/employee/plate-confirm', async (req, res) => {
     const companyId = employment.company_id;
 
     // Search existing vehicle in the active company
-    const allVehiclesRows = db.prepare("SELECT payload FROM entities WHERE entity = 'vehicles'").all();
+    const allVehiclesRows = dal.entities.getAllPayloads('vehicles');
     let existingVehicle = null;
     for (const r of allVehiclesRows) {
       const v = JSON.parse(r.payload);
@@ -1113,7 +936,7 @@ app.post('/api/auth/login', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'MISSING_CREDENTIALS' });
 
-  const users = db.prepare("SELECT entity_id, payload FROM entities WHERE entity = 'users'").all();
+  const users = dal.entities.getAllEntityIdAndPayloads('users');
   let foundUser = null;
   let userPayload = null;
 
@@ -1132,7 +955,7 @@ app.post('/api/auth/login', (req, res) => {
   let foundCompany = null;
   let companyPayload = null;
   if (!foundUser) {
-    const companies = db.prepare("SELECT entity_id, payload FROM entities WHERE entity = 'companies'").all();
+    const companies = dal.entities.getAllEntityIdAndPayloads('companies');
     for (const c of companies) {
       try {
         const p = JSON.parse(c.payload);
@@ -1156,13 +979,7 @@ app.post('/api/auth/login', (req, res) => {
   if (foundUser) {
     // If it's a tech user
     const role = userPayload.role === 'tech' ? 'tech' : 'salarie';
-    db.prepare('INSERT INTO sessions (token, user_id, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
-      token, foundUser, role, new Date().toISOString(), expiresAt.toISOString()
-    );
-    return res.json({ token, user: sanitizeForEmployee('users', userPayload) });
-  } else {
-    db.prepare('INSERT INTO sessions (token, company_id, role, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').run(
-      token, foundCompany, 'company', new Date().toISOString(), expiresAt.toISOString()
+    dal.sessions.createForUser(token, user.entity_id, 'user', now, expiresAt);
     );
     return res.json({ token, company: sanitizeForCompany('companies', companyPayload) });
   }
@@ -1191,7 +1008,7 @@ app.post('/api/documents/:id/file', (req, res) => {
 
   // The client must have created the document entity in the database first
   // Verify authorization: the user or company uploading must be the owner or authorized
-  const docEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'documents' AND entity_id = ?").get(documentId);
+  const docEnt = dal.entities.getPayload('documents', documentId);
   if (!docEnt) return res.status(404).json({ error: 'DOCUMENT_METADATA_NOT_FOUND' });
   
   const payload = JSON.parse(docEnt.payload);
@@ -1207,7 +1024,7 @@ app.post('/api/documents/:id/file', (req, res) => {
   // Mark as uploaded in DB
   payload.file_status = 'UPLOADED';
   payload.file_ext = ext;
-  db.prepare("UPDATE entities SET payload = ? WHERE entity = 'documents' AND entity_id = ?").run(JSON.stringify(payload), documentId);
+  dal.entities.updatePayload('documents', documentId, JSON.stringify(payload));
 
   res.json({ success: true });
 });
@@ -1217,7 +1034,7 @@ app.get('/api/documents/:id/file', (req, res) => {
   if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   const documentId = req.params.id;
-  const docEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'documents' AND entity_id = ?").get(documentId);
+  const docEnt = dal.entities.getPayload('documents', documentId);
   if (!docEnt) return res.status(404).json({ error: 'DOCUMENT_NOT_FOUND' });
 
   const payload = JSON.parse(docEnt.payload);
@@ -1237,14 +1054,14 @@ app.get('/api/documents/:id/file', (req, res) => {
   else if (auth.company_id) {
     if (payload.company_id === auth.company_id) allowed = true;
     else if (payload.scope === 'EMPLOYMENT_SCOPED' && payload.employment_id) {
-      const emp = db.prepare("SELECT payload FROM entities WHERE entity = 'employments' AND entity_id = ?").get(payload.employment_id);
+      const emp = dal.entities.getPayload('employments', payload.employment_id);
       if (emp) {
         const empData = JSON.parse(emp.payload);
         if (empData.company_id === auth.company_id) allowed = true;
       }
     } else if (payload.scope === 'PROFESSIONAL' && payload.user_id) {
       // Allow company if they have an active employment with this user
-      const emps = db.prepare("SELECT payload FROM entities WHERE entity = 'employments'").all();
+      const emps = dal.entities.getAllPayloads('employments');
       for (const e of emps) {
         const eData = JSON.parse(e.payload);
         if (eData.user_id === payload.user_id && eData.company_id === auth.company_id && eData.status === 'ACTIVE') {
@@ -1268,7 +1085,7 @@ app.post('/api/auth/verify-pin', (req, res) => {
   const { pin } = req.body;
   if (!pin) return res.status(400).json({ error: 'MISSING_PIN' });
 
-  const userEnt = db.prepare("SELECT payload FROM entities WHERE entity = 'users' AND entity_id = ?").get(auth.user_id);
+  const userEnt = dal.entities.getPayload('users', auth.user_id);
   if (!userEnt) return res.status(404).json({ error: 'NOT_FOUND' });
 
   const p = JSON.parse(userEnt.payload);
@@ -1283,7 +1100,7 @@ app.post('/api/auth/verify-pin', (req, res) => {
 
 
 
-const getConflictStmt = db.prepare('SELECT * FROM sync_conflicts WHERE conflict_id = ?');
+
 
 const mutateHandler = (req, res) => {
   const auth = getUserAuth(req);
@@ -1461,19 +1278,7 @@ Suivi du brouillon avec "Objet : ..." et "Message : ...".
       const aiReply = aiData.choices[0].message.content;
 
       // 4. Audit Log
-      db.prepare("INSERT INTO changelog (id, operation_id, entity, entity_id, operation, version, occurred_at, actor_type, actor_id, company_id, payload) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-        crypto.randomUUID(),
-        crypto.randomUUID(),
-        'event_logs',
-        crypto.randomUUID(),
-        'CREATE',
-        1,
-        new Date().toISOString(),
-        'system',
-        'fleet_ai',
-        company_id,
-        JSON.stringify({ event: 'FLEET_AI_EMAIL_DRAFT_CREATED', vehicle_id })
-      );
+      dal.changelog.insert(docEnt.id, `upload_doc_${docEnt.id}_${Date.now()}`, 'documents', documentId, 'UPDATE', payload.version, new Date().toISOString(), auth.role === 'company' ? 'COMPANY' : 'USER', auth.company_id || auth.user_id, null, payload.company_id, JSON.stringify(payload));
 
       return res.json({ reply: aiReply });
     } catch (e) {
@@ -1484,7 +1289,7 @@ Suivi du brouillon avec "Objet : ..." et "Message : ...".
 };
 
 function getFleetVehicle(companyId, vehicleId) {
-  const row = db.prepare("SELECT payload, company_id FROM entities WHERE entity='vehicles' AND entity_id=?").get(vehicleId);
+  const row = dal.entities.getPayloadAndCompany('vehicles', vehicleId);
   if (!row) return null;
   if (row.company_id !== companyId) {
     return null; 
@@ -1513,7 +1318,7 @@ app.get('/api/sync/changes', (req, res) => {
   }
 
   try {
-    const rawChanges = db.prepare('SELECT * FROM changelog WHERE sequence > ? ORDER BY sequence ASC LIMIT ?').all(after, limit);
+    const rawChanges = dal.changelog.getAfterSequence(after, limit);
     
     let maxSeq = after;
     if (rawChanges.length > 0) {
@@ -1586,7 +1391,7 @@ app.get('/api/sync/conflicts', (req, res) => {
   }
 
   try {
-    const conflicts = db.prepare(query).all(...params);
+    const conflicts = dal.conflicts.queryAll(query, params);
     
     const formatted = conflicts.map(c => {
       let clientPayload = null;
@@ -1640,7 +1445,7 @@ app.get('/api/sync/conflicts/:id', (req, res) => {
   }
 
   try {
-    const c = db.prepare('SELECT * FROM sync_conflicts WHERE conflict_id = ?').get(req.params.id);
+    const c = dal.conflicts.getById(req.params.id);
     if (!c) return res.status(404).json({ error: 'NOT_FOUND' });
 
     if (clientType === 'EMPLOYEE_APP' && c.user_id !== userId) return res.status(403).json({ error: 'FORBIDDEN' });
@@ -1686,7 +1491,7 @@ app.get('/api/tech/audit/failed', (req, res) => {
   }
 
   try {
-    const failedOps = db.prepare('SELECT * FROM failed_operations ORDER BY sequence DESC LIMIT 100').all();
+    const failedOps = dal.operations.getRecentFailed();
     const formatted = failedOps.map(f => {
       let parsedPayload = null;
       if (f.payload) {
@@ -1723,7 +1528,7 @@ app.get('/api/tech/state', (req, res) => {
   }
 
   try {
-    const entities = db.prepare('SELECT * FROM entities').all();
+    const entities = dal.entities.getAll();
     const employments = entities.filter(e => e.entity === 'employments').map(e => {
       let p = null;
       try { p = JSON.parse(e.payload); } catch(err){}
@@ -1768,7 +1573,7 @@ app.post('/api/circuits/resolve', (req, res) => {
   
   try {
     // 1. Check if token is already used in service_entitlements
-    const existingEntitlements = db.prepare(`SELECT * FROM entities WHERE entity = 'service_entitlements'`).all();
+    const existingEntitlements = dal.entities.getAll('service_entitlements');
     let foundEntitlement = null;
     
     for (const ent of existingEntitlements) {
@@ -1793,7 +1598,7 @@ app.post('/api/circuits/resolve', (req, res) => {
     }
 
     // 2. Migration Check: is it in legacy invitations?
-    const existingInvitations = db.prepare(`SELECT * FROM entities WHERE entity = 'invitations'`).all();
+    const existingInvitations = dal.entities.getAll('invitations');
     let legacyInv = null;
     for (const inv of existingInvitations) {
       let p;
@@ -1921,12 +1726,11 @@ app.use('/api/legacy', async (req, res) => {
 // Background Sync Task
 async function syncToAirtableMirror(row) {
   if (!process.env.AIRTABLE_PAT || !process.env.AIRTABLE_BASE_ID) {
-    db.prepare('UPDATE airtable_mirror_status SET status = ?, last_error = ?, retry_count = retry_count + 1 WHERE entity = ? AND entity_id = ? AND central_version = ?')
-      .run('FAILED_RETRYABLE', 'AIRTABLE_NOT_CONFIGURED', row.entity, row.entity_id, row.central_version);
+      dal.airtable.updateStatusError('FAILED_RETRYABLE', errorMessage, row.entity, row.entity_id, row.central_version);
     return;
   }
   
-  const entityRow = db.prepare('SELECT * FROM entities WHERE entity = ? AND entity_id = ?').get(row.entity, row.entity_id);
+  const entityRow = dal.entities.get(row.entity, row.entity_id);
   if (!entityRow || entityRow.version !== row.central_version) return;
 
   let payload;
@@ -1970,27 +1774,23 @@ async function syncToAirtableMirror(row) {
     });
 
     if (res.ok) {
-      const currentEntity = db.prepare('SELECT version FROM entities WHERE entity = ? AND entity_id = ?').get(row.entity, row.entity_id);
+      const currentEntity = dal.entities.getVersion(row.entity, row.entity_id);
       if (currentEntity && currentEntity.version === row.central_version) {
-        db.prepare('UPDATE airtable_mirror_status SET status = ? WHERE entity = ? AND entity_id = ? AND central_version = ?')
-          .run('COMPLETED', row.entity, row.entity_id, row.central_version);
+        dal.airtable.updateStatus('SYNCED', row.entity, row.entity_id, row.central_version);
       }
     } else {
       const isRetryable = res.status >= 500 || res.status === 429;
       const newStatus = isRetryable ? 'FAILED_RETRYABLE' : 'FAILED_BLOCKED';
-      db.prepare('UPDATE airtable_mirror_status SET status = ?, last_error = ?, retry_count = retry_count + 1 WHERE entity = ? AND entity_id = ? AND central_version = ?')
-        .run(newStatus, `HTTP ${res.status}`, row.entity, row.entity_id, row.central_version);
     }
   } catch (err) {
-    db.prepare('UPDATE airtable_mirror_status SET status = ?, last_error = ?, retry_count = retry_count + 1 WHERE entity = ? AND entity_id = ? AND central_version = ?')
-      .run('FAILED_RETRYABLE', err.message, row.entity, row.entity_id, row.central_version);
+      dal.airtable.updateStatusError('FAILED_RETRYABLE', errorMessage, row.entity, row.entity_id, row.central_version);
   }
 }
 
 setInterval(() => {
   try {
     const now = new Date().toISOString();
-    const pending = db.prepare(`SELECT * FROM airtable_mirror_status WHERE status IN ('PENDING', 'FAILED_RETRYABLE') AND (next_attempt_at IS NULL OR next_attempt_at <= ?) LIMIT 10`).all(now);
+    const pending = dal.airtable.getPendingQueue(now);
     for (const row of pending) {
       syncToAirtableMirror(row).catch(e => console.error(e));
     }
