@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const crypto = require('crypto');
-const { initDB, runInTransaction, dal } = require('./db');
+const { initDB, runInTransaction, dal } = require('./db/index.js');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const app = express();
