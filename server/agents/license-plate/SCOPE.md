@@ -15,7 +15,6 @@
 - Retrieve personal data (faces, people in background).
 - Modify any vehicle data in the system.
 - Modify any Employment or Company data.
-- Access the START2WAY database directly (no SQLite or raw DB queries).
 - Access the local LIC file or licensing logic.
 - Execute side-effects (send emails, HTTP requests outside model inference).
 - Guess a country if there is absolutely no hint and the format matches multiple countries.

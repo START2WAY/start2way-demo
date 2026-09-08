@@ -50,6 +50,5 @@ Document metadata:
 - verification_status
 
 Règles strictes :
-- Pas d'accès SQL direct (le LLM ne reçoit jamais de base SQLite, ni de requêtes SQL libres).
 - Accès aux données de la flotte autorisé UNIQUEMENT via les outils backend pré-définis.
 - Vérification automatique par le backend de la Company (pas d'accès cross-company possible).

@@ -11,8 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const engine = process.env.DB_ENGINE || 'sqlite';
-const dbConfig = engine === 'postgres' ? process.env.DATABASE_URL : (process.env.DB_PATH || 's2w_recovery.db');
+const dbConfig = process.env.DATABASE_URL;
 const dbPromise = initDB(dbConfig);
 
 async function recordFailedOperation(reqData, reason) {

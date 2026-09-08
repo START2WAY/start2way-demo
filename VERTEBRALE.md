@@ -1,303 +1,917 @@
-# START2WAY — Colonne vertébrale du projet (VERTEBRALE.md)
+# START2WAY — VERTEBRALE.md
 
-Ce fichier est la carte des dépendances croisées du projet. Il doit être mis à jour systématiquement pour refléter toute nouvelle structure, table ou convention partagée.
+## VERSION 2 — BASELINE PRODUIT & TECHNIQUE ACTUELLE
 
-## Règles Méthodologiques de Communication
-- **Captures d'écran :** Pour toute capture d'écran ou média destiné à la validation utilisateur, l'agent doit copier le fichier dans le dépôt local (sous `docs/screenshots/`), le commiter et le pousser, puis transmettre le lien public direct `raw.githubusercontent.com`. Les chemins locaux absolus sont proscrits.
-- **Cache-busting CDN :** Toujours ajouter un paramètre de cache-busting (`?v=timestamp` ou `?v=numéro incrémental`) à la fin de chaque lien `raw.githubusercontent.com` envoyé pour une capture d'écran, afin d'éviter que le cache CDN de 5 minutes de GitHub ne serve une ancienne version de l'image.
+Ce fichier contient uniquement les invariants actuels de START2WAY.
 
----
+Il ne sert PAS de journal historique.
 
-## Fichiers du projet et leur rôle
+Il ne doit pas contenir :
 
-| Fichier | Rôle |
-|---|---|
-| `landing.html` | Vitrine publique |
-| `souscription.html` | Inscription employeur |
-| `paiement.html` | Simulation paiement |
-| `telecharger.html` | Téléchargement app salarié |
-| `app-web.html` | Dashboard employeur |
-| `app-mobile.html` | App salarié |
-| `pitch-deck.html` | Présentation commerciale |
-| `docs/s1/js/s2w-localstorage.js` | Moteur de données (tables, CRUD, Airtable) |
-| `docs/s1/js/s2w-utils.js` | Formatage, calculs, validations |
-| `brand-guidelines.md` | Charte graphique officielle |
-| `logo.png` | Fichier logo unique — source de vérité visuelle |
-| `logo-dark.png` | Variante sombre du logo pour fond clair |
-| Base Airtable "START2WAY" | Base de données réelle (11 tables) |
+* anciennes décisions,
+* prototypes abandonnés,
+* comptes rendus de bugs,
+* captures d’écran,
+* détails de tests passés,
+* simulations devenues obsolètes,
+* dette cosmétique.
 
 ---
 
-## VERTÈBRES DE DÉPENDANCE
+# 0 — ORDRE D’AUTORITÉ
 
-### VERTÈBRE 1 — Logo
-- **Fichiers concernés :** `landing.html`, `souscription.html`, `paiement.html`, `telecharger.html`, `app-web.html` (sidebar), `app-mobile.html` (header), `pitch-deck.html`
-- **Règles :** 
-  - Utiliser la balise double image pour la compatibilité universelle (Safari, iOS) :
-    `<img src="logo.png" class="logo-dark-bg" ...>`
-    `<img src="logo-dark.png" class="logo-light-bg" ...>`
-  - Gérer l'affichage via la classe parente `.logo-on-light` ou `.logo-on-dark` et les règles CSS associées.
-  - Jamais de recréation en SVG, CSS ou texte.
-  - L'icône Power verte ne change jamais.
+Pour l’agent Antigravity :
 
+1. instruction explicite de la tâche actuellement donnée par l’utilisateur ;
+2. règles de ce `VERTEBRALE.md` ;
+3. code et architecture actuels du dépôt ;
+4. anciennes documentations uniquement comme historique.
 
-### VERTÈBRE 2 — Palette de couleurs / variables CSS
-- **Fichiers concernés :** Tous les fichiers HTML
-- **Règles :**
-  - Renommer l'ancienne variable `--amber` en `--brand-green` (contient `#009A44`).
-  - Toute nouvelle couleur ajoutée doit être déclarée en variable CSS.
+Si une ancienne documentation contredit ce fichier :
 
-### VERTÈBRE 3 — Schéma de données (tables)
-- **Fichiers concernés :** `docs/s1/js/s2w-localstorage.js`, Airtable (Base réelle)
-- **Règles :**
-  - Garder le modèle JS local et la base Airtable synchronisés.
-  - Tables : `users`, `companies`, `sessions`, `feuillets`, `messages`, `alerts`, `reprise_codes`, `event_logs`, `reopen_logs`, `vehicles`, `documents`.
+**VERTEBRALE.md prévaut.**
 
-### VERTÈBRE 4 — Format Nom/Prénom
-- **Fichiers concernés :** Registre (`app-web.html`), Profil (`app-mobile.html`), alertes, messagerie, Rapport DREAL, feuillets
-- **Règles :**
-  - Convention stricte : `NOM Prénom` (nom de famille en majuscules).
+Si la tâche dit READ ONLY :
 
-### VERTÈBRE 5 — Profil VL / PL
-- **Fichiers concernés :** Invitation (`app-web.html`), Profil conducteur (`app-mobile.html`), FCO/FIMO (génération documents)
-- **Règles :**
-  - Le type de permis détermine les champs et obligations affichés.
+**aucune écriture n’est autorisée.**
 
-### VERTÈBRE 6 — Codes (Invitation / Reprise)
-- **Fichiers concernés :** `app-web.html` (génération), `app-mobile.html` (onboarding/modification), table `reprise_codes`
-- **Règles :**
-  - Invitation = 12h, Reprise = 24h, Reprise utilisable seulement sur feuillet ≤ 6 jours.
+READ ONLY interdit notamment :
 
-### VERTÈBRE 7 — Messagerie
-- **Fichiers concernés :** `app-web.html`, `app-mobile.html`, table `messages`
-- **Règles :**
-  - Polling de 15 secondes pour synchroniser les échanges en temps réel.
-
-### VERTÈBRE 8 — Rapport DREAL / LIC
-- **Fichiers concernés :** `app-web.html` (`generateDrealReport()`), `app-mobile.html` (`generateMobDrealReport()`)
-- **Règles :**
-  - Utilisation du même gabarit visuel (graphique en escalier, pictogrammes A/B/C/D).
-
-### VERTÈBRE 9 — Cycle de vie d'une journée (scellement / minuit / réouverture)
-- **Fichiers concernés :** `app-mobile.html`, `docs/s1/js/s2w-localstorage.js`, tables `sessions`, `feuillets`, `event_logs`, `reopen_logs`
-- **Règles :**
-  - Scellement définitif à la signature, coupure à minuit, Code Reprise requis si jour passé > 24h (max 6 jours).
-
-### VERTÈBRE 10 — Signature (PIN / manuscrite / hybride)
-- **Fichiers concernés :** `app-mobile.html`, table `feuillets`
-- **Règles :**
-  - Choix libre pour le salarié, aucune obligation forcée de l'une ou de l'autre.
-
-### VERTÈBRE 11 — Sécurité IBAN
-- **Fichiers concernés :** `docs/s1/js/s2w-localstorage.js`, `souscription.html`, `app-web.html`
-- **Règles :**
-  - Chiffrement côté client (simulation démo) avec avertissement obligatoire rappelant le besoin de chiffrement serveur en production.
-
-### VERTÈBRE 12 — Modèle économique & Tokens payants (Circuit inclus)
-- **Fichiers concernés :** `landing.html`, `souscription.html`, `paiement.html`, `app-web.html` (modale email, facturation additionnelle 3e+), `app-mobile.html` (liaison onboarding, activation Circuit dans le Profil), table `invitations`
-- **Règles :**
-  - **Abonnement de base :** 14,99 €/mois HT (17,99 € TTC) incluant l'accès gérant et 2 salariés.
-  - **Token_Invitation supplémentaire :** 2,99 €/mois HT (3,59 € TTC). Durée de vie : fin du mois calendaire en cours après activation par le salarié. Format : `INV-XXXX-XXXX`. N'est **jamais** nominatif à la génération.
-  - **Token_Circuit (Planification/Optimisation) :** 7,99 €/mois HT (9,59 € TTC) pour les salariés 3e+. Durée de vie : fin du mois calendaire en cours après activation. Format : `CIR-XXXX-XXXX-XXXX`. N'est plus nominatif à la génération.
-  - **Token_Reprise :** Généré depuis l'historique d'un conducteur, strictement limité aux 12 heures suivant la validation du feuillet initial. Format : `REP-XXXX-XXXX-XXXX`.
-  - **Jetons de lancement :** 2 Token_Invitation et 2 Token_Circuit inclus dans l'abonnement. Ils expirent également à la fin du mois calendaire en cours. La règle d'exception "Jamais (Offre)" est supprimée.
-  - **Règle de conversion :** Tous les calculs financiers utilisent la TVA française de 20%, appliquée sur les tarifs HT avant facturation TTC.
-  - **Affichage & Génération (Codes Générés) :** 
-    - 3 boutons distincts en haut pour générer les invitations, reprises et circuits.
-    - Bandeau de statut résumant les salariés inclus (max 2), salariés supplémentaires actifs (à +2,99€ HT/mois) et circuits actifs (à +7,99€ HT/mois).
-    - 3 tableaux distincts affichant le jeton, le code, le statut et les dates clés (création, activation, expiration).
-  - **Gestion des Homonymes / Doublons :**
-    - Le lien technique est exclusivement assuré par l'ID unique du salarié, défini au moment où il saisit le code dans son application.
-    - Il n'y a plus de saisie nominative (nom, prénom) par l'employeur lors de la génération des jetons, le lien se fait automatiquement à l'activation.
-
-
-### VERTÈBRE 13 — Distinction Historique / Archives (App Salarié)
-- **Fichiers concernés :** `app-mobile.html`
-- **Règles :**
-  - **Historique :** Onglet simple accessible directement depuis la barre de navigation basse (3e position avant Profil). Il affiche uniquement la liste des 30 derniers jours de feuillets filtrables par date avec les totaux journaliers et les statuts de conformité et de signature. Aucun bouton d'action complexe ne doit y figurer.
-  - **Archives :** Section séparée accessible uniquement par un bouton dédié situé dans l'onglet **Profil**. Elle contient deux sous-onglets :
-    - *Documents* : Affichage et téléchargement des documents officiels (Permis, FCO/FIMO, visite médicale).
-    - *Rapports de Tournée* : Liste des feuillets d'activité journaliers avec les 4 boutons d'action complexes par ligne (Partager / Export / Supprimer / Modifier) ainsi que l'interface de génération et d'export du Rapport DREAL mensuel.
-
-
-### VERTÈBRE 14 — Refonte Navigation : Tiroir & Barre Minimaliste (App Salarié)
-- **Fichiers concernés :** `app-mobile.html`
-- **Règles :**
-  - **Tiroir de navigation (Drawer) :**
-    - Coulisse de la gauche vers la droite sur l'écran. Contrôlé par un repère discret (poignée `.drawer-handle`) centré verticalement sur le bord gauche de l'écran, réagissant au clic ou glissé.
-    - Contient 5 entrées : *Accueil*, *Feuillet*, *Historique*, *Profil*, et *Circuit*.
-  - **Option Circuit dans le Menu :**
-    - Toujours visible, mais grisée et dotée d'un cadenas `🔒` si inactive pour le salarié.
-    - Au clic (si inactive), ouvre une popup/modale invitant à saisir le Token_Circuit pour activer le service pour 30 jours (non reconductible automatiquement).
-    - Une fois déverrouillée/active, l'option affiche une icône carte `🗺️` et donne accès à la feuille de route et l'itinéraire optimisés (`tab-circuit`).
-    - *ÉCRAN CIRCUIT :* PROTOTYPE NON SPÉCIFIÉ, construit hors-périmètre par anticipation. Données factices (Lille/Roubaix). À reprendre entièrement avec de vraies spécifications fonctionnelles avant toute mise en production — ne pas considérer comme définitif.
-  - **Barre Basse Minimaliste :**
-    - Remplace l'ancienne barre d'onglets et contient 3 éléments distincts :
-      - *Gauche :* Icône roue dentée `⚙️` redirigeant vers le Profil/Paramètres.
-      - *Centre :* Trait noir simulant l'indicateur d'accueil natif iPhone. Entièrement décoratif dans cette version démo. Note de développement obligatoire : *"À activer avec une vraie fonction de fermeture/minimisation native lors de la génération des builds .apk (Android) et iOS en fin de projet — actuellement décoratif uniquement."*
-      - *Droite :* Raccourci support chatbot technique `🤖` redirigeant vers l'onglet support.
-### VERTÈBRE 15 — Reconstruction Spécifiée de l'Onglet Circuit (App Salarié)
-- **Fichiers concernés :** `app-mobile.html`, `VERTEBRALE.md`
-- **Règles :**
-  - **Moteur local de calcul d'ETA et de retard :**
-    - Les applications GPS externes n'échangeant aucune donnée bidirectionnelle en retour, START2WAY calcule lui-même l'ETA de chaque arrêt de la tournée en combinant la position géographique actuelle du chauffeur, les calculs de distances orthodromiques (Haversine) et une vitesse urbaine moyenne théorique (30 km/h) majorée d'un temps de service (5 min par arrêt).
-    - Un bandeau d'alerte rouge/orange s'affiche de manière permanente en haut de l'écran en cas de risque de dépassement des créneaux contraints par pastilles.
-  - **Saisie & Ajout d'arrêt :**
-    - Saisie manuelle avec sélection d'impératifs horaires par pastilles tactiles ("Pas de contrainte", "Avant 12h", "Entre 14h-16h", "Urgent").
-    - Scan OCR simulé avec animation laser de 1,5s auto-remplissant l'adresse.
-    - Dictée Vocale avec simulation d'ondes d'écoute de 1,8s interprétée par agent IA local.
-  - **Fiche Colis (Photos & Commentaires) :**
-    - Association de 1 à 25 photos par arrêt et/ou commentaire texte libre.
-    - Visualisation des photos associées dans une modale pop-up "Preview" (Aperçu) avec galerie fluide pour faciliter la recherche du colis dans le coffre.
-  - **Validation Tactile par Balayage (Swipe) :**
-    - Swipe vers la droite = Livré, avec coche animée verte et signature client sur Canvas tactile pour preuve.
-    - Swipe vers la gauche = Échoué, ouvrant un choix rapide du motif de l'échec (Destinataire absent, Adresse introuvable, Refusé, Colis endommagé).
-    - Un compteur de progression permanent en haut de la liste affiche les arrêts résolus (ex : "5/12 livrés").
-  - **Résumé de fin de tournée :**
-    - Écran final s'affichant automatiquement lorsque tous les arrêts ont été traités, présentant les statistiques de la journée (taux de réussite, arrêts traités, temps total, distance cumulée).
-
-### VERTÈBRE 16 — Rapports de Tournées Circuit (Panel Employeur)
-- **Fichiers concernés :** `app-web.html`, `docs/s1/js/s2w-localstorage.js`, `VERTEBRALE.md`
-- **Règles :**
-  - **Enregistrement Fin de Tournée :** L'application mobile enregistre automatiquement le rapport dans la table `reports` avec le type `'circuit'` dès que la tournée est clôturée par le salarié.
-  - **En-tête & KPI Dashboard :** Affiche le taux moyen global de réussite sous forme de jauge SVG circulaire colorée, le nombre de tournées complétées, le kilométrage total et la durée moyenne.
-  - **Gamification :** Présente le classement (leaderboard) des conducteurs triés par taux de réussite de livraison.
-  - **Tracé d'itinéraire SVG :** Dessine un tracé cartographique interactif avec connexions en pointillés et marqueurs d'arrêts colorés selon leur statut de livraison (vert pour Livré, rouge pour Échoué).
-  - **Fiche Colis Employeur :** Permet à l'employeur d'inspecter les commentaires et le carrousel d'images pris pour chaque arrêt de la tournée.
-
-### VERTÈBRE 17 — Centre de notifications unifié (Cloche 🔔)
-- **Fichiers concernés :** `app-mobile.html`, `app-web.html`, tables `event_logs`, `documents`, `messages`
-- **Règles :**
-  - **Badge numérique :** La cloche affiche un badge numérique rouge (`.notif-badge`) contenant le décompte exact des notifications non lues (et non pas un simple point statique).
-  - **Panneau déroulant :** Le clic sur la cloche ouvre un volet ou panneau déroulant (sans recharger la page ni ouvrir une nouvelle page) listant les alertes de la plus récente à la plus ancienne.
-  - **Action au clic :** Cliquer sur une notification la marque comme lue, ferme le panneau et redirige directement l'utilisateur vers l'onglet ou la section concernée (ex: *Profil*, *Feuillet*, *Circuit* sur mobile ; *Messagerie*, *Documents* sur web).
-  - **Déclencheurs unifiés :** Centralise les documents expirés, les dépassements et seuils réglementaires (4h30, 9h, 12h, feuillets non signés, risques de retards) côté salarié ; et les dérives d'horloge (drift > 300s), alertes de documents de la flotte/conducteurs et nouveaux messages non lus côté employeur.
-  - **Distinction "Lu" vs "Résolu" (Cohérence des badges) :**
-    - **Marquer comme lu** (clic cloche/item) : fait disparaître la notification du badge numérique de la cloche 🔔 (qui ne compte que les notifications non lues par le gérant), mais le problème sous-jacent (ex: document expiré) reste affiché sur le Dashboard.
-    - **Résoudre** (action métier sur le Dashboard ou Documents) : le fait de résoudre le problème (ex: cliquer sur `✓ Lu` pour la dérive horaire, ou renouveler/valider un document expiré) met à jour la base de données locale, fait disparaître l'alerte du Dashboard **et** marque automatiquement la notification cloche associée comme lue en arrière-plan.
-
-### VERTÈBRE 18 — Onboarding Salarié & Mur de Connexion (Mode Limité)
-- **Fichiers concernés :** `app-mobile.html`, `VERTEBRALE.md`
-- **Règles :**
-  - **Démarrage à zéro :** Aucun utilisateur factice (ex: `usr_001`) n'est injecté automatiquement au lancement. L'application démarre vierge, nécessitant la création d'un compte ou une connexion.
-  - **Écran de bienvenue exclusif :** Un nouvel utilisateur ne voit initialement que l'écran de bienvenue avec deux choix : "Créer mon compte" ou "J'ai déjà un compte" (sans accès aux options développeurs ou à d'autres onglets).
-  - **Stepper de création de compte :** L'inscription se fait via un formulaire modal en 4 étapes fluides, guidées par un composant `S2WStepper` visuel (points et lignes reliant les étapes 1 à 4).
-  - **Mode Limité (Verrouillage par Code Invitation) :** 
-    - Si l'utilisateur clique sur "Plus tard" à l'étape 4 (sans saisir de code invitation valide de son employeur), l'application active le `is-limited` mode sur le `body`.
-    - **Mur de sécurité CSS :** Tous les contenus des onglets fonctionnels (Accueil, Feuillet, Historique, Circuit) sont masqués physiquement via `display: none !important`.
-    - Ils sont remplacés visuellement par un énorme cadenas 🔒 et un texte invitant à saisir le code invitation. Le chronomètre et les actions métiers sont inaccessibles.
-    - Seul l'onglet "Profil" reste accessible et utilisable pour permettre à l'utilisateur de saisir son Code Invitation à tout moment et débloquer son application.
-
-## DETTE TECHNIQUE & LIMITES DE PRODUCTION
-
-### GÉOCODAGE ET CALCUL D'ITINÉRAIRE — SIMULATION LOCALE UNIQUEMENT (pas de production) :
-- Aucune API GPS/cartographie externe n'est utilisée actuellement (ni Google Maps, ni Mapbox, ni OpenStreetMap/OSRM).
-- Le géocodage des adresses saisies utilise un catalogue local codé en dur (ADDRESS_CATALOG) ; toute adresse absente de ce catalogue reçoit des coordonnées ALÉATOIRES près de Lille/Roubaix, sans rapport avec l'adresse réelle saisie.
-- L'optimisation de tournée et le calcul d'ETA utilisent uniquement la formule Haversine (distance à vol d'oiseau + vitesse moyenne estimée), jamais une distance routière réelle.
-- AVANT toute mise en production réelle, il faudra impérativement intégrer : une vraie API de géocodage (ex: Google Geocoding API, Nominatim/OpenStreetMap) et un vrai service de calcul d'itinéraire routier (ex: Google Routes API, OSRM) pour que l'optimisation et les ETA soient fiables en conditions réelles.
-- Cette limitation est acceptable pour la phase actuelle de démo/prototype, mais ne doit jamais être oubliée avant un vrai lancement.
-
-### BOUCLE DE 2 API GPS — Bêta V1 réelle (à traiter au moment de la vraie implémentation fonctionnelle, pas en simulation) :
-Pour le parcours d'optimisation Circuit en version réelle/fonctionnelle (première bêta V1, pas la maquette actuelle), le fondateur souhaite une boucle utilisant 2 API GPS (gratuites ou payantes, à déterminer selon le meilleur rapport coût/fiabilité pour une bêta à petite échelle), en plus de ce qui est déjà prévu dans le parcours d'optimisation actuel. Objectif : redondance et/ou comparaison entre les deux API.
-
-Retour d'utilisation client précisé : après chaque usage de la navigation GPS pendant une tournée, le chauffeur pourra donner un retour sur l'API GPS utilisée à ce moment-là — sous forme de commentaire libre et/ou de notation par étoiles (système à définir précisément, ex: 1 à 5 étoiles). Objectif : comparer dans le temps la fiabilité/qualité perçue des 2 API GPS intégrées, sur la base des retours réels des chauffeurs en conditions de terrain pendant la phase de test de 2 mois.
-
-Ce point sera affiné davantage avec le fondateur au moment de basculer de la simulation vers la version fonctionnelle réelle — ne pas improviser l'implémentation avant cette clarification.
+* modification fichier,
+* création fichier,
+* commit,
+* push,
+* déploiement,
+* modification DB,
+* modification Airtable,
+* modification GCP.
 
 ---
 
-## Vertèbre 18 — Synchronisation schéma Airtable & règle méthodologique
+# 1 — RÈGLES DE TRAVAIL DE L’AGENT
 
-- **Date :** 2026-08-20
-- **Fichiers concernés :** `app-mobile.html` (showTourSummary), `docs/s1/js/s2w-localstorage.js`, tables Airtable `reports`, `invitations`
-- **Corrections appliquées :**
-  1. **Table `reports`** : ajout des colonnes `type` (singleLineText), `stops` (multilineText), `success_rate`, `stops_count`, `total_time`, `total_distance` (number) via l'API Metadata Airtable.
-  2. **Table `invitations`** : ajout des colonnes `driver_name` et `target_user_id` (singleLineText).
-  3. **Bug `user_id` → `driver_id`** : le code de `showTourSummary()` dans `app-mobile.html` utilisait `user_id` pour le rapport Circuit, mais la table Airtable `reports` utilise `driver_id`. Airtable rejetait silencieusement le champ. Corrigé.
-- **Vérification E2E :** script Python automatisé (create → read-back → compare → cleanup) confirmant que les deux tables acceptent et restituent tous les champs correctement. Résultat : ✅ PASS sur les deux tables.
+START2WAY doit être livré rapidement en V1 commercialisable.
 
-### ⚠️ RÈGLE MÉTHODOLOGIQUE OBLIGATOIRE — Vérification schéma Airtable
+L’agent ne doit jamais élargir spontanément le scope.
 
-> **Toute nouvelle vertèbre impliquant une table Airtable DOIT inclure la vérification RÉELLE (pas supposée) que le schéma Airtable accepte tous les champs utilisés par le code, AVANT de considérer la tâche terminée.**
->
-> Checklist obligatoire :
-> 1. Lister les champs que le code envoie à Airtable via `S2W.push()` ou `S2W.update()`.
-> 2. Comparer avec les colonnes réelles de la table Airtable (via API Metadata ou interface web).
-> 3. Créer les colonnes manquantes si nécessaire.
-> 4. Exécuter un test d'écriture/relecture réel (pas juste vérifier le schéma — écrire un enregistrement et le relire).
-> 5. Vérifier que `_serializeFields()` sérialise correctement les types complexes (arrays → JSON string pour multilineText).
->
-> **Motif :** Airtable rejette silencieusement les champs inconnus (pas d'erreur visible côté client si l'erreur réseau est swallowed). Le code local fonctionne parfaitement (localStorage n'a pas de schéma), masquant le problème jusqu'à un audit explicite.
+## Pour chaque tâche
+
+Faire uniquement :
+
+1. comprendre la demande ;
+2. inspecter les éléments strictement nécessaires ;
+3. appliquer la correction demandée ;
+4. effectuer un test réel ciblé ;
+5. STOP.
+
+## Interdictions
+
+Ne jamais créer spontanément :
+
+* `implementation_plan.md`
+* `walkthrough.md`
+* `task.md`
+* framework de test
+* script d’audit général
+* nouvelle architecture
+* dépendance supplémentaire
+
+sauf demande explicite.
+
+Ne jamais transformer :
+
+* un contrôle en refactor,
+* un audit en correction,
+* une correction en audit global.
+
+## Limite de tentatives
+
+Maximum :
+
+**2 corrections sur le même problème.**
+
+Après 2 échecs :
+
+```text
+BLOCKER :
+...
+
+EXACT ERROR :
+...
+
+DECISION NEEDED :
+...
+```
+
+Puis STOP.
+
+---
+
+# 2 — LES 6 COUCHES TECHNIQUES
+
+START2WAY possède actuellement 6 couches devant rester cohérentes :
+
+1. Repository local
+2. GitHub `main`
+3. Cloud Build
+4. Cloud Run
+5. Cloud SQL PostgreSQL
+6. Airtable Mirror
+
+Chaîne de référence :
+
+```text
+LOCAL
+→ GITHUB
+→ CLOUD BUILD
+→ CLOUD RUN
+→ CLOUD SQL
+→ AIRTABLE MIRROR
+```
+
+Une modification d’une couche ne doit pas casser le contrat avec la suivante.
+
+---
+
+# 3 — SOURCE DE VÉRITÉ DES DONNÉES
+
+## Production
+
+La source centrale de vérité est :
+
+**Cloud SQL / PostgreSQL**
+
+Airtable n’est PAS la base principale.
+
+Airtable est uniquement :
+
+**un miroir asynchrone downstream.**
+
+Une panne Airtable ne doit jamais :
+
+* supprimer les données centrales,
+* rendre Airtable autoritaire,
+* provoquer un rollback de la donnée Cloud SQL valide.
+
+---
+
+# 4 — DAL & POSTGRESQL
+
+PostgreSQL est l'unique moteur de base de données START2WAY.
+Cloud SQL héberge PostgreSQL en production.
+Aucun fallback SQLite n'est supporté.
+
+Attention particulière :
+
+PostgreSQL utilise des opérations asynchrones.
+
+Tout appel DAL PostgreSQL retournant une Promise doit être correctement `await`.
 
 
 
-## Vertèbre 19 — Résolution Bugs Interface & Synchronisation Airtable
-- **Date :** 2026-08-21
-- **Fichiers concernés :** `app-mobile.html`, `app-web.html`, `docs/s1/js/s2w-localstorage.js`
-- **Corrections et ajouts appliqués :**
-  1. **Interface & Tiroir :** Suppression du doublon "Contacter l'employeur" (Page Profil) et ajout d'un accès rapide "Messagerie" dans le Menu latéral (Drawer) pour uniformité.
-  2. **Centre d'Alertes Salarié :**
-     - Le bouton "Tout marquer lu" réinitialise correctement l'état et efface le badge de notification.
-     - Correction du périmètre de confidentialité : filtrage strict des notifications pour que le salarié ne voie que **SES** alertes (basé sur `owner_id` / `user_id` lié au conducteur connecté), et non les alertes employeur ou celles des autres.
-  3. **Sélecteur de Véhicule (Mobile) :**
-     - Remplacement du panneau vide par une liste fonctionnelle liée à la table `vehicles`.
-     - Changement de véhicule mis à jour via `S2W.update('users', user.id, { current_vehicle_id: ... })`, se reflétant instantanément côté Dashboard Employeur.
-  4. **Correctif Critique - Doublons Airtable (`syncFromAirtable`) :**
-     - L'ancienne logique faisait un `POST` (insert) aveugle des données locales manquant d'`_airtable_id`, provoquant des doublons (ex: multiples "DX-847-AZ") à chaque perte/réinitialisation du cache.
-     - **Nouvelle logique (Upsert) :** Le code télécharge d'abord la base Airtable existante, construit une carte par ID métier (`r.id`), et associe simplement l'`_airtable_id` aux objets locaux s'ils existent déjà à distance. L'insertion (`POST`) n'a lieu que pour les objets strictement nouveaux.
-     - Nettoyage manuel des véhicules dupliqués dans Airtable de production effectué.
+---
 
-### VERTÈBRE 20 — Formulaire Entreprise (S2WStepper) & Synchronisation Schéma Airtable
-- **Date :** 2026-08-25
-- **Fichiers concernés :** `souscription.html`, `app-web.html` (modale Mon Entreprise), `paiement.html`, `docs/s1/js/s2w-utils.js`, Schéma Airtable
-- **Résumé :** Refonte du formulaire entreprise (inscription et édition) via un contrôleur mutualisé `S2WStepper` pour gérer la navigation multi-étapes (7 étapes pour l'inscription, 5 pour l'édition). Correction d'un bug majeur de perte de données à l'inscription en s'assurant que la totalité des champs (24) est conservée lors de la redirection vers `paiement.html`.
-- **Détails Techniques :**
-  - **S2WStepper :** Contrôleur JS vanilla (`docs/s1/js/s2w-utils.js`) qui prend en charge la pagination (`updateStep()`), la validation HTML native (`form.reportValidity()`), et la collecte des données via `FormData`. Supporte un nombre d'étapes variable selon le contexte (ex: 7 pour la souscription, 5 pour la modale d'édition).
-  - **Synchronisation Airtable :** Mise à jour du schéma réel de la base Airtable via l'API pour ajouter les 21 champs manquants de la table `companies` (dont les checkboxes configurées spécifiquement avec `color: "greenBright"`).
-  - **Fiabilisation `paiement.html` :** Ajout de `await` explicite sur `S2W.insertToAirtable('companies', newCompany)` avant la redirection `window.location.href` pour empêcher le navigateur d'annuler la requête réseau asynchrone (Race condition résolue).
-- **Règle associée :** Toute modification de formulaire ajoutant/modifiant des champs DOIT être suivie d'une vérification et mise à jour du schéma réel dans Airtable via l'API REST pour éviter les rejets silencieux de données.
+# 5 — IDENTITÉ UTILISATEUR
 
-### VERTÈBRE 21 — Factorisation Logique Activation Circuit
-- **Date :** 2026-08-26
-- **Fichiers concernés :** `app-mobile.html`, `docs/s1/js/s2w-utils.js`
-- **Résumé :** Centralisation et mutualisation de la logique d'activation des jetons Circuit pour supprimer la duplication de code entre la modale d'activation (onglet Circuit) et la page Profil.
-- **Détails Techniques :**
-  - Création de la méthode statique `S2WUtils.validateCircuitToken(code, userId)` qui vérifie la validité du code, met à jour son statut (`used`), associe l'utilisateur, calcule la date d'expiration (+30 jours, sauf si code de LANCement) et met à jour Airtable et le cache local.
-  - Refactorisation de `submitPopupCircuitCode()` et `activateCircuitFromProfile()` dans `app-mobile.html` pour qu'elles n'agissent plus que comme de simples wrappers (gestion des Toasts et de l'interface) autour de `validateCircuitToken()`.
+Un `User` représente l’identité personnelle START2WAY.
 
+Un utilisateur peut exister sans entreprise.
 
-### CORRECTIF GLOBAL — Visibilité des Toasts (Z-Index Supremacy)
-- **Date :** 2026-08-26
-- **Fichiers concernés :** `app-mobile.html`, `app-web.html`
-- **Résumé :** Correction globale d'un bug d'UI critique empêchant la visibilité des Toasts sous les modales.
-- **Détails Techniques :**
-  - Un audit complet des valeurs `z-index` a révélé que certaines modales, bannières et visualisateurs (ex: `mediaBox`) utilisaient des valeurs allant de `9999` jusqu'à `100000`.
-  - Les conteneurs de Toasts (`.mob-toast` et `#toast-container`) possédaient des `z-index` inférieurs (`200` et `9999` respectivement), ce qui les rendait invisibles (techniquement affichés mais masqués physiquement) lorsqu'une erreur survenait au-dessus d'une de ces interfaces ouvertes (ex: la modale d'activation Circuit, avec un `z-index` de `1100`).
-  - Passage formel des deux conteneurs de toasts (mobile et web) à `z-index: 999999;` pour garantir leur suprématie absolue et leur visibilité au-dessus de tout autre élément d'interface, sans exception.
+Un utilisateur peut être rattaché à plusieurs entreprises.
 
-### VERTÈBRE 22 — Remplacement des Prompts par Modales Asynchrones (Chantier 3)
-- **Date :** 2026-08-26
-- **Fichier concerné :** `app-mobile.html`
-- **Résumé :** Suppression des appels natifs bloquants `prompt()` et `confirm()` au profit de modales DOM stylisées, asynchrones, et conformes à la charte graphique de l'application.
-- **Détails Techniques :**
-  - **Saisie du Code Reprise** : Remplacement de `promptRepriseCode` par une modale asynchrone `#reprise-code-modal` et scission de la logique métier (validation du code) dans la fonction `submitRepriseCode(feuilletId)`.
-  - **Réouverture de Journée** : Remplacement du duo consécutif `confirm()` + `prompt()` dans la fonction `startTimer()` par une seule modale unifiée `#reopen-session-modal` offrant une meilleure ergonomie. 
-  - Refonte du flux : Si la réouverture est annulée, aucune nouvelle session n'est démarrée par erreur. Si validée, la logique est déportée dans `submitReopenSession(closedToday)`.
-  - **Sécurité et Validation** : Le code PIN est soumis à une validation stricte (`!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)`) avant tout traitement.
-  - Test en situation de la **Z-Index Supremacy** (mise en place au Chantier 2) : Les Toasts d'erreur s'affichent correctement et bien au-dessus des nouvelles modales (qui possèdent un `z-index` de 1100).
+Le rattachement professionnel est représenté par :
 
-### VERTÈBRE 24 — Mur de connexion et Onboarding Mobile (Sécurisation)
-- **Date :** 2026-08-28
-- **Fichiers concernés :** `app-mobile.html`, `docs/s1/js/s2w-utils.js`
-- **Résumé :** Suppression totale de l'injection en dur du faux compte `usr_001`. Mise en place d'un véritable parcours d'authentification et de création de compte via un Stepper, ainsi qu'un "Mode Limité" pour restreindre l'accès à l'application tant qu'un Code Invitation valide n'a pas été saisi.
-- **Détails Techniques :**
-  - **Gestion de Session (`s2w-utils.js`) :** Ajout des méthodes utilitaires `S2WUtils.login(userId)`, `logout()`, et `getLoggedInUser()` basées sur le localStorage.
-  - **Refactoring Massif (`usr_001`) :** Remplacement de la soixantaine d'occurrences statiques `'usr_001'` par la variable globale dynamique `window.currentUserId` dans toute la logique de l'application mobile (requêtes, filtrage, sauvegarde).
-  - **Écran de Bienvenue & Modales :** Intégration d'un `#welcome-screen` interceptant l'accès initial. Ajout de modales de connexion (`#login-modal`) et d'inscription (`#signup-modal`).
-  - **Parcours Stepper :** Création de compte en 4 étapes : 1) Infos perso, 2) Infos pro (Permis VL/PL conditionnel), 3) Sécurité (Validation stricte du code PIN à 4 chiffres, nécessaire pour les signatures), 4) Rattachement via Code Invitation (avec option de report).
-  - **Mode Limité :** Si l'utilisateur est connecté mais n'a pas d'`company_id`, une bannière rouge s'affiche en haut de l'écran. Les menus vitaux du tiroir (Accueil, Feuillet, Historique, Circuit, Messagerie) sont verrouillés visuellement (🔒) et fonctionnellement (redirection annulée). Seuls Profil et Support Chatbot restent accessibles.
-- **Règle associée :** Le code PIN saisi à l'étape 3 de l'onboarding est le SEUL et UNIQUE code de sécurité du chauffeur, exploité ensuite pour rouvrir une session ou signer son feuillet. Il doit être strictement validé (Regex `^\d{4}$`).
+**Employment**
 
-### RÈGLE DE SÉCURITÉ & DONNÉES DE DÉMO (Mise à jour Onboarding)
-> Lors de la suppression des accès directs de test (ex: `usr_001`), toutes les données liées à ces comptes fictifs doivent être purgées intégralement des bases Airtable de production (`users`, `sessions`, `rep_codes`, `documents`, `vehicles`) pour garantir un départ à zéro.
-> **Note de conception :** Le mot de passe de l'application mobile est actuellement stocké en texte clair (simulation démo). Un commentaire explicite a été ajouté dans le code source signalant que pour la production, un hachage robuste côté serveur (via bcrypt ou argon2) est obligatoire, et qu'un hachage côté client type SHA-256 est proscrit.
+Relation canonique :
+
+```text
+User
+→ Employment
+→ Company
+```
+
+Interdit d’utiliser :
+
+```text
+user.company_id
+```
+
+comme unique autorité métier.
+
+---
+
+# 6 — EMPLOYMENT / MULTI-ENTREPRISE
+
+Un utilisateur peut avoir plusieurs `Employment`.
+
+Un seul contexte professionnel peut être actif à un instant donné.
+
+Le changement d’entreprise est interdit pendant :
+
+* activité en cours,
+* session de travail incompatible,
+* autre état métier bloquant défini.
+
+Les données professionnelles doivent rester rattachées à leur :
+
+`employment_id`
+
+d’origine.
+
+Un changement d’entreprise ne doit jamais réattribuer rétroactivement les anciennes données.
+
+---
+
+# 7 — TIMEZONE
+
+Autorité timezone :
+
+```text
+Employment
+→ Company
+→ company.timezone
+```
+
+Les sessions professionnelles doivent capturer :
+
+`business_timezone`
+
+Les objets journaliers doivent capturer leur :
+
+`business_date`
+
+et leur timezone métier lorsque nécessaire.
+
+Une nouvelle session professionnelle doit échouer si aucune timezone métier valide ne peut être déterminée.
+
+---
+
+# 8 — LIC / JOURNÉE DE TRAVAIL
+
+START2WAY est un service LIC numérique.
+
+La journée métier doit préserver :
+
+* chronologie,
+* activités,
+* pauses,
+* véhicule,
+* employment,
+* timezone,
+* événements.
+
+Les données validées ne doivent pas être détruites pour simuler une réouverture.
+
+## Minuit
+
+La journée doit être clôturée automatiquement selon la timezone métier.
+
+## Réouverture le même jour
+
+Une reprise le même business day doit continuer la journée correspondante sans destruction de l’historique.
+
+## J+1
+
+Un feuillet précédent nécessitant une signature peut bloquer le démarrage d’un nouveau service selon la règle métier actuelle.
+
+---
+
+# 9 — SIGNATURE DU FEUILLET
+
+La signature intervient seulement après :
+
+* fermeture de la journée,
+* sauvegarde centrale confirmée,
+* absence d’activité encore active.
+
+Ne jamais considérer un feuillet signé comme modifiable librement.
+
+---
+
+# 10 — HISTORIQUE SALARIÉ
+
+Dans l’application salarié, l’historique professionnel exposé est :
+
+**les feuillets journaliers archivés.**
+
+Ne pas créer d’historique salarié autonome pour :
+
+* Expéditions,
+* Circuit.
+
+Les données peuvent exister techniquement en base sans devenir un écran historique salarié.
+
+---
+
+# 11 — VÉHICULES
+
+Le véhicule utilisé appartient au contexte professionnel actif.
+
+Les règles de sélection et changement doivent respecter :
+
+* Company,
+* Employment,
+* disponibilité,
+* session active,
+* usage en cours.
+
+Le changement de véhicule ne doit pas casser :
+
+* la session,
+* l’Expédition,
+* la chronologie.
+
+---
+
+# 12 — EXPÉDITION
+
+Expédition et Circuit sont deux concepts différents.
+
+Une Expédition :
+
+* est liée au contexte professionnel,
+* peut survivre à un changement de véhicule,
+* peut traverser minuit selon les règles métier existantes,
+* ne termine pas automatiquement la session ou l’activité.
+
+Une Expédition active peut bloquer `CLOCK_OUT`.
+
+Ne jamais fusionner Expédition et Circuit.
+
+---
+
+# 13 — CIRCUIT — DÉFINITION OFFICIELLE
+
+Circuit est un service personnel optionnel pour le chauffeur.
+
+L’entreprise ne construit PAS la tournée Circuit du salarié.
+
+Le chauffeur crée lui-même son Circuit :
+
+* au dépôt,
+* sur quai,
+* avant sa tournée,
+* à partir de ses propres adresses.
+
+START2WAY optimise ensuite ces arrêts.
+
+---
+
+# 14 — CIRCUIT — ENTITLEMENT
+
+Le code :
+
+`CIR-XXXX...`
+
+sert uniquement à activer le droit d’utilisation du service Circuit.
+
+Il ne représente PAS :
+
+* une mission,
+* une tournée entreprise,
+* une liste d’adresses,
+* un Employment.
+
+L’entitlement Circuit est :
+
+**User-scoped**
+
+et non Company-scoped.
+
+Il survit :
+
+* aux changements d’entreprise,
+* aux multiples Employments.
+
+---
+
+# 15 — CIRCUIT — DURÉE
+
+La durée d’un entitlement Circuit est calculée à partir de :
+
+`activated_at`
+
+en ajoutant le nombre de jours du mois calendrier d’activation.
+
+Exemples :
+
+```text
+septembre → +30 jours
+octobre → +31 jours
+février 2027 → +28 jours
+février 2028 → +29 jours
+```
+
+Ne pas revenir à la règle :
+
+“expire à la fin du mois courant”.
+
+---
+
+# 16 — CIRCUIT — MODÈLE CANONIQUE
+
+Modèle actuel :
+
+```text
+User
+→ service_entitlements
+→ circuit_runs
+→ circuit_stops
+→ circuit_stop_events
+```
+
+Un entitlement peut permettre plusieurs `circuit_runs` successifs pendant sa période active.
+
+---
+
+# 17 — CIRCUIT — SAISIE DES ARRÊTS
+
+Méthodes V1 prévues :
+
+* Manuel
+* CSV
+* Excel
+* OCR photo
+* Voix
+
+Toutes les entrées doivent rejoindre une normalisation commune.
+
+Le destinataire et l’adresse sont deux données distinctes.
+
+---
+
+# 18 — CIRCUIT — STATUTS
+
+Statuts canoniques :
+
+```text
+TODO
+DELIVERED
+FAILED
+```
+
+Affichage français :
+
+```text
+À faire
+Livré
+Échec
+```
+
+Avant de passer à la destination suivante, le chauffeur confirme le résultat de l’arrêt précédent.
+
+Le premier arrêt n’a évidemment aucun arrêt précédent à valider.
+
+---
+
+# 19 — CIRCUIT — PREUVES DE LIVRAISON
+
+Les éléments suivants sont facultatifs sauf future décision contraire :
+
+* note,
+* photo,
+* signature,
+* preuve documentaire.
+
+Ne jamais rendre automatiquement une preuve obligatoire sans instruction explicite.
+
+---
+
+# 20 — CIRCUIT — NAVIGATION
+
+START2WAY n’est pas un GPS turn-by-turn.
+
+Navigation externe prévue :
+
+* Google Maps
+* Waze
+* Apple Maps
+
+START2WAY calcule et organise la tournée puis peut ouvrir une application externe de navigation.
+
+---
+
+# 21 — CIRCUIT — PIPELINE COMMERCIAL
+
+Pipeline officiel :
+
+```text
+raw input
+→ deterministic parsing
+→ AI quality control
+→ human review
+→ real geocoding
+→ geographic validation
+→ real route matrix
+→ constraints
+→ deterministic optimization
+→ AI result audit
+→ human final validation
+→ external navigation
+```
+
+L’IA ne doit jamais être autoritaire pour :
+
+* coordonnées GPS,
+* Place ID,
+* distances routières,
+* durées routières,
+* ETA mathématiques,
+* ordre optimisé déterministe.
+
+---
+
+# 22 — CIRCUIT — PROVIDERS
+
+Architecture prévue :
+
+* OCR Provider
+* Speech Provider
+* Geocoding Provider
+* Route Matrix Provider
+* Optimization Provider
+* AI Agent Wrapper
+
+Stack Google actuellement prévue :
+
+* Google Maps Geocoding API
+* Google Routes API / ComputeRouteMatrix
+* Google Route Optimization API
+* Google Cloud Vision
+* Google Speech-to-Text
+
+Si un provider réel n’est pas configuré :
+
+retourner explicitement :
+
+`PROVIDER_NOT_CONFIGURED`
+
+Interdit de produire un résultat fictif.
+
+---
+
+# 23 — INTERDICTION DES MOCKS EN PRODUCTION
+
+Sont interdits comme fallback production :
+
+* coordonnées aléatoires,
+* catalogue d’adresses codé en dur,
+* Lille/Roubaix fictif,
+* Haversine présenté comme route réelle,
+* faux OCR,
+* fausse reconnaissance vocale,
+* fausse optimisation,
+* faux PASS.
+
+Un mock peut uniquement exister dans un test explicitement identifié comme mock.
+
+---
+
+# 24 — CIRCUIT & ENTREPRISE
+
+Circuit reste un service personnel salarié.
+
+L’entreprise ne doit pas recevoir :
+
+* liste détaillée des adresses Circuit,
+* photos personnelles Circuit,
+* signatures Circuit,
+* contrôle complet de la tournée personnelle.
+
+Une future vue Company pourra uniquement afficher un résumé opérationnel succinct de ses propres salariés, par exemple :
+
+```text
+Circuit actif — X/Y arrêts effectués
+```
+
+avec éventuellement le nombre d’échecs.
+
+Pas de dispatch Circuit employeur en V1 actuelle.
+
+---
+
+# 25 — AIRTABLE MIRROR
+
+Airtable reçoit des données depuis Cloud SQL via le Mirror Sync.
+
+Flux :
+
+```text
+Cloud SQL
+→ airtable_mirror_status
+→ Airtable API
+```
+
+Statuts actuels pertinents :
+
+```text
+PENDING
+COMPLETED
+FAILED_RETRYABLE
+FAILED_BLOCKED
+```
+
+Un succès réel nécessite que le même objet puisse être retrouvé côté Airtable après synchronisation.
+
+---
+
+# 26 — CONFIGURATION PRODUCTION
+
+Les secrets de production ne doivent jamais provenir d’un `.env` embarqué dans l’image.
+
+Configuration sensible via Secret Manager.
+
+Exemples :
+
+* DATABASE_URL
+* AIRTABLE_PAT
+
+Configuration non secrète possible via variables Cloud Run.
+
+Exemples :
+
+* DB_ENGINE
+* AIRTABLE_BASE_ID
+* AIRTABLE_API_URL
+
+---
+
+# 27 — SECRETS
+
+INTERDICTION ABSOLUE d’afficher :
+
+* PAT,
+* mot de passe DB,
+* DATABASE_URL complète,
+* access token,
+* Authorization header,
+* private key.
+
+Ne jamais rechercher un secret dans :
+
+* historique shell,
+* logs,
+* ancien fichier oublié,
+* screenshot.
+
+Ne jamais recopier un secret directement dans un script de test.
+
+---
+
+# 28 — GCP
+
+Projet actuel :
+
+`project-0000f1d2-0f56-47e3-bf9`
+
+Région backend principale :
+
+`europe-west1`
+
+Service Cloud Run :
+
+`start2way-backend`
+
+Cloud SQL :
+
+`start2way-postgres`
+
+Database :
+
+`start2way`
+
+Le déploiement production doit rester relié à :
+
+* GitHub,
+* Cloud Build,
+* Cloud Run.
+
+---
+
+# 29 — BUILD / DEPLOY
+
+Pour une modification produit :
+
+```text
+Local
+→ commit
+→ GitHub main
+→ Cloud Build
+→ Cloud Run
+```
+
+Après déploiement, vérifier uniquement ce qui est nécessaire :
+
+```text
+BUILD = SUCCESS
+REVISION = READY
+TRAFFIC = 100%
+```
+
+Pas d’audit supplémentaire si le critère d’acceptation métier est déjà satisfait.
+
+---
+
+# 30 — COLLISION DB LEGACY
+
+Attention à la résolution Node :
+
+```text
+server/db.js
+server/db/index.js
+```
+
+Le backend doit explicitement utiliser le DAL attendu.
+
+Ne jamais réintroduire involontairement une résolution vers l’ancien `server/db.js`.
+
+---
+
+# 31 — SYNCHRONISATION OFFLINE
+
+Le système doit préserver :
+
+* ordre chronologique,
+* employment_id,
+* opérations offline,
+* idempotence,
+* conflits de version.
+
+Retry de synchronisation côté application :
+
+environ toutes les 15 secondes selon le mécanisme existant.
+
+Une reconnexion ne doit pas réattribuer une opération à un autre Employment.
+
+---
+
+# 32 — IMMUTABILITÉ MÉTIER
+
+Les objets professionnels historiques restent attachés à :
+
+* leur utilisateur,
+* leur Employment,
+* leur Company,
+* leur business day,
+* leur timezone,
+* leur contexte d’origine.
+
+Une modification de contexte courant ne doit jamais réécrire l’origine historique d’un objet.
+
+---
+
+# 33 — TESTS
+
+Préférer :
+
+* vrai backend,
+* vraie DB,
+* vraie API,
+* vrai navigateur intégré Antigravity.
+
+Pour les tests UI/E2E :
+
+utiliser le navigateur Chrome intégré à Antigravity.
+
+Ne pas introduire spontanément :
+
+* Puppeteer,
+* Playwright,
+* jsdom.
+
+Pas de PASS hardcodé.
+
+---
+
+# 34 — PRIORITÉ V1
+
+Classifier tout problème :
+
+## BLOCKING V1
+
+À corriger immédiatement.
+
+## SECURITY / DATA SERIOUS
+
+À corriger immédiatement.
+
+## IMPORTANT NON-BLOCKING
+
+Noter, ne pas interrompre la tâche principale.
+
+## COSMETIC / REFACTOR
+
+Reporter.
+
+La perfection architecturale n’est pas un objectif avant livraison V1.
+
+---
+
+# 35 — DISCIPLINE DE SCOPE
+
+Si une tâche demande de modifier un seul fichier :
+
+ne pas modifier un deuxième fichier sans nécessité directe.
+
+Si une anomalie secondaire apparaît :
+
+```text
+NON-BLOCKING DEBT :
+...
+```
+
+Puis continuer la tâche demandée.
+
+Ne jamais “profiter” d’une tâche pour nettoyer autre chose.
+
+---
+
+# 36 — ARRÊT OBLIGATOIRE
+
+Une fois le critère demandé validé :
+
+**STOP.**
+
+Ne pas :
+
+* chercher un nouveau problème,
+* relancer un audit,
+* refaire un plan,
+* nettoyer des fichiers adjacents,
+* optimiser autre chose.
+
+---
+
+# 37 — FORMAT DE RAPPORT PAR DÉFAUT
+
+Rapport court :
+
+```text
+START2WAY — TASK RESULT
+
+TASK :
+...
+
+CHANGE :
+...
+
+REAL CHECK :
+...
+
+RESULT :
+PASS / FAIL
+
+COMMIT :
+...
+
+DEPLOY :
+PASS / FAIL / NOT REQUIRED
+
+NON-BLOCKING DEBT :
+...
+
+BLOCKER :
+...
+```
+
+---
+
+# 38 — CE QUI N’EST PLUS AUTORITAIRE
+
+Les anciennes règles suivantes sont explicitement OBSOLÈTES :
+
+* Airtable comme base centrale de vérité.
+* `user.company_id` comme rattachement professionnel unique.
+* Circuit créé ou dispatché par l’employeur.
+* Circuit rattaché à un Employment pour son entitlement.
+* Token Circuit expirant obligatoirement à la fin du mois civil.
+* Circuit limité à une seule tournée.
+* catalogue d’adresses Lille/Roubaix en production.
+* coordonnées aléatoires.
+* Haversine comme calcul routier commercial.
+* faux OCR / fausse voix comme fallback.
+* historique salarié détaillé Expédition.
+* historique salarié détaillé Circuit.
+* rapports Circuit employeur avec adresses/photos/signatures.
+* leaderboard employeur Circuit.
+* ancienne architecture Airtable-first.
+* anciens tests/demo `usr_001`.
+* règles historiques de screenshots GitHub obligatoires.
+* journalisation de toutes les anciennes corrections dans VERTEBRALE.
+
+---
+
+# 39 — RÈGLE FINALE
+
+`VERTEBRALE.md` contient les invariants.
+
+Il ne raconte pas l’histoire du projet.
+
+Avant toute modification importante, l’agent doit respecter les invariants concernés.
+
+Mais il ne doit PAS relire ou auditer les 39 sections à chaque petite tâche.
+
+Il consulte uniquement les sections pertinentes au scope courant.
+
+**Exécuter précisément. Tester une fois. STOP.**
