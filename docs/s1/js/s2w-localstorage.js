@@ -11,12 +11,7 @@ const SECRET_KEY_LOCAL = 'S2W-LOCAL-DEMO-KEY-2026';
 
 /* ─── CRUD ─────────────────────────────────────────────────────────────── */
 const S2W = {
-  // CONFIGURATION AIRTABLE — DÉMO CONNECTÉE
-  // NOTE DE SÉCURITÉ : Les identifiants de connexion Airtable sont saisis via une interface utilisateur
-  // sécurisée au premier chargement et stockés localement dans le localStorage du navigateur client.
-  // En production, toutes les requêtes Airtable doivent transiter par un serveur backend sécurisé.
-  // CONFIGURATION AIRTABLE — SUPPRIMÉE LORS DE LA MIGRATION D2B
-  // Le client s'adresse uniquement au serveur local (façade Legacy Airtable)
+  
   TABLES_LIST: ['companies', 'users', 'sessions', 'messages', 'alerts', 'reprise_codes', 'event_logs', 'reopen_logs', 'vehicles', 'documents', 'invitations', 'reports', 'day_declarations', 'expeditions', 'expedition_events', 'expedition_anomalies', 'expedition_vehicle_usages', 'service_entitlements', 'circuit_runs', 'circuit_stops', 'circuit_stop_events'],
 
   /* Lecture complète du cache local */
@@ -317,9 +312,7 @@ const S2W = {
     console.log('[S2W] Lancement du reset...');
     // Supprimer le cache local
     localStorage.removeItem(S2W_KEY);
-    // Vider également la base distante Airtable pour les prochains tests
-    await this.clearAirtableTables();
-    // Recréer le cache local vide
+        // Recréer le cache local vide
     await this.init();
     console.log('[S2W] Reset complet effectué (local et distant vides).');
   }

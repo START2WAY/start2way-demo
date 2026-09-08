@@ -83,14 +83,4 @@ CREATE TABLE IF NOT EXISTS failed_operations (
   payload JSONB
 );
 
-CREATE TABLE IF NOT EXISTS airtable_mirror_status (
-  entity TEXT,
-  entity_id TEXT,
-  central_version INTEGER,
-  status TEXT,
-  retry_count INTEGER DEFAULT 0,
-  last_error TEXT,
-  next_attempt_at TIMESTAMPTZ,
-  updated_at TIMESTAMPTZ,
-  PRIMARY KEY (entity, entity_id)
-);
+

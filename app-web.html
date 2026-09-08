@@ -996,30 +996,7 @@
     return true;
   }
 
-  function checkAirtableConfig() {
-    const token = localStorage.getItem('s2w_airtable_token');
-    const baseId = localStorage.getItem('s2w_airtable_base_id');
-    const warningBanner = document.getElementById('airtable-warning-banner');
-    
-    if (!token || !baseId) {
-      if (!warningBanner) {
-        const banner = document.createElement('div');
-        banner.id = 'airtable-warning-banner';
-        banner.style = 'background:#FFF3CD;color:#856404;padding:12px 20px;font-size:13px;font-family:sans-serif;font-weight:600;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #FFEBAA;cursor:pointer;position:sticky;top:0;z-index:99999;';
-        banner.innerHTML = `
-          <span>⚠️ Configuration Airtable manquante — cliquez ici pour connecter la base de données.</span>
-          <button style="background:#856404;color:#fff;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">Configurer</button>
-        `;
-        banner.onclick = async () => {
-          const success = await S2W.ensureCredentials();
-          if (success) {
-            banner.remove();
-            showToast('Airtable configuré avec succès ! Connexion en cours...', 'success');
-            await S2W.init();
-            updateCompanyUI();
-            switchPage(_activePage);
-          }
-        };
+  };
         document.body.insertBefore(banner, document.body.firstChild);
       }
     } else {
@@ -1033,7 +1010,7 @@
     checkAllEmployerAlerts();
     switchPage('dashboard');
 
-    // checkAirtableConfig();
+    // 
 
     if (checkAuth()) {
       (async () => {

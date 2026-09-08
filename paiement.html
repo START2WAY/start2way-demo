@@ -417,7 +417,7 @@
           
           cache.companies.push(newCompany);
           S2W.set(cache);
-          await S2W.insertToAirtable('companies', newCompany);
+          
 
           // --- GÉNÉRATION DES TOKENS DE LANCEMENT ---
           // 2 Token_Invitation de lancement
@@ -434,7 +434,7 @@
             };
             cache.invitations.push(inv);
             S2W.set(cache);
-            await S2W.insertToAirtable('invitations', inv);
+            
           }
 
           // 2 Token_Circuit de lancement
@@ -451,7 +451,7 @@
             };
             cache.invitations.push(circ);
             S2W.set(cache);
-            await S2W.insertToAirtable('invitations', circ);
+            
           }
         }
 

@@ -98,17 +98,7 @@ async function initDB(dbUrl) {
         updated_at TEXT
       );
 
-      CREATE TABLE IF NOT EXISTS airtable_mirror_status (
-        entity TEXT,
-        entity_id TEXT,
-        central_version BIGINT,
-        status TEXT,
-        last_error TEXT,
-        retry_count INTEGER DEFAULT 0,
-        next_attempt_at TEXT,
-        updated_at TEXT,
-        PRIMARY KEY (entity, entity_id)
-      );
+      
     `);
   } finally {
     client.release();
@@ -222,26 +212,7 @@ const dal = {
     createForCompany: async (token, companyId, role, createdAt, expiresAt) => execute('INSERT INTO sessions (token, company_id, role, created_at, expires_at) VALUES ($1, $2, $3, $4, $5)', [token, companyId, role, createdAt, expiresAt])
   },
 
-  airtable: {
-    upsertStatus: async (entity, entityId, centralVersion, status, updatedAt) =>
-      execute(`
-        INSERT INTO airtable_mirror_status (entity, entity_id, central_version, status, updated_at)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (entity, entity_id) DO UPDATE SET
-        central_version = EXCLUDED.central_version,
-        status = EXCLUDED.status,
-        updated_at = EXCLUDED.updated_at,
-        retry_count = 0,
-        last_error = NULL
-      `, [entity, entityId, centralVersion, status, updatedAt]),
-    insertStatus: async (entity, entityId, centralVersion, status, updatedAt) =>
-      execute('INSERT INTO airtable_mirror_status (entity, entity_id, central_version, status, updated_at) VALUES ($1, $2, $3, $4, $5)', [entity, entityId, centralVersion, status, updatedAt]),
-    updateStatus: async (status, entity, entityId, centralVersion) =>
-      execute('UPDATE airtable_mirror_status SET status = $1 WHERE entity = $2 AND entity_id = $3 AND central_version = $4', [status, entity, entityId, centralVersion]),
-    updateStatusError: async (status, lastError, entity, entityId, centralVersion) =>
-      execute('UPDATE airtable_mirror_status SET status = $1, last_error = $2, retry_count = retry_count + 1 WHERE entity = $3 AND entity_id = $4 AND central_version = $5', [status, lastError, entity, entityId, centralVersion]),
-    getPendingQueue: async (now) => queryAll(`SELECT * FROM airtable_mirror_status WHERE status IN ('PENDING', 'FAILED_RETRYABLE') AND (next_attempt_at IS NULL OR next_attempt_at <= $1) LIMIT 10`, [now])
-  }
+  
 };
 
 module.exports = {

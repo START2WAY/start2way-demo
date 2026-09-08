@@ -64,7 +64,6 @@ Si une tâche contient `READ ONLY`, alors il est strictement interdit de :
 * deploy ;
 * modifier Cloud Run ;
 * modifier Cloud SQL ;
-* modifier Airtable ;
 * modifier Secret Manager ;
 * modifier IAM.
 
@@ -148,7 +147,6 @@ Ne jamais afficher, copier ou écrire dans une commande visible :
 
 * mot de passe PostgreSQL ;
 * DATABASE_URL complète ;
-* Airtable PAT ;
 * token GCP ;
 * token GitHub ;
 * private key ;
@@ -194,7 +192,6 @@ interdit :
 * tests généraux ;
 * outils de diagnostic ;
 * scripts Cloud Run ;
-* scripts Airtable ;
 * backups non liés ;
 * fichiers auxiliaires non prouvés MongoDB.
 
@@ -272,6 +269,161 @@ Si une ancienne consigne, un ancien fichier, un vieux script ou une ancienne doc
 
 ---
 
+## L — TÂCHES ATOMIQUES OBLIGATOIRES
+
+Pour START2WAY, chaque instruction donnée à l’agent doit être traitée comme une tâche atomique.
+
+Format attendu :
+
+```text
+ACTION UNIQUE :
+faire X
+
+VÉRIFICATION UNIQUE :
+vérifier Y
+
+STOP
+```
+
+Exemples autorisés :
+
+```text
+Vérifie qu'il reste 0 occurrence.
+STOP.
+```
+
+```text
+Corrige l'import PostgreSQL.
+Vérifie que le serveur démarre.
+STOP.
+```
+
+```text
+Lis le trafic Cloud Run.
+Retourne la répartition.
+STOP.
+```
+
+Exemples interdits :
+
+```text
+Stabilise tout le projet.
+```
+
+```text
+Audite puis corrige puis déploie puis vérifie les 6 couches.
+```
+
+```text
+Trouve tous les problèmes et résous-les.
+```
+
+RÈGLE ABSOLUE :
+
+Une tâche = une action principale + une vérification principale + STOP.
+
+L’agent ne doit pas enchaîner spontanément plusieurs chantiers.
+
+Si une seconde action devient nécessaire :
+
+```text
+NEXT ACTION REQUIRED :
+...
+
+NOT EXECUTED
+```
+
+Puis STOP.
+
+---
+
+## M — INTERDICTION DES TÂCHES MULTI-ÉTAPES AUTONOMES
+
+L’agent ne doit jamais transformer une tâche atomique en chaîne autonome du type :
+
+```text
+audit
+→ correction
+→ refactor
+→ build
+→ deploy
+→ monitoring
+→ cleanup
+```
+
+Chaque étape importante doit faire l’objet d’une nouvelle instruction explicite.
+
+---
+
+## N — PAS DE SURVEILLANCE ACTIVE
+
+L’agent ne doit jamais rester en attente active d’un résultat.
+
+Si un build, déploiement ou service est encore :
+
+```text
+RUNNING
+PENDING
+IN_PROGRESS
+```
+
+retourner cet état puis STOP.
+
+Aucune répétition automatique de la même vérification.
+
+---
+
+## O — UNE VÉRIFICATION NE DOIT PAS ÊTRE RÉPÉTÉE SANS INFORMATION NOUVELLE
+
+Il est interdit de relancer la même lecture, requête ou commande si aucun nouvel événement ou changement n’a eu lieu.
+
+Si la dernière vérification a déjà donné le même état :
+
+STOP.
+
+---
+
+## P — PRIORITÉ À L’EXÉCUTION, PAS À LA MÉTA-RÉFLEXION
+
+L’agent ne doit pas passer du temps à optimiser :
+
+* son choix d’outil,
+* son plan,
+* son orchestration,
+* sa méthode.
+
+Si la tâche est claire :
+
+exécuter l’action demandée immédiatement.
+
+Pas de réflexion autonome sur “la meilleure stratégie” sauf si la tâche l’exige explicitement.
+
+---
+
+## Q — FORMAT PAR DÉFAUT POUR LES FUTURES TÂCHES
+
+Les instructions START2WAY doivent être interprétées selon ce modèle :
+
+```text
+TASK :
+une seule action
+
+CHECK :
+une seule vérification
+
+RESULT :
+PASS / FAIL
+
+NEXT :
+action suivante éventuelle, non exécutée
+
+STOP
+```
+
+Ce format prévaut sur toute ancienne méthode de travail plus large.
+
+---
+
 # 0.1 — ORDRE D’AUTORITÉ
 
 Pour l’agent Antigravity :
@@ -297,7 +449,6 @@ READ ONLY interdit notamment :
 * push,
 * déploiement,
 * modification DB,
-* modification Airtable,
 * modification GCP.
 
 ---
@@ -370,7 +521,6 @@ START2WAY possède actuellement 6 couches devant rester cohérentes :
 3. Cloud Build
 4. Cloud Run
 5. Cloud SQL PostgreSQL
-6. Airtable Mirror
 
 Chaîne de référence :
 
@@ -380,7 +530,6 @@ LOCAL
 → CLOUD BUILD
 → CLOUD RUN
 → CLOUD SQL
-→ AIRTABLE MIRROR
 ```
 
 Une modification d’une couche ne doit pas casser le contrat avec la suivante.
@@ -395,16 +544,12 @@ La source centrale de vérité est :
 
 **Cloud SQL / PostgreSQL**
 
-Airtable n’est PAS la base principale.
 
-Airtable est uniquement :
 
 **un miroir asynchrone downstream.**
 
-Une panne Airtable ne doit jamais :
 
 * supprimer les données centrales,
-* rendre Airtable autoritaire,
 * provoquer un rollback de la donnée Cloud SQL valide.
 
 ---
@@ -845,16 +990,12 @@ Pas de dispatch Circuit employeur en V1 actuelle.
 
 ---
 
-# 25 — AIRTABLE MIRROR
 
-Airtable reçoit des données depuis Cloud SQL via le Mirror Sync.
 
 Flux :
 
 ```text
 Cloud SQL
-→ airtable_mirror_status
-→ Airtable API
 ```
 
 Statuts actuels pertinents :
@@ -866,7 +1007,6 @@ FAILED_RETRYABLE
 FAILED_BLOCKED
 ```
 
-Un succès réel nécessite que le même objet puisse être retrouvé côté Airtable après synchronisation.
 
 ---
 
@@ -879,15 +1019,12 @@ Configuration sensible via Secret Manager.
 Exemples :
 
 * DATABASE_URL
-* AIRTABLE_PAT
 
 Configuration non secrète possible via variables Cloud Run.
 
 Exemples :
 
 * DB_ENGINE
-* AIRTABLE_BASE_ID
-* AIRTABLE_API_URL
 
 ---
 
@@ -1135,7 +1272,6 @@ BLOCKER :
 
 Les anciennes règles suivantes sont explicitement OBSOLÈTES :
 
-* Airtable comme base centrale de vérité.
 * `user.company_id` comme rattachement professionnel unique.
 * Circuit créé ou dispatché par l’employeur.
 * Circuit rattaché à un Employment pour son entitlement.
@@ -1149,7 +1285,6 @@ Les anciennes règles suivantes sont explicitement OBSOLÈTES :
 * historique salarié détaillé Circuit.
 * rapports Circuit employeur avec adresses/photos/signatures.
 * leaderboard employeur Circuit.
-* ancienne architecture Airtable-first.
 * anciens tests/demo `usr_001`.
 * règles historiques de screenshots GitHub obligatoires.
 * journalisation de toutes les anciennes corrections dans VERTEBRALE.
