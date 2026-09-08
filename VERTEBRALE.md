@@ -18,7 +18,261 @@ Il ne doit pas contenir :
 
 ---
 
-# 0 — ORDRE D’AUTORITÉ
+# 0 — RÈGLES NON NÉGOCIABLES DE L’AGENT
+
+Ces règles sont prioritaires sur tout le reste du document.
+
+## A — OBÉISSANCE AU SCOPE
+
+L’agent doit exécuter **exactement** la tâche demandée.
+
+Il est INTERDIT de :
+
+* modifier un fichier non demandé ;
+* supprimer un fichier non demandé ;
+* créer un script non demandé ;
+* créer un plan non demandé ;
+* lancer un audit supplémentaire ;
+* élargir spontanément la tâche ;
+* corriger une anomalie secondaire non demandée ;
+* “profiter” d’une tâche pour nettoyer le dépôt.
+
+Si une action hors scope semble nécessaire :
+
+```text
+OUT-OF-SCOPE ISSUE :
+...
+
+ACTION :
+NOT EXECUTED
+```
+
+Puis continuer ou STOP selon la tâche.
+
+---
+
+## B — READ ONLY = AUCUNE ÉCRITURE
+
+Si une tâche contient `READ ONLY`, alors il est strictement interdit de :
+
+* modifier un fichier ;
+* créer un fichier ;
+* supprimer un fichier ;
+* modifier Git ;
+* commit ;
+* push ;
+* deploy ;
+* modifier Cloud Run ;
+* modifier Cloud SQL ;
+* modifier Airtable ;
+* modifier Secret Manager ;
+* modifier IAM.
+
+Même si l’agent trouve un bug.
+
+Il doit seulement le signaler.
+
+---
+
+## C — INTERDICTION DES BOUCLES D’ATTENTE
+
+Il est interdit d’utiliser spontanément :
+
+* `schedule`
+* timer
+* polling
+* repeated status checks
+* wait loops
+* background monitoring
+
+Pour un build/deploy :
+
+faire UNE lecture.
+
+Si le statut est `RUNNING` :
+
+```text
+BUILD :
+RUNNING
+
+NEXT :
+MANUAL RECHECK REQUIRED
+```
+
+Puis STOP.
+
+---
+
+## D — MAXIMUM DE COMMANDES
+
+Par défaut :
+
+* diagnostic simple : maximum 5 commandes ;
+* correction ciblée : maximum 10 commandes ;
+* audit : uniquement si explicitement demandé.
+
+Si cette limite est atteinte sans résultat :
+
+STOP.
+
+---
+
+## E — MAXIMUM 2 CORRECTIONS
+
+Sur le même problème :
+
+maximum 2 corrections.
+
+Après 2 échecs :
+
+```text
+BLOCKER :
+...
+
+EXACT ERROR :
+...
+
+DECISION NEEDED :
+...
+```
+
+Puis STOP.
+
+Aucune troisième stratégie.
+
+---
+
+## F — SECRETS : INTERDICTION ABSOLUE
+
+Ne jamais afficher, copier ou écrire dans une commande visible :
+
+* mot de passe PostgreSQL ;
+* DATABASE_URL complète ;
+* Airtable PAT ;
+* token GCP ;
+* token GitHub ;
+* private key ;
+* Authorization header.
+
+Ne jamais chercher un secret dans :
+
+* `.bash_history`
+* `.zsh_history`
+* logs
+* anciens scripts
+* fichiers backup
+* screenshots
+
+Utiliser uniquement :
+
+* Secret Manager
+* Keychain
+* variables runtime sécurisées
+
+sans imprimer leur valeur.
+
+---
+
+## G — INTERDICTION DE SUPPRESSION LARGE
+
+Pour toute tâche de suppression :
+
+l’agent ne peut supprimer QUE les fichiers explicitement identifiés comme appartenant au scope.
+
+Exemple :
+
+si la tâche est “supprimer MongoDB” :
+
+autorisé :
+
+* fichiers MongoDB ;
+* dépendances MongoDB ;
+* références MongoDB.
+
+interdit :
+
+* tests généraux ;
+* outils de diagnostic ;
+* scripts Cloud Run ;
+* scripts Airtable ;
+* backups non liés ;
+* fichiers auxiliaires non prouvés MongoDB.
+
+Chaque suppression hors évidence directe doit être précédée de :
+
+```text
+FILE :
+...
+
+WHY DIRECTLY IN SCOPE :
+...
+```
+
+Sinon : NE PAS SUPPRIMER.
+
+---
+
+## H — PAS DE BUILD MANUEL IMPROVISÉ
+
+Ne jamais inventer :
+
+```text
+gcloud builds submit
+```
+
+ou un `cloudbuild.yaml` si le projet utilise déjà un trigger GitHub/Cloud Build automatique.
+
+Après push :
+
+* lire le build existant ;
+* ne pas créer un nouveau pipeline parallèle.
+
+---
+
+## I — PAS DE MODIFICATION PENDANT UN AUDIT
+
+Un audit observe.
+
+Un audit ne corrige pas.
+
+Si une tâche demande :
+
+* inspecter,
+* vérifier,
+* auditer,
+* confirmer,
+* mesurer,
+
+alors aucune modification n’est autorisée sauf instruction explicite distincte.
+
+---
+
+## J — STOP OBLIGATOIRE
+
+Quand le critère demandé est atteint :
+
+**STOP IMMÉDIATEMENT.**
+
+Ne pas :
+
+* chercher un autre problème ;
+* relancer un test ;
+* nettoyer autre chose ;
+* créer de la documentation ;
+* faire une optimisation ;
+* exécuter un nouvel audit.
+
+---
+
+## K — EN CAS DE CONFLIT
+
+Si une ancienne consigne, un ancien fichier, un vieux script ou une ancienne documentation contredit ces règles :
+
+**CES RÈGLES PRÉVALENT.**
+
+---
+
+# 0.1 — ORDRE D’AUTORITÉ
 
 Pour l’agent Antigravity :
 
@@ -159,7 +413,7 @@ Une panne Airtable ne doit jamais :
 
 PostgreSQL est l'unique moteur de base de données START2WAY.
 Cloud SQL héberge PostgreSQL en production.
-Aucun fallback SQLite n'est supporté.
+Aucun fallback n'est supporté.
 
 Attention particulière :
 
