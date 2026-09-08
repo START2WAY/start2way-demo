@@ -2,12 +2,20 @@ const fs = require("fs");
 const path = require("path");
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
+const crypto = require('crypto');
 const { initDB, runInTransaction, dal } = require('./db');
 
-const dbPath = process.env.DB_PATH || 's2w_recovery.db';
-initDB(dbPath);
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
 
-function recordFailedOperation(reqData, reason) {
+const engine = process.env.DB_ENGINE || 'sqlite';
+const dbConfig = engine === 'postgres' ? process.env.DATABASE_URL : (process.env.DB_PATH || 's2w_recovery.db');
+const dbPromise = initDB(dbConfig);
+
+async function recordFailedOperation(reqData, reason) {
   const { operation_id, entity, entity_id, payload, clientType, actorId, userId, companyId } = reqData;
   const now = new Date().toISOString();
   let sanitized = sanitizePayload(entity, payload, clientType);
@@ -19,7 +27,7 @@ function recordFailedOperation(reqData, reason) {
     delete sanitized.pin_code;
   }
   
-  insertFailedOpStmt.run(
+  await dal.operations.insertFailed(
     operation_id || 'UNKNOWN',
     entity || 'UNKNOWN',
     entity_id || 'UNKNOWN',
@@ -124,7 +132,7 @@ function verifySecret(secret, hashStr) {
   return derivedKey === storedKey;
 }
 
-function getUserAuth(req) {
+async function getUserAuth(req) {
   let token = null;
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -384,42 +392,46 @@ function sanitizePayload(entityType, payload, clientType) {
 }
 
 // Apply mutation
-const applyMutation = runInTransaction((reqData) => {
+const applyMutation = runInTransaction(async (reqData) => {
   let { operation_id, entity, entity_id, version, operation, payload, clientType, actorId, userId, companyId, requestFingerprint } = reqData;
 
+  // Acquire transaction-level advisory locks for concurrency (serialization)
+  await dal.locks.acquireXactLock('operation', operation_id);
+  await dal.locks.acquireXactLock('entity', entity + ':' + entity_id);
+
   // 1. Idempotency Check
-  const existingOp = getOpStmt.get(operation_id);
+  const existingOp = await dal.operations.getProcessed(operation_id);
   if (existingOp) {
     if (!existingOp.request_fingerprint) {
-      recordFailedOperation(reqData, 'LEGACY_OPERATION_FINGERPRINT_MISSING');
+      await recordFailedOperation(reqData, 'LEGACY_OPERATION_FINGERPRINT_MISSING');
       return { error: 'LEGACY_OPERATION_FINGERPRINT_MISSING', status: 409 };
     }
     if (existingOp.request_fingerprint !== requestFingerprint) {
-      recordFailedOperation(reqData, 'OPERATION_ID_REUSE_MISMATCH');
+      await recordFailedOperation(reqData, 'OPERATION_ID_REUSE_MISMATCH');
       return { error: 'OPERATION_ID_REUSE_MISMATCH', status: 409 };
     }
     return { status: 'ack', sequence: existingOp.sequence, version: existingOp.version };
   }
 
-  const existingConflictGlobal = getConflictByOpStmt.get(operation_id);
+  const existingConflictGlobal = await dal.conflicts.getByOpId(operation_id);
   if (existingConflictGlobal) {
     if (!existingConflictGlobal.request_fingerprint) {
-      recordFailedOperation(reqData, 'LEGACY_CONFLICT_FINGERPRINT_MISSING');
+      await recordFailedOperation(reqData, 'LEGACY_CONFLICT_FINGERPRINT_MISSING');
       return { error: 'LEGACY_CONFLICT_FINGERPRINT_MISSING', status: 409 };
     }
     if (existingConflictGlobal.request_fingerprint !== requestFingerprint) {
-      recordFailedOperation(reqData, 'OPERATION_ID_REUSE_MISMATCH');
+      await recordFailedOperation(reqData, 'OPERATION_ID_REUSE_MISMATCH');
       return { error: 'OPERATION_ID_REUSE_MISMATCH', status: 409 };
     }
   }
 
 
   // 1.5 Security & Scope Checks
-  const existingEntity = getEntityStmt.get(entity, entity_id);
+  const existingEntity = await dal.entities.get(entity, entity_id);
 
   if (clientType === 'START2WAY_TECH_PANEL') {
     if (entity === 'vehicle_usages') {
-      recordFailedOperation(reqData, 'TECH_VEHICLE_USAGE_MUTATION_FORBIDDEN');
+      await recordFailedOperation(reqData, 'TECH_VEHICLE_USAGE_MUTATION_FORBIDDEN');
       return { error: 'TECH_VEHICLE_USAGE_MUTATION_FORBIDDEN', status: 403 };
     }
   }
@@ -427,19 +439,19 @@ const applyMutation = runInTransaction((reqData) => {
   if (clientType === 'COMPANY_PANEL') {
     if (entity === 'employments') {
       if (!existingEntity) {
-        recordFailedOperation(reqData, 'COMPANY_EMPLOYMENT_CREATE_FORBIDDEN');
+        await recordFailedOperation(reqData, 'COMPANY_EMPLOYMENT_CREATE_FORBIDDEN');
         return { error: 'COMPANY_EMPLOYMENT_CREATE_FORBIDDEN', status: 403 };
       }
       if (existingEntity.company_id !== companyId) {
-        recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
+        await recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
         return { error: 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH', status: 403 };
       }
       if (payload && payload.company_id && payload.company_id !== existingEntity.company_id) {
-        recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
+        await recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
         return { error: 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH', status: 403 };
       }
       if (payload && payload.user_id && payload.user_id !== existingEntity.user_id) {
-        recordFailedOperation(reqData, 'EMPLOYMENT_USER_SCOPE_MISMATCH');
+        await recordFailedOperation(reqData, 'EMPLOYMENT_USER_SCOPE_MISMATCH');
         return { error: 'EMPLOYMENT_USER_SCOPE_MISMATCH', status: 403 };
       }
       
@@ -456,17 +468,17 @@ const applyMutation = runInTransaction((reqData) => {
       userId = existingEntity.user_id;
       companyId = existingEntity.company_id;
     } else if (entity === 'feuillets') {
-      recordFailedOperation(reqData, 'COMPANY_FEUILLET_MUTATION_FORBIDDEN');
+      await recordFailedOperation(reqData, 'COMPANY_FEUILLET_MUTATION_FORBIDDEN');
       return { error: 'COMPANY_FEUILLET_MUTATION_FORBIDDEN', status: 403 };
     } else if (entity === 'vehicle_usages') {
-      recordFailedOperation(reqData, 'COMPANY_VEHICLE_USAGE_MUTATION_FORBIDDEN');
+      await recordFailedOperation(reqData, 'COMPANY_VEHICLE_USAGE_MUTATION_FORBIDDEN');
       return { error: 'COMPANY_VEHICLE_USAGE_MUTATION_FORBIDDEN', status: 403 };
     }
   }
 
   if (entity === 'vehicles') {
     if (!reqData.companyId) {
-      recordFailedOperation(reqData, 'COMPANY_AUTH_REQUIRED_FOR_VEHICLE');
+      await recordFailedOperation(reqData, 'COMPANY_AUTH_REQUIRED_FOR_VEHICLE');
       return { error: 'COMPANY_AUTH_REQUIRED_FOR_VEHICLE', status: 403 };
     }
 
@@ -482,7 +494,7 @@ const applyMutation = runInTransaction((reqData) => {
     }
     
     if (existingEntity && existingEntity.company_id && reqData.companyId && existingEntity.company_id !== reqData.companyId) {
-      recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
+      await recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
       return { error: 'VEHICLE_COMPANY_SCOPE_MISMATCH', status: 403 };
     }
     
@@ -491,7 +503,7 @@ const applyMutation = runInTransaction((reqData) => {
       const activeUsages = dal.entities.getActiveUsagesByVehicle(entity_id);
       console.log('VEHICLE ARCHIVE CHECK:', entity_id, 'Active usages found:', activeUsages.length, activeUsages);
       if (activeUsages.length > 0) {
-        recordFailedOperation(reqData, 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE');
+        await recordFailedOperation(reqData, 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE');
         return { error: 'VEHICLE_ARCHIVE_FORBIDDEN_ACTIVE_USAGE', status: 403 };
       }
     }
@@ -499,25 +511,25 @@ const applyMutation = runInTransaction((reqData) => {
 
   if (entity === 'feuillets' || entity === 'segments' || entity === 'vehicle_usages' || entity === 'event_logs' || entity === 'sessions' || entity === 'day_declarations') {
     if (!payload || !payload.employment_id) {
-      recordFailedOperation(reqData, 'MISSING_EMPLOYMENT_ID');
+      await recordFailedOperation(reqData, 'MISSING_EMPLOYMENT_ID');
       return { error: 'MISSING_EMPLOYMENT_ID', status: 403 };
     }
-    const employment = getEntityStmt.get('employments', payload.employment_id);
+    const employment = await dal.entities.get('employments', payload.employment_id);
     if (!employment) {
-      recordFailedOperation(reqData, 'EMPLOYMENT_NOT_FOUND');
+      await recordFailedOperation(reqData, 'EMPLOYMENT_NOT_FOUND');
       return { error: 'EMPLOYMENT_NOT_FOUND', status: 403 };
     }
     if (payload.company_id && payload.company_id !== employment.company_id) {
-      recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
+      await recordFailedOperation(reqData, 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH');
       return { error: 'EMPLOYMENT_COMPANY_SCOPE_MISMATCH', status: 403 };
     }
     if (payload.user_id && payload.user_id !== employment.user_id) {
       console.log(`EMPLOYMENT_USER_SCOPE_MISMATCH: payload.user_id=${payload.user_id}, employment.user_id=${employment.user_id}`);
-      recordFailedOperation(reqData, 'EMPLOYMENT_USER_SCOPE_MISMATCH');
+      await recordFailedOperation(reqData, 'EMPLOYMENT_USER_SCOPE_MISMATCH');
       return { error: 'EMPLOYMENT_USER_SCOPE_MISMATCH', status: 403 };
     }
     if (clientType === 'EMPLOYEE_APP' && employment.user_id !== userId) {
-      recordFailedOperation(reqData, 'USER_SCOPE_FORBIDDEN');
+      await recordFailedOperation(reqData, 'USER_SCOPE_FORBIDDEN');
       return { error: 'USER_SCOPE_FORBIDDEN', status: 403 };
     }
     
@@ -525,27 +537,27 @@ const applyMutation = runInTransaction((reqData) => {
       const startedAt = new Date(payload.started_at).getTime();
       const endedAt = new Date(payload.ended_at).getTime();
       if (isNaN(startedAt) || isNaN(endedAt) || endedAt <= startedAt) {
-        recordFailedOperation(reqData, 'INVALID_SEGMENT_TIMESTAMPS');
+        await recordFailedOperation(reqData, 'INVALID_SEGMENT_TIMESTAMPS');
         return { error: 'INVALID_SEGMENT_TIMESTAMPS', status: 400 };
       }
       if (!['A', 'B', 'C', 'D'].includes(payload.category)) {
-        recordFailedOperation(reqData, 'INVALID_SEGMENT_CATEGORY');
+        await recordFailedOperation(reqData, 'INVALID_SEGMENT_CATEGORY');
         return { error: 'INVALID_SEGMENT_CATEGORY', status: 400 };
       }
       try {
         new Intl.DateTimeFormat(undefined, { timeZone: payload.business_timezone });
       } catch (e) {
-        recordFailedOperation(reqData, 'INVALID_SEGMENT_TIMEZONE');
+        await recordFailedOperation(reqData, 'INVALID_SEGMENT_TIMEZONE');
         return { error: 'INVALID_SEGMENT_TIMEZONE', status: 400 };
       }
       
       const diffSecs = Math.round((endedAt - startedAt) / 1000);
       if (Math.abs(diffSecs - payload.duration_sec) > 5) {
-        recordFailedOperation(reqData, 'INVALID_SEGMENT_DURATION');
+        await recordFailedOperation(reqData, 'INVALID_SEGMENT_DURATION');
         return { error: 'INVALID_SEGMENT_DURATION', status: 400 };
       }
       if (!payload.business_date) {
-        recordFailedOperation(reqData, 'MISSING_SEGMENT_BUSINESS_DATE');
+        await recordFailedOperation(reqData, 'MISSING_SEGMENT_BUSINESS_DATE');
         return { error: 'MISSING_SEGMENT_BUSINESS_DATE', status: 400 };
       }
 
@@ -559,7 +571,7 @@ const applyMutation = runInTransaction((reqData) => {
       });
       const expectedBusinessDate = formatter.format(startedDateObj);
       if (payload.business_date !== expectedBusinessDate) {
-        recordFailedOperation(reqData, 'INVALID_SEGMENT_BUSINESS_DATE');
+        await recordFailedOperation(reqData, 'INVALID_SEGMENT_BUSINESS_DATE');
         return { error: 'INVALID_SEGMENT_BUSINESS_DATE', status: 400 };
       }
     }
@@ -568,41 +580,41 @@ const applyMutation = runInTransaction((reqData) => {
       console.log(`[applyMutation] Inside vehicle_usages for entity_id=${entity_id}`);
       if (!existingEntity && payload.ended_at == null) {
         if (payload.user_id !== reqData.userId) {
-          recordFailedOperation(reqData, 'USER_ID_MISMATCH');
+          await recordFailedOperation(reqData, 'USER_ID_MISMATCH');
           return { error: 'USER_ID_MISMATCH', status: 403 };
         }
-        const emp = getEntityStmt.get('employments', payload.employment_id);
+        const emp = await dal.entities.get('employments', payload.employment_id);
         if (emp) {
           let empPayload = {};
           try { empPayload = JSON.parse(emp.payload); } catch(e){}
           if (empPayload.status !== 'active' || emp.user_id !== reqData.userId) {
-            recordFailedOperation(reqData, 'EMPLOYMENT_NOT_ACTIVE_OR_UNOWNED');
+            await recordFailedOperation(reqData, 'EMPLOYMENT_NOT_ACTIVE_OR_UNOWNED');
             return { error: 'EMPLOYMENT_NOT_ACTIVE_OR_UNOWNED', status: 403 };
           }
-          const veh = getEntityStmt.get('vehicles', payload.vehicle_id);
+          const veh = await dal.entities.get('vehicles', payload.vehicle_id);
           if (!veh) {
-            recordFailedOperation(reqData, 'VEHICLE_NOT_FOUND');
+            await recordFailedOperation(reqData, 'VEHICLE_NOT_FOUND');
             return { error: 'VEHICLE_NOT_FOUND', status: 403 };
           }
           let vehPayload = {};
           try { vehPayload = JSON.parse(veh.payload); } catch(e){}
           console.log(`CHECKING VEHICLE ${veh.entity_id}: veh.company_id=${veh.company_id}, emp.company_id=${emp.company_id}, vehPayload.status=${vehPayload.status}`);
           if (veh.company_id !== emp.company_id) {
-            recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
+            await recordFailedOperation(reqData, 'VEHICLE_COMPANY_SCOPE_MISMATCH');
             return { error: 'VEHICLE_COMPANY_SCOPE_MISMATCH', status: 403 };
           }
           if (vehPayload.status !== 'ACTIVE' && vehPayload.status !== 'active') {
-            recordFailedOperation(reqData, 'VEHICLE_STATUS_NOT_ACTIVE');
+            await recordFailedOperation(reqData, 'VEHICLE_STATUS_NOT_ACTIVE');
             return { error: 'VEHICLE_STATUS_NOT_ACTIVE', status: 403 };
           }
           const activeUsages = dal.entities.getActiveUsagesByVehicle(payload.vehicle_id);
           if (activeUsages.length > 0) {
-            recordFailedOperation(reqData, 'VEHICLE_ALREADY_IN_USE');
+            await recordFailedOperation(reqData, 'VEHICLE_ALREADY_IN_USE');
             return { error: 'VEHICLE_ALREADY_IN_USE', status: 403 };
           }
           const userActiveUsages = dal.entities.getActiveUsagesByUser(payload.user_id);
           if (userActiveUsages.length > 0) {
-            recordFailedOperation(reqData, 'USER_ALREADY_USING_VEHICLE');
+            await recordFailedOperation(reqData, 'USER_ALREADY_USING_VEHICLE');
             return { error: 'USER_ALREADY_USING_VEHICLE', status: 403 };
           }
         }
@@ -614,7 +626,7 @@ const applyMutation = runInTransaction((reqData) => {
         
         if (currentPayload) {
           if (currentPayload.ended_at && currentPayload.odometer_end != null) {
-            recordFailedOperation(reqData, 'CLOSED_VEHICLE_USAGE_IMMUTABLE');
+            await recordFailedOperation(reqData, 'CLOSED_VEHICLE_USAGE_IMMUTABLE');
             return { error: 'CLOSED_VEHICLE_USAGE_IMMUTABLE', status: 403 };
           }
           
@@ -622,7 +634,7 @@ const applyMutation = runInTransaction((reqData) => {
           for (let field of immutableFields) {
             if (payload[field] !== undefined && payload[field] !== currentPayload[field]) {
               console.log(`IMMUTABLE FAIL on ${field}: payload=${payload[field]}, current=${currentPayload[field]}`);
-              recordFailedOperation(reqData, 'VEHICLE_USAGE_IMMUTABLE_FIELD');
+              await recordFailedOperation(reqData, 'VEHICLE_USAGE_IMMUTABLE_FIELD');
               return { error: 'VEHICLE_USAGE_IMMUTABLE_FIELD', status: 403 };
             }
           }
@@ -631,18 +643,18 @@ const applyMutation = runInTransaction((reqData) => {
       
       if (payload.ended_at != null || payload.odometer_end != null || payload.rollover_type === 'MIDNIGHT') {
         if (!payload.ended_at || (payload.odometer_end == null && payload.rollover_type !== 'MIDNIGHT')) {
-          recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_CLOSURE');
+          await recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_CLOSURE');
           return { error: 'INVALID_VEHICLE_USAGE_CLOSURE', status: 400 };
         }
         
         const startedAt = new Date(payload.started_at).getTime();
         const endedAt = new Date(payload.ended_at).getTime();
         if (isNaN(startedAt) || isNaN(endedAt) || endedAt < startedAt) {
-          recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_TIMESTAMPS');
+          await recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_TIMESTAMPS');
           return { error: 'INVALID_VEHICLE_USAGE_TIMESTAMPS', status: 400 };
         }
         if (payload.odometer_end != null && payload.odometer_start != null && payload.odometer_end < payload.odometer_start) {
-          recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_ODOMETER');
+          await recordFailedOperation(reqData, 'INVALID_VEHICLE_USAGE_ODOMETER');
           return { error: 'INVALID_VEHICLE_USAGE_ODOMETER', status: 400 };
         }
       }
@@ -659,7 +671,7 @@ const applyMutation = runInTransaction((reqData) => {
             const next = payload.employee_snapshot;
             if (curr.user_id !== next.user_id || curr.first_name !== next.first_name || curr.last_name !== next.last_name) {
               console.log(`IMMUTABLE FAIL on feuillets employee_snapshot`);
-              recordFailedOperation(reqData, 'FEUILLET_SNAPSHOT_IMMUTABLE');
+              await recordFailedOperation(reqData, 'FEUILLET_SNAPSHOT_IMMUTABLE');
               return { error: 'FEUILLET_SNAPSHOT_IMMUTABLE', status: 403 };
             }
           }
@@ -668,7 +680,7 @@ const applyMutation = runInTransaction((reqData) => {
             const next = payload.company_snapshot;
             if (curr.company_id !== next.company_id || curr.name !== next.name) {
               console.log(`IMMUTABLE FAIL on feuillets company_snapshot`);
-              recordFailedOperation(reqData, 'FEUILLET_SNAPSHOT_IMMUTABLE');
+              await recordFailedOperation(reqData, 'FEUILLET_SNAPSHOT_IMMUTABLE');
               return { error: 'FEUILLET_SNAPSHOT_IMMUTABLE', status: 403 };
             }
           }
@@ -689,7 +701,7 @@ const applyMutation = runInTransaction((reqData) => {
             // mais on accepte les envois idempotents (strictement identiques)
             if (payload[field] !== undefined && payload[field] !== currentPayload[field]) {
               console.log(`IMMUTABLE FAIL on event_logs ${field}: payload=${payload[field]}, current=${currentPayload[field]}`);
-              recordFailedOperation(reqData, 'EVENT_LOG_GPS_IMMUTABLE');
+              await recordFailedOperation(reqData, 'EVENT_LOG_GPS_IMMUTABLE');
               return { error: 'EVENT_LOG_GPS_IMMUTABLE', status: 403 };
             }
           }
@@ -721,14 +733,14 @@ const applyMutation = runInTransaction((reqData) => {
 
   if (existingEntity && clientBaseVersion !== currentServerVersion) {
     // VERSION CONFLICT
-    const existingConflict = getConflictByOpStmt.get(operation_id);
+    const existingConflict = await dal.conflicts.getByOpId(operation_id);
 
     let conflictId = existingConflict ? existingConflict.conflict_id : uuidv4();
     
     if (!existingConflict) {
       const now = new Date().toISOString();
       const employmentId = payload ? payload.employment_id : null;
-      insertConflictStmt.run(
+      await dal.conflicts.insert(
         conflictId, operation_id, entity, entity_id, clientBaseVersion, currentServerVersion,
         JSON.stringify(payload), existingEntity.payload, clientType, actorId, userId, companyId, employmentId,
         'OPEN', 'VERSION_CONFLICT', requestFingerprint, now, now
@@ -763,22 +775,20 @@ const applyMutation = runInTransaction((reqData) => {
   const payloadStr = JSON.stringify(payload);
 
   if (existingEntity) {
-    updateEntityStmt.run(newVersion, payloadStr, companyId, userId, now, entity, entity_id);
+    await dal.entities.update(newVersion, payloadStr, companyId, userId, now, entity, entity_id);
   } else {
-    insertEntityStmt.run(entity, entity_id, newVersion, payloadStr, companyId, userId, now);
+    await dal.entities.insert(entity, entity_id, newVersion, payloadStr, companyId, userId, now);
   }
 
   const logId = uuidv4();
-  const info = insertChangelogStmt.run(logId, operation_id, entity, entity_id, operation, newVersion, now, clientType, actorId, userId, companyId, payloadStr);
+  const info = await dal.changelog.insert(logId, operation_id, entity, entity_id, operation, newVersion, now, clientType, actorId, userId, companyId, payloadStr);
   const sequence = info.lastInsertRowid;
 
   // 5. Write processed_operations
-  insertOpStmt.run(operation_id, 'COMPLETED', entity, entity_id, newVersion, sequence, now, requestFingerprint);
+  await dal.operations.insertProcessed(operation_id, 'COMPLETED', entity, entity_id, newVersion, sequence, now, requestFingerprint);
 
   if (entity === 'employments' || entity === 'feuillets' || entity === 'segments') {
-    dal.airtable.upsertStatus(entity, entityId, newVersion, 'PENDING', now);
-        updated_at = excluded.updated_at
-    `).run(entity, entity_id, newVersion, now);
+    dal.airtable.upsertStatus(entity, entity_id, newVersion, 'PENDING', now);
   }
 
   return { status: 'ack', sequence, version: newVersion };
@@ -793,7 +803,7 @@ app.get('/health', (req, res) => res.send('OK'));
 const scanRateLimits = new Map();
 app.post('/api/employee/plate-scan', async (req, res) => {
   try {
-    const auth = getUserAuth(req);
+    const auth = await getUserAuth(req);
     if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
     req.user = { id: auth.user_id };
 
@@ -815,7 +825,7 @@ app.post('/api/employee/plate-scan', async (req, res) => {
     if (!employment_id) return res.status(400).json({ error: "Missing employment_id" });
 
     // Verify employment
-    const empRow = getEntityStmt.get('employments', employment_id);
+    const empRow = await dal.entities.get('employments', employment_id);
     if (!empRow) return res.status(404).json({ error: "Employment not found" });
     const employment = JSON.parse(empRow.payload);
     
@@ -840,7 +850,7 @@ app.post('/api/employee/plate-scan', async (req, res) => {
 
 app.post('/api/employee/plate-confirm', async (req, res) => {
   try {
-    const auth = getUserAuth(req);
+    const auth = await getUserAuth(req);
     if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
     req.user = { id: auth.user_id };
 
@@ -851,7 +861,7 @@ app.post('/api/employee/plate-confirm', async (req, res) => {
     }
 
     // Verify employment
-    const empRow = getEntityStmt.get('employments', employment_id);
+    const empRow = await dal.entities.get('employments', employment_id);
     if (!empRow) return res.status(404).json({ error: "Employment not found" });
     const employment = JSON.parse(empRow.payload);
     
@@ -896,7 +906,7 @@ app.post('/api/employee/plate-confirm', async (req, res) => {
     };
 
     // Insert entity
-    insertEntityStmt.run(
+    await dal.entities.insert(
       'vehicles',
       vehicleId,
       1,
@@ -907,7 +917,7 @@ app.post('/api/employee/plate-confirm', async (req, res) => {
     );
 
     // Add to changelog
-    insertChangelogStmt.run(
+    await dal.changelog.insert(
       'op_' + Date.now(),
       'op_' + Date.now(),
       'vehicles',
@@ -932,7 +942,7 @@ app.post('/api/employee/plate-confirm', async (req, res) => {
 // ==========================================
 // AI CHAT ENDPOINTS
 // ==========================================----------------------------------------------------
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'MISSING_CREDENTIALS' });
 
@@ -980,7 +990,6 @@ app.post('/api/auth/login', (req, res) => {
     // If it's a tech user
     const role = userPayload.role === 'tech' ? 'tech' : 'salarie';
     dal.sessions.createForUser(token, user.entity_id, 'user', now, expiresAt);
-    );
     return res.json({ token, company: sanitizeForCompany('companies', companyPayload) });
   }
 });
@@ -994,8 +1003,8 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-app.post('/api/documents/:id/file', (req, res) => {
-  const auth = getUserAuth(req);
+app.post('/api/documents/:id/file', async (req, res) => {
+  const auth = await getUserAuth(req);
   if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   const documentId = req.params.id;
@@ -1029,8 +1038,8 @@ app.post('/api/documents/:id/file', (req, res) => {
   res.json({ success: true });
 });
 
-app.get('/api/documents/:id/file', (req, res) => {
-  const auth = getUserAuth(req);
+app.get('/api/documents/:id/file', async (req, res) => {
+  const auth = await getUserAuth(req);
   if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   const documentId = req.params.id;
@@ -1078,8 +1087,8 @@ app.get('/api/documents/:id/file', (req, res) => {
 });
 // ----------------------------------------------------
 
-app.post('/api/auth/verify-pin', (req, res) => {
-  const auth = getUserAuth(req);
+app.post('/api/auth/verify-pin', async (req, res) => {
+  const auth = await getUserAuth(req);
   if (!auth || !auth.user_id) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
   const { pin } = req.body;
@@ -1102,8 +1111,8 @@ app.post('/api/auth/verify-pin', (req, res) => {
 
 
 
-const mutateHandler = (req, res) => {
-  const auth = getUserAuth(req);
+const mutateHandler = async (req, res) => {
+  const auth = await getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (clientType === 'START2WAY_TECH_PANEL') {
     return res.status(403).json({ error: 'TECH_PANEL_READONLY' });
@@ -1144,7 +1153,7 @@ const mutateHandler = (req, res) => {
   const requestFingerprint = calculateFingerprint(fingerprintPayload);
 
   try {
-    const result = applyMutation({
+    const result = await applyMutation({
       operation_id, entity, entity_id, version, operation: opType, payload,
       clientType, actorId, userId: reqUserId, companyId: reqCompanyId, requestFingerprint
     });
@@ -1164,7 +1173,7 @@ const mutateHandler = (req, res) => {
       return res.status(result.status).json({ error: result.error });
     }
 
-    res.json({ status: 'ok', sequence: result.sequence, version: result.version });
+    res.json({ status: 'ack', sequence: result.sequence, version: result.version });
   } catch (err) {
     console.error('Mutate error:', err);
     res.status(500).json({ error: 'INTERNAL_ERROR' });
@@ -1203,7 +1212,7 @@ const FleetAIService = {
 
   async handleChat(req, res) {
     try {
-      const auth = getUserAuth(req);
+      const auth = await getUserAuth(req);
       if (!auth) return res.status(401).json({ error: 'UNAUTHORIZED' });
 
       // FORCE COMPANY ID FROM AUTHENTICATION - NO CLIENT TRUST
@@ -1301,10 +1310,10 @@ function getFleetVehicle(companyId, vehicleId) {
 app.post('/api/fleet/ai/chat', FleetAIService.handleChat);
 
 
-app.get('/api/sync/changes', (req, res) => {
+app.get('/api/sync/changes', async (req, res) => {
   const after = parseInt(req.query.after) || 0;
   const limit = parseInt(req.query.limit) || 100;
-  const auth = getUserAuth(req);
+  const auth = await getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (!auth) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
@@ -1365,8 +1374,8 @@ app.get('/api/sync/changes', (req, res) => {
   }
 });
 
-app.get('/api/sync/conflicts', (req, res) => {
-  const auth = getUserAuth(req);
+app.get('/api/sync/conflicts', async (req, res) => {
+  const auth = await getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (!auth) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
@@ -1391,15 +1400,15 @@ app.get('/api/sync/conflicts', (req, res) => {
   }
 
   try {
-    const conflicts = dal.conflicts.queryAll(query, params);
+    const conflicts = await dal.conflicts.queryAll(query, params);
     
-    const formatted = conflicts.map(c => {
+    const formatted = await Promise.all(conflicts.map(async c => {
       let clientPayload = null;
       let serverPayloadAtConflict = null;
       try { clientPayload = JSON.parse(c.client_payload); } catch(e){}
       try { serverPayloadAtConflict = JSON.parse(c.server_payload); } catch(e){}
 
-      const currentEntity = getEntityStmt.get(c.entity, c.entity_id);
+      const currentEntity = await dal.entities.get(c.entity, c.entity_id);
       let currentPayload = null;
       if (currentEntity && currentEntity.payload) {
         try { currentPayload = JSON.parse(currentEntity.payload); } catch(e){}
@@ -1421,7 +1430,7 @@ app.get('/api/sync/conflicts', (req, res) => {
         client_payload: sanitizePayload(c.entity, clientPayload, clientType),
         server_payload: sanitizePayload(c.entity, serverPayloadAtConflict, clientType)
       };
-    });
+    }));
 
     res.json({ conflicts: formatted });
   } catch (err) {
@@ -1430,8 +1439,8 @@ app.get('/api/sync/conflicts', (req, res) => {
   }
 });
 
-app.get('/api/sync/conflicts/:id', (req, res) => {
-  const auth = getUserAuth(req);
+app.get('/api/sync/conflicts/:id', async (req, res) => {
+  const auth = await getUserAuth(req);
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (!auth) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
@@ -1456,7 +1465,7 @@ app.get('/api/sync/conflicts/:id', (req, res) => {
     try { clientPayload = JSON.parse(c.client_payload); } catch(e){}
     try { serverPayloadAtConflict = JSON.parse(c.server_payload); } catch(e){}
 
-    const currentEntity = getEntityStmt.get(c.entity, c.entity_id);
+    const currentEntity = await dal.entities.get(c.entity, c.entity_id);
     let currentPayload = null;
     if (currentEntity && currentEntity.payload) {
       try { currentPayload = JSON.parse(currentEntity.payload); } catch(e){}
@@ -1484,7 +1493,7 @@ app.get('/api/sync/conflicts/:id', (req, res) => {
   }
 });
 
-app.get('/api/tech/audit/failed', (req, res) => {
+app.get('/api/tech/audit/failed', async (req, res) => {
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (clientType !== 'START2WAY_TECH_PANEL') {
     return res.status(403).json({ error: 'FORBIDDEN' });
@@ -1518,7 +1527,7 @@ app.get('/api/tech/audit/failed', (req, res) => {
   }
 });
 
-app.get('/api/tech/state', (req, res) => {
+app.get('/api/tech/state', async (req, res) => {
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
   if (clientType !== 'START2WAY_TECH_PANEL') {
     return res.status(403).json({ error: 'FORBIDDEN' });
@@ -1558,7 +1567,7 @@ app.get('/api/tech/state', (req, res) => {
 // ----------------------------------------------------------------------------
 // CIRCUIT API
 // ----------------------------------------------------------------------------
-app.post('/api/circuits/resolve', (req, res) => {
+app.post('/api/circuits/resolve', async (req, res) => {
   const userId = req.headers['x-user-id'];
   if (!userId) {
     return res.status(401).json({ error: 'UNAUTHORIZED' });
@@ -1802,7 +1811,7 @@ const port = process.env.PORT || 3000;
 
 // --- CIRCUIT V1 COMMERCIAL ENDPOINTS ---
 
-app.post('/api/circuit/parse-file', upload.single('file'), (req, res) => {
+app.post('/api/circuit/parse-file', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided' });
     
@@ -1883,4 +1892,9 @@ app.post('/api/circuit/audit-optimization', async (req, res) => {
 
 // --- END CIRCUIT V1 COMMERCIAL ENDPOINTS ---
 
-app.listen(port, () => console.log(`Recovery server running on port ${port}`));
+dbPromise.then(() => {
+  app.listen(port, () => console.log(`Recovery server running on port ${port}`));
+}).catch(err => {
+  console.error('Failed to init DB', err);
+  process.exit(1);
+});
