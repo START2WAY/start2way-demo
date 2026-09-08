@@ -1,13 +1,10 @@
-const sqliteImpl = require('./sqlite');
-const postgresImpl = require('./postgres');
-
 const engine = process.env.DB_ENGINE || 'sqlite';
 
 let dbImpl;
 if (engine === 'postgres') {
-  dbImpl = postgresImpl;
+  dbImpl = require('./postgres');
 } else {
-  dbImpl = sqliteImpl;
+  dbImpl = require('./sqlite');
 }
 
 module.exports = {
