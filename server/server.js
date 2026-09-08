@@ -1737,7 +1737,7 @@ async function syncToAirtableMirror(row) {
     return;
   }
   
-  const entityRow = dal.entities.get(row.entity, row.entity_id);
+  const entityRow = await dal.entities.get(row.entity, row.entity_id);
   if (!entityRow || entityRow.version !== row.central_version) return;
 
   let payload;
