@@ -1795,10 +1795,10 @@ async function syncToAirtableMirror(row) {
   }
 }
 
-setInterval(() => {
+setInterval(async () => {
   try {
     const now = new Date().toISOString();
-    const pending = dal.airtable.getPendingQueue(now);
+    const pending = await dal.airtable.getPendingQueue(now);
     for (const row of pending) {
       syncToAirtableMirror(row).catch(e => console.error(e));
     }
