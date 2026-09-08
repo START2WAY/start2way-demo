@@ -1717,6 +1717,8 @@ app.post('/api/circuit/audit-optimization', async (req, res) => {
 
 // --- END CIRCUIT V1 COMMERCIAL ENDPOINTS ---
 
+const port = process.env.PORT || 8080;
+
 dbPromise.then(() => {
   app.listen(port, () => console.log(`Recovery server running on port ${port}`));
 }).catch(err => {
