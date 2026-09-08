@@ -1733,7 +1733,7 @@ app.use('/api/legacy', async (req, res) => {
 // Background Sync Task
 async function syncToAirtableMirror(row) {
   if (!process.env.AIRTABLE_PAT || !process.env.AIRTABLE_BASE_ID) {
-    dal.airtable.updateStatusError('FAILED_RETRYABLE', 'AIRTABLE_NOT_CONFIGURED', row.entity, row.entity_id, row.central_version);
+    await dal.airtable.updateStatusError('FAILED_RETRYABLE', 'AIRTABLE_NOT_CONFIGURED', row.entity, row.entity_id, row.central_version);
     return;
   }
   
@@ -1783,17 +1783,17 @@ async function syncToAirtableMirror(row) {
     if (res.ok) {
       const currentEntity = await dal.entities.getVersion(row.entity, row.entity_id);
       if (currentEntity && currentEntity.version === row.central_version) {
-        dal.airtable.updateStatus('COMPLETED', row.entity, row.entity_id, row.central_version);
+        await dal.airtable.updateStatus('COMPLETED', row.entity, row.entity_id, row.central_version);
       }
     } else {
       const isRetryable = res.status >= 500 || res.status === 429;
       const newStatus = isRetryable ? 'FAILED_RETRYABLE' : 'FAILED_BLOCKED';
       let errorBody = '';
       try { errorBody = await res.text(); } catch (e) {}
-      dal.airtable.updateStatusError(newStatus, `HTTP ${res.status} ${errorBody}`, row.entity, row.entity_id, row.central_version);
+      await dal.airtable.updateStatusError(newStatus, `HTTP ${res.status} ${errorBody}`, row.entity, row.entity_id, row.central_version);
     }
   } catch (err) {
-      dal.airtable.updateStatusError('FAILED_RETRYABLE', err.message, row.entity, row.entity_id, row.central_version);
+      await dal.airtable.updateStatusError('FAILED_RETRYABLE', err.message, row.entity, row.entity_id, row.central_version);
   }
 }
 
