@@ -68,7 +68,8 @@ class CircuitOptimizationProvider {
         startLocation: {
           latitude: constraints.vehicleStart.latitude,
           longitude: constraints.vehicleStart.longitude
-        }
+        },
+        costPerHour: 1
       };
 
       if (constraints.vehicleEnd) {
@@ -82,10 +83,7 @@ class CircuitOptimizationProvider {
         model: {
           shipments,
           vehicles: [vehicle]
-        },
-        objectives: [
-          { type: 'MIN_TRAVEL_TIME' }
-        ]
+        }
       };
 
       // Call Route Optimization API
