@@ -1,7 +1,7 @@
-const CircuitAgentWrapper = require('./CircuitAgentWrapper.js');
-const CircuitGeocodingProvider = require('./CircuitGeocodingProvider.js');
-const CircuitRouteMatrixProvider = require('./CircuitRouteMatrixProvider.js');
-const CircuitOptimizationProvider = require('./CircuitOptimizationProvider.js');
+const CircuitAgentWrapper = require('./services/CircuitAgentWrapper.js');
+const CircuitGeocodingProvider = require('./services/CircuitGeocodingProvider.js');
+const CircuitRouteMatrixProvider = require('./services/CircuitRouteMatrixProvider.js');
+const CircuitOptimizationProvider = require('./services/CircuitOptimizationProvider.js');
 
 class CircuitPipeline {
   static async run(input) {
