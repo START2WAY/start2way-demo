@@ -131,7 +131,8 @@ class CircuitOptimizationProvider {
 
       return {
         status: 'OK',
-        routes
+        routes,
+        rawGoogle: data
       };
 
     } catch (err) {
