@@ -9,6 +9,7 @@ const CircuitGeocodingProvider = require('./services/CircuitGeocodingProvider.js
 const CircuitRouteMatrixProvider = require('./services/CircuitRouteMatrixProvider.js');
 const CircuitOptimizationProvider = require('./services/CircuitOptimizationProvider.js');
 const CircuitAgentWrapper = require('./services/CircuitAgentWrapper.js');
+const CircuitPipeline = require('./services/CircuitPipeline.js');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const app = express();
@@ -1716,6 +1717,11 @@ app.post('/api/circuit/optimize', async (req, res) => {
 
 app.post('/api/circuit/audit-optimization', async (req, res) => {
   const result = await CircuitAgentWrapper.auditOptimization(req.body.stops, req.body.optimizedOrder);
+  res.json(result);
+});
+
+app.post('/api/circuit/run', async (req, res) => {
+  const result = await CircuitPipeline.run(req.body);
   res.json(result);
 });
 
