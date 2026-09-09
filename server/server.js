@@ -6,6 +6,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const { initDB, runInTransaction, dal } = require('./db/index.js');
 const CircuitGeocodingProvider = require('./services/CircuitGeocodingProvider.js');
+const CircuitRouteMatrixProvider = require('./services/CircuitRouteMatrixProvider.js');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const app = express();
