@@ -82,7 +82,10 @@ class CircuitOptimizationProvider {
         model: {
           shipments,
           vehicles: [vehicle]
-        }
+        },
+        objectives: [
+          { type: 'MIN_TRAVEL_TIME' }
+        ]
       };
 
       // Call Route Optimization API
