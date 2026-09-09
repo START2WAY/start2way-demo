@@ -113,10 +113,12 @@ class CircuitOptimizationProvider {
           const orderedStops = [];
           if (route.visits && Array.isArray(route.visits)) {
             for (const visit of route.visits) {
-              if (visit.shipmentIndex !== undefined && stops[visit.shipmentIndex]) {
+              const resolvedShipmentIndex = visit.shipmentIndex !== undefined ? visit.shipmentIndex : 0;
+
+              if (visit.isPickup && stops[resolvedShipmentIndex]) {
                 orderedStops.push({
-                  id: stops[visit.shipmentIndex].id,
-                  shipmentIndex: visit.shipmentIndex
+                  id: stops[resolvedShipmentIndex].id,
+                  shipmentIndex: resolvedShipmentIndex
                 });
               }
             }
