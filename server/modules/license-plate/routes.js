@@ -6,21 +6,7 @@ const { dal } = require('../../db/index.js');
 const PlateOCRService = require('./services/PlateOCRService');
 const LicensePlateAgentService = require('./services/LicensePlateAgentService');
 
-async function getUserAuth(req) {
-  let token = null;
-  const authHeader = req.headers['authorization'];
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.substring(7);
-  } else if (req.query.token) {
-    token = req.query.token;
-  }
-  
-  if (token) {
-    const session = dal.sessions.getValidSession(token, new Date().toISOString());
-    if (session) return session;
-  }
-  return null;
-}
+const getUserAuth = require('../../shared/auth/getUserAuth.js');
 
 const scanRateLimits = new Map();
 
