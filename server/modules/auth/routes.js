@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { dal } = require('../../db/index.js');
 const verifySecret = require('./services/verifySecret.js');
 const getUserAuth = require('../../shared/auth/getUserAuth.js');
+const sanitizeForCompany = require('../../shared/sanitizeForCompany.js');
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
