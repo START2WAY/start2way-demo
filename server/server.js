@@ -108,11 +108,9 @@ const KEY_LEN = 64;
 const hashSecret = require('./modules/auth/services/hashSecret.js');
 
 const getUserAuth = require('./shared/auth/getUserAuth.js');
+const uuidv4 = require('./shared/uuidv4.js');
 
 // UUID helper
-function uuidv4() {
-  return crypto.randomUUID();
-}
 
 // Sanitization functions
 const ALLOWED_ENTITIES = ['employments', 'feuillets', 'segments', 'vehicle_usages', 'event_logs', 'day_declarations', 'documents', 'vehicles', 'vehicle_maintenance_events', 'sessions'];
