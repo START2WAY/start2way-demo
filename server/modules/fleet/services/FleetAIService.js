@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const getUserAuth = require('../../shared/auth/getUserAuth');
 const getFleetVehicle = require('../getFleetVehicle');
-const dal = require('../../dal');
+const { dal } = require('../../../db');
 
 const FleetAIService = {
   getSystemPrompt() {
@@ -106,7 +106,6 @@ Suivi du brouillon avec "Objet : ..." et "Message : ...".
       const aiReply = aiData.choices[0].message.content;
 
       // 4. Audit Log
-      dal.changelog.insert(docEnt.id, `upload_doc_${docEnt.id}_${Date.now()}`, 'documents', documentId, 'UPDATE', payload.version, new Date().toISOString(), auth.role === 'company' ? 'COMPANY' : 'USER', auth.company_id || auth.user_id, null, payload.company_id, JSON.stringify(payload));
 
       return res.json({ reply: aiReply });
     } catch (e) {

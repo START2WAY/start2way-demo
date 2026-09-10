@@ -1,4 +1,4 @@
-const dal = require('../../dal');
+const { dal } = require('../../db');
 
 function getFleetVehicle(companyId, vehicleId) {
   const row = dal.entities.getPayloadAndCompany('vehicles', vehicleId);
