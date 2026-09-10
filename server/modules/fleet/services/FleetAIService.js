@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const getUserAuth = require('../../shared/auth/getUserAuth');
+const getUserAuth = require('../../../shared/auth/getUserAuth');
 const getFleetVehicle = require('../getFleetVehicle');
 const { dal } = require('../../../db');
 
