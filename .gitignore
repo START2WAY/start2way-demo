@@ -12,6 +12,8 @@ node_modules/
 *.bak
 
 scratch/
+# Antigravity local scratch space (START2WAY only, never committed)
+temp/
 
 server/data/uploads/*
 !server/data/uploads/.gitkeep
