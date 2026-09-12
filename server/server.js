@@ -1,12 +1,7 @@
-const fs = require("fs");
-const path = require("path");
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
-const crypto = require('crypto');
-const { initDB, runInTransaction, dal } = require('./db/index.js');
+const { initDB } = require('./db/index.js');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -14,73 +9,15 @@ app.use(express.json({ limit: '50mb' }));
 const dbConfig = process.env.DATABASE_URL;
 const dbPromise = initDB(dbConfig);
 
-
-
 // Deterministic JSON stringify
-const stableStringify = require('./shared/stableStringify.js');
 
 // Fingerprint calculation
-
-
-function isConflictAlreadyApplied(conflict, currentEntity) {
-  if (!currentEntity || !currentEntity.payload) return false;
-  
-  let clientPayload = {};
-  try { clientPayload = JSON.parse(conflict.client_payload); } catch(e) {}
-  let currentPayload = {};
-  try { currentPayload = JSON.parse(currentEntity.payload); } catch(e) {}
-
-  let comparedFieldCount = 0;
-
-  if (conflict.entity === 'employments') {
-    const fieldsToCheck = ['status', 'depart_at'];
-    for (const f of fieldsToCheck) {
-      if (clientPayload[f] !== undefined) {
-        if (clientPayload[f] !== currentPayload[f]) return false;
-        comparedFieldCount++;
-      }
-    }
-    return comparedFieldCount > 0;
-  }
-  
-  if (conflict.entity === 'feuillets') {
-    const isSignatureIntention = clientPayload.signature_method !== undefined || 
-                                 clientPayload.integrity_hash !== undefined || 
-                                 clientPayload.signed_at !== undefined;
-    
-    if (isSignatureIntention) {
-      if (clientPayload.signature_method !== undefined && currentPayload.signature_method !== clientPayload.signature_method) return false;
-      if (clientPayload.integrity_hash !== undefined && currentPayload.integrity_hash !== clientPayload.integrity_hash) return false;
-      if (clientPayload.signed_at !== undefined && currentPayload.signed_at !== clientPayload.signed_at) return false;
-      
-      if (currentPayload.status !== 'SIGNED' && currentPayload.status !== 'SEALED_CONFIRMED') return false;
-      comparedFieldCount++;
-    } else {
-      const fieldsToCheck = ['status', 'hours', 'description', 'company_notes'];
-      for (const f of fieldsToCheck) {
-        if (clientPayload[f] !== undefined) {
-          if (clientPayload[f] !== currentPayload[f]) return false;
-          comparedFieldCount++;
-        }
-      }
-    }
-    return comparedFieldCount > 0;
-  }
-  
-  return false;
-}
-
 
 // ----------------------------------------------------
 // AUTH & HASHING
 // ----------------------------------------------------
 const SALT_SIZE = 16;
 const KEY_LEN = 64;
-
-const hashSecret = require('./shared/hashSecret.js');
-
-const getUserAuth = require('./shared/auth/getUserAuth.js');
-const uuidv4 = require('./shared/uuidv4.js');
 
 // UUID helper
 
