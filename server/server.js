@@ -77,7 +77,7 @@ function isConflictAlreadyApplied(conflict, currentEntity) {
 const SALT_SIZE = 16;
 const KEY_LEN = 64;
 
-const hashSecret = require('./modules/auth/services/hashSecret.js');
+const hashSecret = require('./shared/hashSecret.js');
 
 const getUserAuth = require('./shared/auth/getUserAuth.js');
 const uuidv4 = require('./shared/uuidv4.js');

@@ -1,5 +1,5 @@
 const { runInTransaction, dal } = require('../../../db/index.js');
-const hashSecret = require('../../auth/services/hashSecret.js');
+const hashSecret = require('../../../shared/hashSecret.js');
 const uuidv4 = require('../../../shared/uuidv4.js');
 const { recordFailedOperation } = require('./syncHelpers.js');
 
