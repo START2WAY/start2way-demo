@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { dal } = require('../../db/index.js');
-const { sanitizePayload } = require('../sync/services/sanitizers.js');
+const sanitizeForTech = require('../../shared/sanitizeForTech.js');
 
 router.get('/api/tech/audit/failed', async (req, res) => {
   const clientType = req.headers['x-client-type'] || 'UNKNOWN';
@@ -51,12 +51,12 @@ router.get('/api/tech/state', async (req, res) => {
     const employments = entities.filter(e => e.entity === 'employments').map(e => {
       let p = null;
       try { p = JSON.parse(e.payload); } catch(err){}
-      return { ...e, payload: sanitizePayload(e.entity, p, clientType) };
+      return { ...e, payload: sanitizeForTech(e.entity, p) };
     });
     const feuillets = entities.filter(e => e.entity === 'feuillets').map(e => {
       let p = null;
       try { p = JSON.parse(e.payload); } catch(err){}
-      return { ...e, payload: sanitizePayload(e.entity, p, clientType) };
+      return { ...e, payload: sanitizeForTech(e.entity, p) };
     });
     
     res.json({

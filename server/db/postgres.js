@@ -203,6 +203,21 @@ const dal = {
         pq = pq.replace('?', `$${i}`);
       }
       return queryAll(pq, params);
+    },
+
+    async listForClientScope({ clientType, userId, companyId }) {
+      let query = 'SELECT * FROM sync_conflicts WHERE 1=1';
+      const params = [];
+
+      if (clientType === 'EMPLOYEE_APP') {
+        query += ' AND user_id = $' + (params.length + 1);
+        params.push(userId);
+      } else if (clientType === 'COMPANY_PANEL') {
+        query += ' AND company_id = $' + (params.length + 1);
+        params.push(companyId);
+      }
+
+      return queryAll(query, params);
     }
   },
 

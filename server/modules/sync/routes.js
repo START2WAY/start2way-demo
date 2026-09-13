@@ -156,19 +156,12 @@ router.get('/api/sync/conflicts', async (req, res) => {
     return res.status(403).json({ error: 'FORBIDDEN' });
   }
 
-  let query = 'SELECT * FROM sync_conflicts WHERE 1=1';
-  const params = [];
-
-  if (clientType === 'EMPLOYEE_APP') {
-    query += ' AND user_id = ?';
-    params.push(userId);
-  } else if (clientType === 'COMPANY_PANEL') {
-    query += ' AND company_id = ?';
-    params.push(companyId);
-  }
-
   try {
-    const conflicts = await dal.conflicts.queryAll(query, params);
+    const conflicts = await dal.conflicts.listForClientScope({
+      clientType,
+      userId,
+      companyId
+    });
     
     const formatted = await Promise.all(conflicts.map(async c => {
       let clientPayload = null;
